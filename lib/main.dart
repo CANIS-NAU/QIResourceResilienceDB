@@ -109,6 +109,20 @@ class _MyHomePageState extends State<MyHomePage> {
                   new SingleChildScrollView(
                     child: new Column(
                         children: [
+                            Container(
+                                margin: const EdgeInsets.only(right: 1300, left: 0),
+                                height: 50,
+                                width: 130.0,
+                                decoration: BoxDecoration(
+                                  image: DecorationImage(
+                                    image: AssetImage(
+                                        'assets/rrdb_logo.png'),
+                                    fit: BoxFit.fill,
+                                  ),
+                                  
+                                ),
+                              ),
+
                             new Container(
                               padding: const EdgeInsets.symmetric( vertical: 20),
                               margin: const EdgeInsets.only(right: 0, left: 1200),
@@ -691,11 +705,11 @@ class createResourceState extends State<CreateResource> {
         title: const Text('Submit Resource'),
       ),
       body: new Container(
-                    child: new Column(
+                    child: new Stack(
                         children: [
                             new Container(
                               padding: const EdgeInsets.symmetric( vertical: 20),
-                              margin: const EdgeInsets.only(right: 1000, left: 100),
+                              margin: const EdgeInsets.only(top: 50, right: 800, left: 300),
                               child: 
                                 TextField(
                                     obscureText: false,
@@ -710,7 +724,7 @@ class createResourceState extends State<CreateResource> {
                             ),
                             new Container(
                               padding: const EdgeInsets.symmetric( vertical: 20),
-                              margin: const EdgeInsets.only(right: 1000, left: 100),
+                              margin: const EdgeInsets.only(top: 150, right: 800, left: 300),
                               child: 
                                 TextField(
                                     obscureText: false,
@@ -725,7 +739,7 @@ class createResourceState extends State<CreateResource> {
                             ),
                             new Container(
                               padding: const EdgeInsets.symmetric( vertical: 20),
-                              margin: const EdgeInsets.only(right: 1000, left: 100),
+                              margin: const EdgeInsets.only(top: 250, right: 800, left: 300),
                               child: 
                                 TextField(
                                     obscureText: false,
@@ -740,7 +754,7 @@ class createResourceState extends State<CreateResource> {
                             ),
                             new Container(
                               padding: const EdgeInsets.symmetric( vertical: 20),
-                              margin: const EdgeInsets.only(right: 1000, left: 100),
+                              margin: const EdgeInsets.only(top: 350, right: 800, left: 300),
                               child: 
                                 TextField(
                                     obscureText: false,
@@ -760,9 +774,24 @@ class createResourceState extends State<CreateResource> {
                                   },
                                 ),
                             ),
-                            Text("Your active tags. Click to remove"),
-                            Text("Resource Type"),
-                            new ToggleButtons(
+                            Padding(
+                            padding: const EdgeInsets.only(top: 450, left: 325 ),
+                            child: Text(
+                            "Your active tags. Click to remove",
+                                style: TextStyle(fontSize: 15.0),
+                              ),
+                          ),
+                            Padding(
+                            padding: const EdgeInsets.only(top: 70, left: 970 ),
+                            child: Text(
+                            "Resource Type",
+                                style: TextStyle(fontSize: 20.0),
+                              ),
+                          ),
+                            new Container(
+                              margin: const EdgeInsets.only(top: 100, right: 0, left: 920),
+                              child:
+                              ToggleButtons(
                               direction: vertical ? Axis.vertical : Axis.horizontal,
                               onPressed: ( int index ) {
                                 setState(() {
@@ -783,10 +812,20 @@ class createResourceState extends State<CreateResource> {
                               ),
                               isSelected: _selectedResources,
                               children: resourceType,
-                            ),
+                            ),),
                             SizedBox(height: 20 ),
-                            Text("Privacy Protections"),
-                            new ToggleButtons(
+                            Padding(
+                            padding: const EdgeInsets.only(top: 250, left: 960 ),
+                            child: Text(
+                            "Privacy Protections",
+                                style: TextStyle(fontSize: 20.0),
+                              ),
+                          ),
+                            
+                            new Container(
+                              margin: const EdgeInsets.only(top: 290, right: 0, left: 900),
+                              child: 
+                              ToggleButtons(
                               direction: vertical ? Axis.vertical : Axis.horizontal,
                               onPressed: ( int index ) {
                                 setState(() {
@@ -806,10 +845,20 @@ class createResourceState extends State<CreateResource> {
                               ),
                               isSelected: _selectedPrivacy,
                               children: resourcePrivacy,
-                            ),
+                            ),),
                             SizedBox(height: 20 ),
-                            Text("Cultural Responsiveness"),
+                            Padding(
+                            padding: const EdgeInsets.only(top: 350, left: 950 ),
+                            child: Text(
+                            "Cultural Responsiveness",
+                                style: TextStyle(fontSize: 20.0),
+                              ),
+                          ),
+
+                            
                             new Container(
+                              margin: const EdgeInsets.only(top: 380, right: 0, left: 850),
+                              height: 50,
                               width: 500,
                               child:
                                   Slider(
@@ -824,7 +873,16 @@ class createResourceState extends State<CreateResource> {
                                   },
                                 ),
                             ),
-                            Text("Age range of resource"),
+                            Padding(
+                            padding: const EdgeInsets.only(top: 160, left: 950 ),
+                            child: Text(
+                            "Age Range of Resource",
+                                style: TextStyle(fontSize: 20.0),
+                              ),
+                          ),
+                           new Container(
+                            margin: const EdgeInsets.only(top: 190, right: 0, left: 975),
+                            child:
                             DropdownButton(
                               value: _currentDropDownValue,
                               onChanged: (String? newValue){
@@ -838,10 +896,11 @@ class createResourceState extends State<CreateResource> {
                                 child: Text(value),
                                );
                               }).toList(),
-                            ),
+                            ),),
+                          
                             
                             new Container(
-                              margin: const EdgeInsets.only(right: 600, left: 550),
+                              margin: const EdgeInsets.only(top: 100, right: 0, left: 800),
                               child:
                                 MultiSelectChipDisplay(                              
                                   items: selectedTags.map( (e) => MultiSelectItem( e, e ) ).toList(),
@@ -854,7 +913,7 @@ class createResourceState extends State<CreateResource> {
                             ),
                             new Container(
                               padding: const EdgeInsets.symmetric( vertical: 20),
-                              margin: const EdgeInsets.only(right: 200, left: 150),
+                              margin: const EdgeInsets.only(top: 450, right: 0, left: 700),
                               child: 
                                 TextButton(
                                   style: ButtonStyle(
