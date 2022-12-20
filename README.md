@@ -1,16 +1,22 @@
-# web_app
+# RRDB
 
-A new Flutter project.
+## Flutter Installation
+> Follow the instructions provided by the following link: https://docs.flutter.dev/get-started/install
 
-## Getting Started
+## Run Web App
+> Once the installation is complete:
+> 1) Clone or download the repository.
+> 2) Change into the web directory within the cloned or downloaded repository.
+> 3) Run the app with your browser of choice using: flutter -d run { browser }. For example using chrome: flutter run -d chrome.
+> 4) When testing newly added or fixed code, you can apply changes to the browser by entering 'r' within the command line while the app is running.
 
-This project is a starting point for a Flutter application.
+## Important Files and Folders
+> 1) lib: This is where the web app source code is kept(screens and such). Any changes to be made to the flutter application will be in this folder.
+> 2) test: This directory is for tests in the application. There needs to be more tests in the future. 
+> 3) assets: Where resources such as images are to be kept for organization.
+> 4) web: Do Not Mess With This Directory. This directory may not look important but houses flutter engine initalization. This is why we need to be in this directory to start the web app.
+> 5) Firebase Files: Do not touch unless you need to mess with the firebase configuration. These link the backend db. 
+> Nothing else is specifically important but I would suggest not touching anything else unless needed. The files are likly to be flutter default configs.
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Help with flutter or dart
+> It will sound very cliche but the flutter documentation is very helpful for learning: https://docs.flutter.dev/development/ui/widgets-intro. The development tab is very useful.
