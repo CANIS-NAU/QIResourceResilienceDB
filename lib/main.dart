@@ -9,6 +9,8 @@ import 'package:multi_select_flutter/multi_select_flutter.dart';
 import './home.dart';
 import './verify.dart';
 import './createResource.dart';
+import './loginpage.dart';
+import './dashboard.dart';
 
 //Main fubction
 void main() async  {
@@ -36,6 +38,8 @@ class MyApp extends StatelessWidget {
         '/home': ( context ) => const MyHomePage(),
         '/verify': ( context ) => Verify(),
         '/createresource': ( context ) => CreateResource(),
+        '/login': ( context ) => Login(),
+        '/dashboard': ( context ) => Dashboard(),
       },
       theme: ThemeData(
         primarySwatch: Colors.blue,

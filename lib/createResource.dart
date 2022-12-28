@@ -168,7 +168,7 @@ class createResourceState extends State<CreateResource> {
                                     decoration: InputDecoration(
                                     border: OutlineInputBorder(),
                                     labelText: 'Name of the Resource',
-                                  ),
+                                    ),
                                   onChanged: ( text ) {
                                     resourceName = text;
                                   },

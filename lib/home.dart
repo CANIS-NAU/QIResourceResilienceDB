@@ -75,73 +75,111 @@ class _MyHomePageState extends State<MyHomePage> {
             return Scaffold(
                 resizeToAvoidBottomInset : false,
                 body: 
-                  new SingleChildScrollView(
+                 LayoutBuilder( builder: ( context, windowSize ) {
+                  return SingleChildScrollView(
                     child: new Column(
                         children: [
-                            //RRDB Image 
-                            Container(
-                                margin: const EdgeInsets.only(right: 1300, left: 0),
-                                height: 50,
-                                width: 130.0,
-                                decoration: BoxDecoration(
-                                  image: DecorationImage(
-                                    image: AssetImage(
-                                        'assets/rrdb_logo.png'),
-                                    fit: BoxFit.fill,
+                            new Row(
+                                children: [
+                                  Expanded(
+                                    child: 
+                                      Container(
+                                        //margin: EdgeInsets.only( right: windowSize.maxWidth / 1.07, left: 0 ),
+                                        height: windowSize.maxHeight / 13,
+                                        width: windowSize.maxWidth / 10,
+                                        decoration: BoxDecoration(
+                                        image: DecorationImage(
+                                          image: AssetImage(
+                                              'assets/rrdb_logo.png'),
+                                          fit: BoxFit.fill,
+                                        ),                                
+                                      ),
+                                   ),
                                   ),
-                                  
-                                ),
-                            ),
-                            //Create Resource navigation button 
-                            new Container(
-                              padding: const EdgeInsets.symmetric( vertical: 20),
-                              margin: const EdgeInsets.only(right: 0, left: 1200),
-                              child: 
-                                TextButton(
-                                  style: ButtonStyle(
-                                    foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
-                                    backgroundColor: MaterialStateProperty.all<Color>(Colors.blue),
-                                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                                      RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(18.0),
-                                        side: BorderSide(color: Colors.blue)
-                                      )
-                                    )
+                                  Expanded(
+                                    child:
+                                      Container(
+                                        padding: EdgeInsets.only( right: windowSize.maxWidth / 100, left: 0 ),
+                                        //margin: EdgeInsets.only(right: 0, left: 1200),
+                                        width: windowSize.maxWidth / 100,
+                                        child: 
+                                          TextButton(
+                                            style: ButtonStyle(
+                                              foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
+                                              backgroundColor: MaterialStateProperty.all<Color>(Colors.blue),
+                                              shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                                                RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.circular(18.0),
+                                                  side: BorderSide(color: Colors.blue)
+                                                )
+                                              )
+                                            ),
+                                            //Button navigation 
+                                            onPressed: () { 
+                                              Navigator.pushNamed( context, '/createresource' );
+                                            },
+                                            child: Text('Submit Resource'),
+                                          )
+                                    ),
                                   ),
-                                  //Button navigation 
-                                  onPressed: () { 
-                                    Navigator.pushNamed( context, '/createresource' );
-                                  },
-                                  child: Text('Submit Resource'),
-                                )
-                            ),
-                            //Verify navigation button
-                            new Container(
-                              padding: const EdgeInsets.symmetric( vertical: 0),
-                              margin: const EdgeInsets.only(right: 0, left: 1200),
-                              child: 
-                                TextButton(
-                                  style: ButtonStyle(
-                                    foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
-                                    backgroundColor: MaterialStateProperty.all<Color>(Colors.blue),
-                                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                                      RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(18.0),
-                                        side: BorderSide(color: Colors.blue)
-                                      )
-                                    )
+                                  Expanded(
+                                    child: 
+                                      Container(
+                                        padding: EdgeInsets.only( right: windowSize.maxWidth / 100, left: 0 ),
+                                        //margin: const EdgeInsets.only(right: 0, left: 1200),
+                                        width: windowSize.maxWidth / 100,
+                                        child: 
+                                          TextButton(
+                                            style: ButtonStyle(
+                                              foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
+                                              backgroundColor: MaterialStateProperty.all<Color>(Colors.blue),
+                                              shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                                                RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.circular(18.0),
+                                                  side: BorderSide(color: Colors.blue)
+                                                )
+                                              )
+                                            ),
+                                            //Button navigation
+                                            onPressed: () { 
+                                              Navigator.pushNamed(context, '/verify');
+                                            },
+                                            child: Text('Verify New Resources'),
+                                          )
+                                    ),
                                   ),
-                                  //Button navigation
-                                  onPressed: () { 
-                                     Navigator.pushNamed(context, '/verify');
-                                  },
-                                  child: Text('Verify New Resources'),
-                                )
+                                  Expanded(
+                                    child: 
+                                      Container(
+                                        padding: EdgeInsets.only( right: windowSize.maxWidth / 100, left: 0 ),
+                                        //margin: const EdgeInsets.only(right: 0, left: 1200),
+                                        width: windowSize.maxWidth / 100,
+                                        child: 
+                                          TextButton(
+                                            style: ButtonStyle(
+                                              foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
+                                              backgroundColor: MaterialStateProperty.all<Color>(Colors.blue),
+                                              shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                                                RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.circular(18.0),
+                                                  side: BorderSide(color: Colors.blue)
+                                                )
+                                              )
+                                            ),
+                                            //Button navigation
+                                            onPressed: () { 
+                                              Navigator.pushNamed( context, '/login' );
+                                            },
+                                            child: Text('Dashboard'),
+                                          )
+                                    ),
+                                  ),
+                               ],
                             ),
                             //Search bar
                             new Container(
-                              padding: const EdgeInsets.symmetric( vertical: 20),
-                              margin: const EdgeInsets.only(right: 300, left: 300),
+                              padding: EdgeInsets.symmetric( vertical: windowSize.maxHeight / 100 ),
+                              margin: EdgeInsets.only( right: windowSize.maxWidth / 6, left: windowSize.maxWidth / 6 ),
                               child: 
                                 Column(
                                   mainAxisAlignment: MainAxisAlignment.start,
@@ -277,7 +315,9 @@ class _MyHomePageState extends State<MyHomePage> {
                       ),
                     ],
                   ),
-                ),
-              );
+                );
+               }
+              ),
+             );
             }
           }
