@@ -224,7 +224,7 @@ class createResourceState extends State<CreateResource> {
                                 ),
                             ),
                             new Container(
-                            padding: EdgeInsets.only( top: windowSize.maxHeight / 50 + 350, left: windowSize.maxWidth / 10 ),
+                            margin: EdgeInsets.only( top: windowSize.maxHeight / 50 + 375, left: windowSize.maxWidth / 10 ),
                             child: 
                               new Stack( 
                                 children: [ 
