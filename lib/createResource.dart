@@ -101,7 +101,20 @@ class createResourceState extends State<CreateResource> {
   //Submit to DB
   Future<void> submitResource( resourceName, resourceLocation, resourceDescription )
   {
-    String resourceType = "", privacyType = "";
+    String resourceType = "", privacyType = "", culturalResponse = "";
+
+    if( _currentSliderValue >= 0 && _currentSliderValue <= 1 )
+    {
+      culturalResponse = "Low Cultural Responsivness";
+    }
+    else if( _currentSliderValue >= 2 && _currentSliderValue <= 3 )
+    {
+      culturalResponse = "Medium Cultural Responsivness";
+    }
+    else
+    {
+      culturalResponse = "High Cultural Responsivness";
+    }
 
     //Check for resource type, required to convert to string( useful for db store )
     if( _selectedResources[ 0 ] )
@@ -142,6 +155,7 @@ class createResourceState extends State<CreateResource> {
         'verified': verified, //Always false upon creation
         'resourceType': resourceType,
         'privacy': privacyType,
+        'culturalResponse': culturalResponse,
         'culturalResponsivness': _currentSliderValue,
         'tagline': selectedTags
       }

@@ -49,8 +49,8 @@ class Dashboard extends StatelessWidget
                     gridData: FlGridData( show: false ),
                     titlesData: FlTitlesData(
                       bottomTitles: AxisTitles( sideTitles: _bottomTitles, axisNameWidget:Text('Day'), ),
-                      leftTitles: AxisTitles( sideTitles: SideTitles( showTitles: false ), axisNameWidget: Text('Number Of Searches') ),
-                      topTitles: AxisTitles( sideTitles: SideTitles( showTitles: false ), axisNameWidget: Text('Number Of Searches Per Day') ),
+                      leftTitles: AxisTitles( sideTitles: SideTitles( showTitles: false ), axisNameWidget: Text('Number Of Searches') ), //${ leftLabelText }
+                      topTitles: AxisTitles( sideTitles: SideTitles( showTitles: false ), axisNameWidget: Text('Number Of Searches Per Day') ), 
                       rightTitles: AxisTitles( sideTitles: SideTitles( showTitles: false ) ),
                     ),
                   ),
