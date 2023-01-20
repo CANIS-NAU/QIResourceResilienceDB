@@ -26,19 +26,34 @@ class filterItem {
 }
 
 //Home Page state
-class _MyHomePageState extends State<MyHomePage> {  
+class _MyHomePageState extends State<MyHomePage> {
+
+  //Set booleans for filtering types
+  bool ageFilter = false, responsivenessType = false, reportingType = false, locationType = false;
 
   //Static list of filter items, more to be added. Added with constructor
   static List<filterItem> filterItems = [
     filterItem(id: 1, name: "Online"),
     filterItem(id: 2, name: "In Person"),
     filterItem(id: 3, name: "App"),
+
     filterItem(id: 4, name: "Low Cultural Responsivness"),
     filterItem(id: 5, name: "Medium Cultural Responsivness"),
     filterItem(id: 6, name: "High Cultural Responsivness"),
+
     filterItem(id: 7, name: "HIPAA Compliant"),
-    filterItem(id: 7, name: "Anonymous"),
-    filterItem(id: 7, name: "Mandatory Reporting"),
+    filterItem(id: 8, name: "Anonymous"),
+    filterItem(id: 9, name: "Mandatory Reporting"),
+
+    filterItem(id: 10, name: "0-5"),
+    filterItem(id: 11, name: "6-10"),
+    filterItem(id: 12, name: "11-15"),
+    filterItem(id: 13, name: "16-20"),
+    filterItem(id: 14, name: "21-25"),
+    filterItem(id: 15, name: "26-35"),
+    filterItem(id: 16, name: "36-55"),
+    filterItem(id: 17, name: "56-75"),
+    filterItem(id: 18, name: "76+"),
   ];
 
   //Create a list that is casted dynamic, to hold filter items
@@ -52,16 +67,106 @@ class _MyHomePageState extends State<MyHomePage> {
   CollectionReference resourceCollection = FirebaseFirestore.instance.collection('resources');
 
   //TODO: Finish filter mech. Needs to be a compund filter
-  Stream<QuerySnapshot> filter( List<dynamic> selectedFilter ) {
-    List<String> selectedFilterNames = selectedFilter.map((item) => item.name.toString()).toList();
+  Stream<QuerySnapshot> filter( List<dynamic> selectedFilter )
+  {
+    String potentialLocationType = "", potentialResponsivenessType = "", potentialReportingType = "", potentialAgeType = "";
+    String currentArrayItem = "";
 
+    //Since list is dynamic type with id and name, we must map only to name
+    List<String> selectedFilterNames = selectedFilter.map( (item) => item.name.toString() ).toList();
+
+    //Get all queries that are verified
     Query query = FirebaseFirestore.instance.collection('resources').where('verified', isEqualTo: true);
+
+    //Check what filter catagories have been selected
+    setTypeFilter( selectedFilter );
+
+    //Loop through selected filter options
+    for( int filterIterator = 0; filterIterator < selectedFilterNames.length; filterIterator++ ) 
+    {
+      //Get current item
+      currentArrayItem = selectedFilterNames[ filterIterator ];
+
+      //Check items in catagories and set the potential filter query
+      if( currentArrayItem == "Online" || currentArrayItem == "In Person" ||
+                                                     currentArrayItem == "App" ) 
+      {
+        potentialLocationType = currentArrayItem;
+      }
+      else if( currentArrayItem == "Low Cultural Responsivness" || 
+               currentArrayItem == "Medium Cultural Responsivness" || 
+               currentArrayItem == "High Cultural Responsivness" )
+      {
+        potentialResponsivenessType = currentArrayItem;
+      }
+      else if( currentArrayItem == "HIPAA Compliant" || 
+               currentArrayItem == "Anonymous" || 
+               currentArrayItem == "Mandatory Reporting" )
+      {
+        potentialReportingType = currentArrayItem;
+      }
+      else
+      {
+        potentialAgeType = currentArrayItem;
+      }
+    }
+
+    //Query based on selected filter catagories collected
+    if( locationType )
+    {
+      query = query.where('resourceType', isEqualTo: potentialLocationType );
+    }
+    if( responsivenessType )
+    {
+      query = query.where('culturalResponse', isEqualTo : potentialResponsivenessType );
+    }
+    if( reportingType )
+    {
+      query = query.where('privacy', isEqualTo: potentialReportingType );
+    }
+    if( ageFilter )
+    {
+      query = query.where('agerange', isEqualTo: potentialAgeType );
+    }
     
-    query = query.where( 'tagline', arrayContainsAny: selectedFilterNames );
+    //query = query.where( 'tagline', arrayContainsAny: selectedFilterNames );
 
     Stream<QuerySnapshot> filtered = query.snapshots();
 
+    //set filter booleans back to false for filter removable
+    locationType = false;
+    responsivenessType = false;
+    reportingType = false;
+    ageFilter = false;
+
     return filtered;
+  }
+
+  //Set what was selected for filtering 
+  void setTypeFilter( List<dynamic> selectedFilter )
+  {
+    int selectedFilterId = 0;
+    for( int dynamicListIndex = 0; dynamicListIndex < selectedFilter.length; dynamicListIndex++ ) 
+    {
+      selectedFilterId = selectedFilter[ dynamicListIndex ].id;
+
+      if( selectedFilterId >= 1 && selectedFilterId <= 3 ) 
+      {
+        locationType = true;
+      }
+      else if( selectedFilterId >= 4 && selectedFilterId <= 6 ) 
+      {
+        responsivenessType = true;
+      }
+      else if( selectedFilterId >= 7 && selectedFilterId <= 9 ) 
+      {
+        reportingType = true;
+      }
+      else if( selectedFilterId >= 10 && selectedFilterId <= 18 )
+      {
+        ageFilter = true;
+      }
+    }
   }
 
   //Search query by keyword. Get resource with matching name
@@ -75,73 +180,118 @@ class _MyHomePageState extends State<MyHomePage> {
             return Scaffold(
                 resizeToAvoidBottomInset : false,
                 body: 
-                  new SingleChildScrollView(
+                 LayoutBuilder( builder: ( context, windowSize ) {
+                  return SingleChildScrollView(
                     child: new Column(
                         children: [
-                            //RRDB Image 
-                            Container(
-                                margin: const EdgeInsets.only(right: 1300, left: 0),
-                                height: 50,
-                                width: 130.0,
-                                decoration: BoxDecoration(
-                                  image: DecorationImage(
-                                    image: AssetImage(
-                                        'assets/rrdb_logo.png'),
-                                    fit: BoxFit.fill,
+                          new Container(
+                            width: windowSize.maxWidth,
+                            child:
+                            new Row(
+                                children: [
+                                  SizedBox(
+                                    //width: windowSize.maxWidth / 50,
+                                    child: 
+                                      Container(
+                                        //margin: EdgeInsets.only( right: windowSize.maxWidth / 1.07, left: 0 ),
+                                        height: windowSize.maxHeight / 13,
+                                        width: windowSize.maxWidth / 10,
+                                        decoration: BoxDecoration(
+                                        image: DecorationImage(
+                                          image: AssetImage(
+                                              'assets/rrdb_logo.png'),
+                                          fit: BoxFit.fill,
+                                        ),                                
+                                      ),
+                                   ),
                                   ),
-                                  
-                                ),
-                            ),
-                            //Create Resource navigation button 
-                            new Container(
-                              padding: const EdgeInsets.symmetric( vertical: 20),
-                              margin: const EdgeInsets.only(right: 0, left: 1200),
-                              child: 
-                                TextButton(
-                                  style: ButtonStyle(
-                                    foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
-                                    backgroundColor: MaterialStateProperty.all<Color>(Colors.blue),
-                                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                                      RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(18.0),
-                                        side: BorderSide(color: Colors.blue)
-                                      )
-                                    )
+                                  SizedBox(
+                                    width: windowSize.maxWidth / 10,
+                                    child:
+                                      Container(
+                                        width: windowSize.maxWidth / 100,
+                                        padding: EdgeInsets.only( right: windowSize.maxWidth / 100, left: 0 ),
+                                        child: 
+                                          TextButton(
+                                            style: ButtonStyle(
+                                              foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
+                                              backgroundColor: MaterialStateProperty.all<Color>(Colors.blue),
+                                              shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                                                RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.circular(18.0),
+                                                  side: BorderSide(color: Colors.blue)
+                                                )
+                                              )
+                                            ),
+                                            //Button navigation 
+                                            onPressed: () { 
+                                              Navigator.pushNamed( context, '/createresource' );
+                                            },
+                                            child: Text('Submit Resource'),
+                                          )
+                                    ),
                                   ),
-                                  //Button navigation 
-                                  onPressed: () { 
-                                    Navigator.pushNamed( context, '/createresource' );
-                                  },
-                                  child: Text('Submit Resource'),
-                                )
-                            ),
-                            //Verify navigation button
-                            new Container(
-                              padding: const EdgeInsets.symmetric( vertical: 0),
-                              margin: const EdgeInsets.only(right: 0, left: 1200),
-                              child: 
-                                TextButton(
-                                  style: ButtonStyle(
-                                    foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
-                                    backgroundColor: MaterialStateProperty.all<Color>(Colors.blue),
-                                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                                      RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(18.0),
-                                        side: BorderSide(color: Colors.blue)
-                                      )
-                                    )
+                                  SizedBox(
+                                    width: windowSize.maxWidth / 10,
+                                    child: 
+                                      Container(
+                                        padding: EdgeInsets.only( right: windowSize.maxWidth / 100, left: 0 ),
+                                        //margin: const EdgeInsets.only(right: 0, left: 1200),
+                                        width: windowSize.maxWidth / 100,
+                                        child: 
+                                          TextButton(
+                                            style: ButtonStyle(
+                                              foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
+                                              backgroundColor: MaterialStateProperty.all<Color>(Colors.blue),
+                                              shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                                                RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.circular(18.0),
+                                                  side: BorderSide(color: Colors.blue)
+                                                )
+                                              )
+                                            ),
+                                            //Button navigation
+                                            onPressed: () { 
+                                              Navigator.pushNamed(context, '/verify');
+                                            },
+                                            child: Text('Verify New Resources'),
+                                          )
+                                    ),
                                   ),
-                                  //Button navigation
-                                  onPressed: () { 
-                                     Navigator.pushNamed(context, '/verify');
-                                  },
-                                  child: Text('Verify New Resources'),
-                                )
+                                  SizedBox(
+                                    width: windowSize.maxWidth / 10,
+                                    child: 
+                                      Container(
+                                        padding: EdgeInsets.only( right: windowSize.maxWidth / 100, left: 0 ),
+                                        //margin: const EdgeInsets.only(right: 0, left: 1200),
+                                        width: windowSize.maxWidth / 100,
+                                        child: 
+                                          TextButton(
+                                            style: ButtonStyle(
+                                              foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
+                                              backgroundColor: MaterialStateProperty.all<Color>(Colors.blue),
+                                              shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                                                RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.circular(18.0),
+                                                  side: BorderSide(color: Colors.blue)
+                                                )
+                                              )
+                                            ),
+                                            //Button navigation
+                                            onPressed: () { 
+                                              Navigator.pushNamed( context, '/login' );
+                                            },
+                                            child: Text('Dashboard'),
+                                          )
+                                    ),
+                                  ),
+                               ],
+                             ),
                             ),
                             //Search bar
                             new Container(
-                              padding: const EdgeInsets.symmetric( vertical: 20),
-                              margin: const EdgeInsets.only(right: 300, left: 300),
+                              padding: EdgeInsets.symmetric( vertical: windowSize.maxHeight / 100 ),
+                              margin: EdgeInsets.only( right: windowSize.maxWidth / 6, left: windowSize.maxWidth / 6 ),
                               child: 
                                 Column(
                                   mainAxisAlignment: MainAxisAlignment.start,
@@ -190,6 +340,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                       onTap: (value) {
                                         setState(() {
                                           selectedFilter.remove( value );
+                                          resources = filter( selectedFilter );
                                         });
                                       },
                                     ),
@@ -277,7 +428,9 @@ class _MyHomePageState extends State<MyHomePage> {
                       ),
                     ],
                   ),
-                ),
-              );
+                );
+               }
+              ),
+             );
             }
           }

@@ -101,7 +101,20 @@ class createResourceState extends State<CreateResource> {
   //Submit to DB
   Future<void> submitResource( resourceName, resourceLocation, resourceDescription )
   {
-    String resourceType = "", privacyType = "";
+    String resourceType = "", privacyType = "", culturalResponse = "";
+
+    if( _currentSliderValue >= 0 && _currentSliderValue <= 1 )
+    {
+      culturalResponse = "Low Cultural Responsivness";
+    }
+    else if( _currentSliderValue >= 2 && _currentSliderValue <= 3 )
+    {
+      culturalResponse = "Medium Cultural Responsivness";
+    }
+    else
+    {
+      culturalResponse = "High Cultural Responsivness";
+    }
 
     //Check for resource type, required to convert to string( useful for db store )
     if( _selectedResources[ 0 ] )
@@ -142,6 +155,7 @@ class createResourceState extends State<CreateResource> {
         'verified': verified, //Always false upon creation
         'resourceType': resourceType,
         'privacy': privacyType,
+        'culturalResponse': culturalResponse,
         'culturalResponsivness': _currentSliderValue,
         'tagline': selectedTags
       }
@@ -156,27 +170,26 @@ class createResourceState extends State<CreateResource> {
       appBar: AppBar(
         title: const Text('Submit Resource'),
       ),
-      body: new Container(
+      body: LayoutBuilder( builder: ( context, windowSize ) {
+        return new Container(
                     child: new Stack(
                         children: [
                             new Container(
-                              padding: const EdgeInsets.symmetric( vertical: 20),
-                              margin: const EdgeInsets.only(top: 50, right: 800, left: 300),
+                              margin: EdgeInsets.only( top: windowSize.maxHeight / 50, right: windowSize.maxWidth / 2, left: windowSize.maxWidth / 10 ),
                               child: 
                                 TextField(
                                     obscureText: false,
                                     decoration: InputDecoration(
                                     border: OutlineInputBorder(),
                                     labelText: 'Name of the Resource',
-                                  ),
+                                    ),
                                   onChanged: ( text ) {
                                     resourceName = text;
                                   },
                                 ),
                             ),
                             new Container(
-                              padding: const EdgeInsets.symmetric( vertical: 20),
-                              margin: const EdgeInsets.only(top: 150, right: 800, left: 300),
+                              margin: EdgeInsets.only( top: windowSize.maxHeight / 50 + 100, right: windowSize.maxWidth / 2, left: windowSize.maxWidth / 10 ),
                               child: 
                                 TextField(
                                     obscureText: false,
@@ -190,8 +203,7 @@ class createResourceState extends State<CreateResource> {
                                 ),
                             ),
                             new Container(
-                              padding: const EdgeInsets.symmetric( vertical: 20),
-                              margin: const EdgeInsets.only(top: 250, right: 800, left: 300),
+                              margin: EdgeInsets.only( top: windowSize.maxHeight / 50 + 200, right: windowSize.maxWidth / 2, left: windowSize.maxWidth / 10 ),
                               child: 
                                 TextField(
                                     obscureText: false,
@@ -205,8 +217,7 @@ class createResourceState extends State<CreateResource> {
                                 ),
                             ),
                             new Container(
-                              padding: const EdgeInsets.symmetric( vertical: 20),
-                              margin: const EdgeInsets.only(top: 350, right: 800, left: 300),
+                              margin: EdgeInsets.only( top: windowSize.maxHeight / 50 + 300, right: windowSize.maxWidth / 2, left: windowSize.maxWidth / 10 ),
                               child: 
                                 TextField(
                                     obscureText: false,
@@ -226,22 +237,40 @@ class createResourceState extends State<CreateResource> {
                                   },
                                 ),
                             ),
-                            Padding(
-                            padding: const EdgeInsets.only(top: 450, left: 325 ),
-                            child: Text(
-                            "Your active tags. Click to remove",
-                                style: TextStyle(fontSize: 15.0),
-                              ),
-                          ),
-                            Padding(
-                            padding: const EdgeInsets.only(top: 70, left: 970 ),
-                            child: Text(
-                            "Resource Type",
-                                style: TextStyle(fontSize: 20.0),
-                              ),
-                          ),
                             new Container(
-                              margin: const EdgeInsets.only(top: 100, right: 0, left: 920),
+                            margin: EdgeInsets.only( top: windowSize.maxHeight / 50 + 375, left: windowSize.maxWidth / 10 ),
+                            child: 
+                              new Stack( 
+                                children: [ 
+                                  Text(
+                                    "Your active tags. Click to remove",
+                                    style: TextStyle(fontSize: 15.0),
+                                  ),
+                                  //Fix: Display under the tag zone
+                                  Container(
+                                    //margin: EdgeInsets.only( top: windowSize.maxHeight / 50 + 350, left: windowSize.maxWidth / 10 ),
+                                    child:
+                                      MultiSelectChipDisplay(                              
+                                        items: selectedTags.map( (e) => MultiSelectItem( e, e ) ).toList(),
+                                        onTap: (value) {
+                                        setState(() {
+                                          selectedTags.remove( value );
+                                        });
+                                    },
+                                  ),
+                                ),  
+                              ],
+                             ),
+                            ),
+                              Padding(
+                              padding: EdgeInsets.only( top: windowSize.maxHeight / 50, right: windowSize.maxWidth / 9, left: windowSize.maxWidth / 1.39 ),
+                              child: Text(
+                              "Resource Type",
+                                  style: TextStyle( fontSize: 20.0 ),
+                                ),
+                            ),
+                            new Container(
+                              margin: EdgeInsets.only( top: windowSize.maxHeight / 50 + 25, left: windowSize.maxWidth / 1.45 ),
                               child:
                               ToggleButtons(
                               direction: vertical ? Axis.vertical : Axis.horizontal,
@@ -267,14 +296,14 @@ class createResourceState extends State<CreateResource> {
                             ),),
                             SizedBox(height: 20 ),
                             Padding(
-                            padding: const EdgeInsets.only(top: 250, left: 960 ),
+                            padding: EdgeInsets.only( top: windowSize.maxHeight / 50 + 100, right: windowSize.maxWidth / 9, left: windowSize.maxWidth / 1.43 ),
                             child: Text(
                             "Privacy Protections",
                                 style: TextStyle(fontSize: 20.0),
                               ),
                           ),  
-                        new Container(
-                              margin: const EdgeInsets.only(top: 290, right: 0, left: 900),
+                          new Container(
+                              margin: EdgeInsets.only( top: windowSize.maxHeight / 50 + 125, left: windowSize.maxWidth / 1.5 ),
                               child: 
                               ToggleButtons(
                               direction: vertical ? Axis.vertical : Axis.horizontal,
@@ -299,14 +328,14 @@ class createResourceState extends State<CreateResource> {
                             ),),
                             SizedBox(height: 20 ),
                             Padding(
-                            padding: const EdgeInsets.only(top: 350, left: 950 ),
+                            padding: EdgeInsets.only( top: windowSize.maxHeight / 50 + 200, right: windowSize.maxWidth / 9, left: windowSize.maxWidth / 1.43 ),
                             child: Text(
                             "Cultural Responsiveness",
-                                style: TextStyle(fontSize: 20.0),
+                                style: TextStyle( fontSize: 20.0 ),
                             ),
                         ),    
                         new Container(
-                          margin: const EdgeInsets.only(top: 380, right: 0, left: 850),
+                          margin: EdgeInsets.only( top: windowSize.maxHeight / 50 + 225, left: windowSize.maxWidth / 1.60 ),
                           height: 50,
                           width: 500,
                               child:
@@ -315,7 +344,7 @@ class createResourceState extends State<CreateResource> {
                                     max: 5,
                                     divisions: 5,
                                     label: _currentSliderValue.round().toString(),
-                                    onChanged: (double value) {
+                                    onChanged: ( double value ) {
                                     setState(() {
                                       _currentSliderValue = value;
                                     });
@@ -323,14 +352,14 @@ class createResourceState extends State<CreateResource> {
                                 ),
                             ),
                             Padding(
-                            padding: const EdgeInsets.only(top: 160, left: 950 ),
+                            padding: EdgeInsets.only( top: windowSize.maxHeight / 50 + 300, right: windowSize.maxWidth / 9, left: windowSize.maxWidth / 1.43 ),
                             child: Text(
                             "Age Range of Resource",
-                                style: TextStyle(fontSize: 20.0),
+                                style: TextStyle( fontSize: 20.0 ),
                               ),
                           ),
                            new Container(
-                            margin: const EdgeInsets.only(top: 190, right: 0, left: 975),
+                            margin: EdgeInsets.only( top: windowSize.maxHeight / 50 + 325, left: windowSize.maxWidth / 1.40 ),
                             child:
                             DropdownButton(
                               value: _currentDropDownValue,
@@ -347,20 +376,7 @@ class createResourceState extends State<CreateResource> {
                               }).toList(),
                             ),),
                             new Container(
-                              margin: const EdgeInsets.only(top: 100, right: 0, left: 800),
-                              child:
-                                MultiSelectChipDisplay(                              
-                                  items: selectedTags.map( (e) => MultiSelectItem( e, e ) ).toList(),
-                                  onTap: (value) {
-                                  setState(() {
-                                    selectedTags.remove( value );
-                                  });
-                                },
-                              ),
-                            ),
-                            new Container(
-                              padding: const EdgeInsets.symmetric( vertical: 20),
-                              margin: const EdgeInsets.only(top: 450, right: 0, left: 700),
+                              margin: EdgeInsets.only( top: windowSize.maxHeight / 50 + 400, left: windowSize.maxWidth / 1.90 ),
                               child: 
                                 TextButton(
                                   style: ButtonStyle(
@@ -381,7 +397,9 @@ class createResourceState extends State<CreateResource> {
                             ),
                     ]
                   )
-      )
-    );
+      );
+     },
+    ),
+   );
   }
 }
