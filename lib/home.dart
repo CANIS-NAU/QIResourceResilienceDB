@@ -128,8 +128,6 @@ class _MyHomePageState extends State<MyHomePage> {
     {
       query = query.where('agerange', isEqualTo: potentialAgeType );
     }
-    
-    //query = query.where( 'tagline', arrayContainsAny: selectedFilterNames );
 
     Stream<QuerySnapshot> filtered = query.snapshots();
 
@@ -162,6 +160,7 @@ class _MyHomePageState extends State<MyHomePage> {
       {
         reportingType = true;
       }
+      // Note:
       else if( selectedFilterId >= 10 && selectedFilterId <= 18 )
       {
         ageFilter = true;
@@ -359,7 +358,7 @@ class _MyHomePageState extends State<MyHomePage> {
                               //Check for firestore snapshot error
                               if( snapshot.hasError )
                               {
-                                return Text("Something went wrong");
+                                return Text("${snapshot.error}");
                               }
                               //Check if connection is being made
                               if( snapshot.connectionState == ConnectionState.waiting )
