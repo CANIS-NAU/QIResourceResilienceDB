@@ -1,4 +1,5 @@
 //Package imports
+
 import 'package:flutter/material.dart';
 import 'firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -17,11 +18,13 @@ class MyHomePage extends StatefulWidget {
 class filterItem {
   final int id;
   final String name;
+  final String category;
 
-  //Class construtor
+  //Class constructor
   filterItem({
     required this.id,
     required this.name,
+    required this.category
   });
 }
 
@@ -31,30 +34,65 @@ class _MyHomePageState extends State<MyHomePage> {
   //Set booleans for filtering types
   bool ageFilter = false, responsivenessType = false, reportingType = false, locationType = false;
 
-  //Static list of filter items, more to be added. Added with constructor
+  //Static list of filter categories with corresponding filter items
+  // more to be added. Added with constructor
   static List<filterItem> filterItems = [
-    filterItem(id: 1, name: "Online"),
-    filterItem(id: 2, name: "In Person"),
-    filterItem(id: 3, name: "App"),
+    filterItem(id: 0, name: "Online", category: "Type"),
+    filterItem(id: 1, name: "In Person", category: "Type"),
+    filterItem(id: 2, name: "App", category: "Type"),
+    filterItem(id: 3, name: "Hotline", category: "Type"),
 
-    filterItem(id: 4, name: "Low Cultural Responsivness"),
-    filterItem(id: 5, name: "Medium Cultural Responsivness"),
-    filterItem(id: 6, name: "High Cultural Responsivness"),
+    filterItem(id: 4, name: "Low Cultural Responsiveness", category: "Cultural Responsiveness"),
+    filterItem(id: 5, name: "Medium Cultural Responsiveness", category: "Cultural Responsiveness"),
+    filterItem(id: 6, name: "High Cultural Responsiveness", category: "Cultural Responsiveness"),
 
-    filterItem(id: 7, name: "HIPAA Compliant"),
-    filterItem(id: 8, name: "Anonymous"),
-    filterItem(id: 9, name: "Mandatory Reporting"),
+    filterItem(id: 7, name: "HIPAA Compliant", category: "Privacy"),
+    filterItem(id: 8, name: "Anonymous", category: "Privacy"),
+    filterItem(id: 9, name: "Mandatory Reporting", category: "Privacy"),
 
-    filterItem(id: 10, name: "0-5"),
-    filterItem(id: 11, name: "6-10"),
-    filterItem(id: 12, name: "11-15"),
-    filterItem(id: 13, name: "16-20"),
-    filterItem(id: 14, name: "21-25"),
-    filterItem(id: 15, name: "26-35"),
-    filterItem(id: 16, name: "36-55"),
-    filterItem(id: 17, name: "56-75"),
-    filterItem(id: 18, name: "76+"),
+    filterItem(id: 10, name: "0-5", category: "Age Range"),
+    filterItem(id: 11, name: "6-10", category: "Age Range"),
+    filterItem(id: 12, name: "11-15", category: "Age Range"),
+    filterItem(id: 13, name: "16-20", category: "Age Range"),
+    filterItem(id: 14, name: "21-25", category: "Age Range"),
+    filterItem(id: 15, name: "26-35", category: "Age Range"),
+    filterItem(id: 16, name: "36-55", category: "Age Range"),
+    filterItem(id: 17, name: "56-75", category: "Age Range"),
+    filterItem(id: 18, name: "76+", category: "Age Range"),
   ];
+
+  // for possibly grouping filter items by category
+  Map<String, List<filterItem>> groupedFilterItems() {
+    return {
+      "Type": [
+        filterItems[0],
+        filterItems[1],
+        filterItems[2],
+        filterItems[3]
+      ],
+      "Cultural Responsiveness": [
+        filterItems[4],
+        filterItems[5],
+        filterItems[6],
+      ],
+      "Privacy": [
+        filterItems[7],
+        filterItems[8],
+        filterItems[9],
+      ],
+      "Age Range": [
+        filterItems[10],
+        filterItems[11],
+        filterItems[12],
+        filterItems[13],
+        filterItems[14],
+        filterItems[15],
+        filterItems[16],
+        filterItems[17],
+        filterItems[18],
+      ],
+    };
+  }
 
   //Create a list that is casted dynamic, to hold filter items
   List<dynamic> selectedFilter = [];
@@ -69,7 +107,7 @@ class _MyHomePageState extends State<MyHomePage> {
   //TODO: Finish filter mech. Needs to be a compund filter
   Stream<QuerySnapshot> filter( List<dynamic> selectedFilter )
   {
-    String potentialLocationType = "", potentialResponsivenessType = "", potentialReportingType = "", potentialAgeType = "";
+    String potentialLocationType = "", potentialResponsivenessType = "", potentialReportingType = "", potentialAgeType = "", potentialCostType ="";
     String currentArrayItem = "";
 
     //Since list is dynamic type with id and name, we must map only to name
@@ -89,7 +127,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
       //Check items in catagories and set the potential filter query
       if( currentArrayItem == "Online" || currentArrayItem == "In Person" ||
-                                                     currentArrayItem == "App" ) 
+          currentArrayItem == "App" || currentArrayItem == "Hotline" )
       {
         potentialLocationType = currentArrayItem;
       }
@@ -104,6 +142,12 @@ class _MyHomePageState extends State<MyHomePage> {
                currentArrayItem == "Mandatory Reporting" )
       {
         potentialReportingType = currentArrayItem;
+      }
+      else if( currentArrayItem == "Price" ||
+          currentArrayItem == "Subscription" ||
+          currentArrayItem == "Insurance" )
+      {
+        potentialCostType = currentArrayItem;
       }
       else
       {
@@ -173,263 +217,309 @@ class _MyHomePageState extends State<MyHomePage> {
     return FirebaseFirestore.instance.collection('resources').where('name', isEqualTo: "${ searchQuery }" ).where('verified', isEqualTo: true).snapshots();
   }
 
+  int _selectedIndex = 0;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
   //Home screen UI 
   @override
   Widget build( BuildContext context ) {
-            return Scaffold(
-                resizeToAvoidBottomInset : false,
-                body: 
-                 LayoutBuilder( builder: ( context, windowSize ) {
-                  return SingleChildScrollView(
-                    child: new Column(
-                        children: [
-                          new Container(
-                            width: windowSize.maxWidth,
-                            child:
-                            new Row(
-                                children: [
-                                  SizedBox(
-                                    //width: windowSize.maxWidth / 50,
-                                    child: 
-                                      Container(
-                                        //margin: EdgeInsets.only( right: windowSize.maxWidth / 1.07, left: 0 ),
-                                        height: windowSize.maxHeight / 13,
-                                        width: windowSize.maxWidth / 10,
-                                        decoration: BoxDecoration(
-                                        image: DecorationImage(
-                                          image: AssetImage(
-                                              'assets/rrdb_logo.png'),
-                                          fit: BoxFit.fill,
-                                        ),                                
-                                      ),
-                                   ),
-                                  ),
-                                  SizedBox(
-                                    width: windowSize.maxWidth / 10,
-                                    child:
-                                      Container(
-                                        width: windowSize.maxWidth / 100,
-                                        padding: EdgeInsets.only( right: windowSize.maxWidth / 100, left: 0 ),
-                                        child: 
-                                          TextButton(
-                                            style: ButtonStyle(
-                                              foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
-                                              backgroundColor: MaterialStateProperty.all<Color>(Colors.blue),
-                                              shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                                                RoundedRectangleBorder(
-                                                  borderRadius: BorderRadius.circular(18.0),
-                                                  side: BorderSide(color: Colors.blue)
-                                                )
-                                              )
-                                            ),
-                                            //Button navigation 
-                                            onPressed: () { 
-                                              Navigator.pushNamed( context, '/createresource' );
-                                            },
-                                            child: Text('Submit Resource'),
-                                          )
-                                    ),
-                                  ),
-                                  SizedBox(
-                                    width: windowSize.maxWidth / 10,
-                                    child: 
-                                      Container(
-                                        padding: EdgeInsets.only( right: windowSize.maxWidth / 100, left: 0 ),
-                                        //margin: const EdgeInsets.only(right: 0, left: 1200),
-                                        width: windowSize.maxWidth / 100,
-                                        child: 
-                                          TextButton(
-                                            style: ButtonStyle(
-                                              foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
-                                              backgroundColor: MaterialStateProperty.all<Color>(Colors.blue),
-                                              shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                                                RoundedRectangleBorder(
-                                                  borderRadius: BorderRadius.circular(18.0),
-                                                  side: BorderSide(color: Colors.blue)
-                                                )
-                                              )
-                                            ),
-                                            //Button navigation
-                                            onPressed: () { 
-                                              Navigator.pushNamed(context, '/verify');
-                                            },
-                                            child: Text('Verify New Resources'),
-                                          )
-                                    ),
-                                  ),
-                                  SizedBox(
-                                    width: windowSize.maxWidth / 10,
-                                    child: 
-                                      Container(
-                                        padding: EdgeInsets.only( right: windowSize.maxWidth / 100, left: 0 ),
-                                        //margin: const EdgeInsets.only(right: 0, left: 1200),
-                                        width: windowSize.maxWidth / 100,
-                                        child: 
-                                          TextButton(
-                                            style: ButtonStyle(
-                                              foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
-                                              backgroundColor: MaterialStateProperty.all<Color>(Colors.blue),
-                                              shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                                                RoundedRectangleBorder(
-                                                  borderRadius: BorderRadius.circular(18.0),
-                                                  side: BorderSide(color: Colors.blue)
-                                                )
-                                              )
-                                            ),
-                                            //Button navigation
-                                            onPressed: () { 
-                                              Navigator.pushNamed( context, '/login' );
-                                            },
-                                            child: Text('Dashboard'),
-                                          )
-                                    ),
-                                  ),
-                               ],
-                             ),
-                            ),
-                            //Search bar
-                            new Container(
-                              padding: EdgeInsets.symmetric( vertical: windowSize.maxHeight / 100 ),
-                              margin: EdgeInsets.only( right: windowSize.maxWidth / 6, left: windowSize.maxWidth / 6 ),
-                              child: 
-                                Column(
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text("Search for a Resource", style: TextStyle(color: Colors.black, fontSize: 28.0, fontWeight: FontWeight.bold,),),
-                                    SizedBox(height: 20.0,),
-                                    TextField(
-                                      decoration: InputDecoration(
-                                        filled: true,
-                                        fillColor: Color(0xFFEEEEEE),
-                                        border: OutlineInputBorder(),
-                                        labelText: "Enter a keyword for the Resource",
-                                        suffixIcon: Icon(Icons.search),
-                                      ),
-                                      obscureText: false,
-                                      //Send text to search function 
-                                      onSubmitted: ( text ) {
-                                          setState(() {
-                                            resources = searchResource( text );
-                                        });
-                                      },
-                                    ),
-                                    //Filter drop down
-                                    SizedBox(
-                                     width: 90,
-                                     child:
-                                      MultiSelectDialogField(
-                                      title: Text("Filter"),
-                                      decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.all(Radius.circular(18.0)),
-                                      ),
-                                      chipDisplay: MultiSelectChipDisplay.none(),
-                                      items: filterItems.map( (e) => MultiSelectItem(e, e.name) ).toList(),
-                                      listType: MultiSelectListType.CHIP,
-                                      onConfirm: (values) {
-                                        setState(() {
-                                          selectedFilter = values;
-                                          resources = filter( selectedFilter ); 
-                                        });
-                                      },                            
-                                      ), 
-                                    ),
-                                    MultiSelectChipDisplay(
-                                      items: selectedFilter.map( (e) => MultiSelectItem( e, e.name ) ).toList(),
-                                      onTap: (value) {
-                                        setState(() {
-                                          selectedFilter.remove( value );
-                                          resources = filter( selectedFilter );
-                                        });
-                                      },
-                                    ),
-                                  ]
-                                ),
-                            ),
-                            new Container(
-                              padding: const EdgeInsets.symmetric( vertical: 10),
-                              child:
-                                StreamBuilder<QuerySnapshot>(
-                                stream: resources,
-                                builder: (
-                                BuildContext context,
-                                AsyncSnapshot<QuerySnapshot> snapshot, 
-                              ) {
-                              //Check for firestore snapshot error
-                              if( snapshot.hasError )
-                              {
-                                return Text("${snapshot.error}");
-                              }
-                              //Check if connection is being made
-                              if( snapshot.connectionState == ConnectionState.waiting )
-                              {
-                                return Text("Loading Resources");
-                              }
-                              //Get the snapshot data
-                              final data = snapshot.requireData;
-
-                              //Return a list of the data
-                              if( data.size != 0 )
-                              {
-                                return ListView.builder(
-                                  scrollDirection: Axis.vertical,
-                                  shrinkWrap: true,
-                                  itemCount: data.size,
-                                  itemBuilder: ( context, index ) {
-                                  return DataTable(
-                                    columns: [
-                                      DataColumn(label: Text(
-                                          index == 0 ? 'Name' : '',
-                                          style: TextStyle(fontSize: index == 0 ? 18 : 0, fontWeight: FontWeight.bold),
-                                      )),
-                                      DataColumn(label: Text(
-                                          index == 0 ? 'Type': '',
-                                          style: TextStyle(fontSize: index == 0 ? 18 : 0, fontWeight: FontWeight.bold),
-                                      )),
-                                      DataColumn(label: Text(
-                                          index == 0 ? 'Reporting' : '',
-                                          style: TextStyle(fontSize: index == 0 ? 18 : 0, fontWeight: FontWeight.bold),
-                                      )),
-                                      DataColumn(label: Text(
-                                          index == 0 ? 'Responsiveness' : '',
-                                          style: TextStyle(fontSize: index == 0 ? 18 : 0, fontWeight: FontWeight.bold),
-                                      )),
-                                      DataColumn(label: Text(
-                                          index == 0 ? 'Location' : '',
-                                          style: TextStyle(fontSize: index == 0 ? 18 : 0, fontWeight: FontWeight.bold),
-                                      )),
-                                      DataColumn(label: Text(
-                                          index == 0 ? 'Description' : '',
-                                          style: TextStyle(fontSize: index == 0 ? 18 : 0, fontWeight: FontWeight.bold),
-                                          
-                                      )),
-                                    ],
-                                    rows: [
-                                      DataRow(cells: [
-                                        DataCell( SizedBox( width: index == 0 ? 95 : 80, child: Text('${data.docs[ index ][ 'name' ]}', overflow: TextOverflow.visible, softWrap: true,))),
-                                        DataCell( SizedBox( width: index == 0 ? 100 : 80, child: Text('${data.docs[ index ][ 'resourceType' ]}', overflow: TextOverflow.visible, softWrap: true,))),
-                                        DataCell( SizedBox( width: index == 0 ? 95 : 80, child: Text('${data.docs[ index ][ 'privacy' ]}',overflow: TextOverflow.visible, softWrap: true,))),
-                                        DataCell( SizedBox( width: index == 0 ? 0 : 80, child: Text('${data.docs[ index ][ 'culturalResponsivness' ]}', overflow: TextOverflow.visible, softWrap: true,))),
-                                        DataCell( SizedBox( width: index == 0 ? 90 : 80, child: Text('${data.docs[ index ][ 'location' ]}', overflow: TextOverflow.visible, softWrap: true,))),
-                                        DataCell( SizedBox( width: 80, child: Text('${data.docs[ index ][ 'description' ]}', overflow: TextOverflow.visible, softWrap: true,)))
-                                      ]),
-                                    ],
-                                  );
-                              }
-                            );
-                          }
-                          else
-                          {
-                            return Text("No resources");
-                          }
-                          }
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-               }
+    final width = MediaQuery.of(context).size.width;
+    final bool isLargeScreen = width > 800;
+    return Scaffold(
+      key: _scaffoldKey,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        titleSpacing: 0,
+        leading: isLargeScreen
+            ? null
+            : IconButton(
+          color: Colors.blue,
+          icon: const Icon(Icons.menu),
+          onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+        ),
+        title: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Image.asset(
+                'assets/rrdb_logo.png',
+                height: 55,
               ),
-             );
-            }
+              if (isLargeScreen) Expanded(child: _navBarItems())
+            ],
+          ),
+        ),
+        actions: const [
+          Padding(
+            padding: EdgeInsets.only(right: 16.0),
+            child: CircleAvatar(child: _ProfileIcon()),
+          )
+        ],
+      ),
+      drawer: isLargeScreen ? null : _drawer(),
+      body: LayoutBuilder(builder: (context, windowSize) {
+        return SingleChildScrollView(
+          child: new Column(
+            children:[
+              // search bar
+              new Container(
+                padding: EdgeInsets.symmetric( vertical: windowSize.maxHeight / 100 ),
+                margin: EdgeInsets.only( right: windowSize.maxWidth / 6, left: windowSize.maxWidth / 6 ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    //SizedBox(height: 20.0,),
+                    Container(
+                      child: TextField(
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Color(0xFFEEEEEE),
+                  border: OutlineInputBorder(),
+                  labelText: "Enter a keyword for the resource",
+                  suffixIcon: Icon(Icons.search),
+                ),
+                obscureText: false,
+                onSubmitted: (text) {
+                  setState(() {
+                    resources = searchResource(text);
+                  });
+                }
+                ),
+                    ),
+                    // filter items
+                    SizedBox(
+                      width: 90,
+                      child:
+                      MultiSelectDialogField(
+                        title: Text("Filter"),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.all(Radius.circular(18.0)),
+                        ),
+                        chipDisplay: MultiSelectChipDisplay.none(),
+                        items: filterItems.map( (e) => MultiSelectItem(e, e.name) ).toList(),
+                        listType: MultiSelectListType.CHIP,
+                        onConfirm: (values) {
+                          setState(() {
+                            selectedFilter = values;
+                            resources = filter( selectedFilter );
+                          });
+                        },
+                      ),
+                    ),
+                    MultiSelectChipDisplay(
+                      items: selectedFilter.map( (e) => MultiSelectItem( e, e.name ) ).toList(),
+                      onTap: (value) {
+                        setState(() {
+                          selectedFilter.remove( value );
+                          resources = filter( selectedFilter );
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              new Container(
+                  margin: EdgeInsets.only( right: windowSize.maxWidth /6, left: windowSize.maxWidth / 6 ),
+                  padding: const EdgeInsets.symmetric( vertical: 20),
+                  child: StreamBuilder<QuerySnapshot>(
+                    stream: resources,
+                    builder: (
+                    BuildContext context,
+                        AsyncSnapshot<QuerySnapshot> snapshot,
+                        ) {
+                      //Check for firestore snapshot error
+                      if(snapshot.hasError)
+                        {
+                          return Text("${snapshot.error}");
+                        }
+                      //Check if connection is being made
+                      if( snapshot.connectionState == ConnectionState.waiting )
+                      {
+                        return Text("Loading Resources");
+                      }
+                      //Get the snapshot data
+                      final data = snapshot.requireData;
+
+                      //Return a list of the data (resources)
+                      if(data.size != 0)
+                        {
+                          return Container(
+                            height: 500,
+                            child: ListView.builder(
+                              scrollDirection: Axis.vertical,
+                              shrinkWrap: true,
+                              itemCount: data.size,
+                              itemBuilder: (context, index) {
+                                return Container(
+                                  height: 100,
+                                  child: Card(
+                                    color: Colors.white,
+                                    elevation: 4,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.all(Radius.circular(0)),
+                                    ),
+                                // the format for each resource box
+                                    child: ListTile(
+                                    contentPadding: EdgeInsets.symmetric(
+                                        vertical: 10.0,
+                                        horizontal: 30.0),
+                                dense: false,
+                                title: SizedBox( width: index == 0 ? 95 : 80,
+                                child: Text('${data.docs[ index ][ 'name' ]}',
+                                overflow: TextOverflow.visible,
+                                softWrap: true,
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 25),)),
+                                subtitle: SizedBox( width: 80,
+                                    child: Text('Description: ${data.docs[ index ][ 'description' ]}',
+                                        overflow: TextOverflow.visible,
+                                        softWrap: true,
+                                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14))),
+                                      trailing: GestureDetector(
+                                        child: Icon(
+                                          Icons.arrow_forward_rounded,
+                                          color: Colors.black,
+                                        ),
+                                        // pop up for a resource with information
+                                        onTap: () {
+                                          showDialog(
+                                              context: context,
+                                              builder: (context) => AlertDialog(
+                                                title: Text('${data.docs[ index ][ 'name' ]}',
+                                                    style: TextStyle(fontSize: 25.0, fontWeight: FontWeight.bold)),
+                                                content: Container(
+                                                  child: SizedBox(
+                                                    // include cost when there is data for it
+                                                    child: Text(
+                                                        'Type: ${data.docs[ index ][ 'resourceType' ]}\n\n'
+                                                        'Privacy: ${data.docs[ index ][ 'privacy' ]}\n\n'
+                                                        'Cultural Responsiveness: ${data.docs[ index ][ 'culturalResponsivness' ]} \n\n'
+                                                        'Location: ${data.docs[ index ][ 'location' ]}\n\n'
+                                                        'Description: ${data.docs[ index ][ 'description']}',
+                                                        overflow: TextOverflow.visible, softWrap: true,
+                                                        style: TextStyle(fontSize: 16.0)),
+                                                  ),
+                                                ),
+                                                actions:[
+                                                  TextButton(
+                                                    child: Text('OK'),
+                                                    onPressed: () => Navigator.pop(context),
+                                                  )
+                                                ]
+                                              ),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }
+                            )
+
+                          );
+                        }
+                      else
+                        {
+                          return Text('No resources');
+                        }
+                    }
+                  ),
+              ),
+            ]
+          ),
+        );
+      }
+      ),
+    );
+  }
+
+  // creates menu items when screen size is small
+  Widget _drawer() => Drawer(
+    child: ListView(
+      children: _menuItems
+          .map((item) => ListTile(
+        onTap: () {
+          _scaffoldKey.currentState?.openEndDrawer();
+          switch(item){
+            case "Submit Resource":
+              Navigator.pushNamed(context, '/createresource');
+              break;
+            case "Verify Resource":
+              Navigator.pushNamed(context, '/verify');
+              break;
+            case "Dashboard":
+              Navigator.pushNamed(context, '/dashboard');
           }
+        },
+        title: Text(item),
+      ))
+          .toList(),
+    ),
+  );
+
+  // creates main menu navigation buttons
+  Widget _navBarItems() => Row(
+    mainAxisAlignment: MainAxisAlignment.end,
+    crossAxisAlignment: CrossAxisAlignment.center,
+    children: _menuItems
+        .map(
+          (item) => InkWell(
+        onTap: () {
+          switch(item){
+            case "Submit Resource":
+              Navigator.pushNamed(context, '/createresource');
+              break;
+            case "Verify Resource":
+              Navigator.pushNamed(context, '/verify');
+              break;
+            case "Dashboard":
+              Navigator.pushNamed(context, '/dashboard');
+          }
+        },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+              vertical: 24.0, horizontal: 16),
+          child: Text(
+            item,
+            style: const TextStyle(fontSize: 16, color: Colors.black),
+          ),
+        ),
+      ),
+    )
+        .toList(),
+  );
+}
+
+// list of navigation buttons
+final List<String> _menuItems = <String>[
+  'Submit Resource',
+  'Verify Resource',
+  'Dashboard',
+];
+
+enum Menu { itemOne, itemTwo, itemThree }
+
+// adds the menu items for the profile drop down
+class _ProfileIcon extends StatelessWidget {
+  const _ProfileIcon({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return PopupMenuButton<Menu>(
+        icon: const Icon(Icons.person),
+        offset: const Offset(0, 40),
+        onSelected: (Menu item) {},
+        itemBuilder: (BuildContext context) => <PopupMenuEntry<Menu>>[
+          const PopupMenuItem<Menu>(
+            value: Menu.itemOne,
+            child: Text('Account'),
+          ),
+          const PopupMenuItem<Menu>(
+            value: Menu.itemTwo,
+            child: Text('Settings'),
+          ),
+        ]);
+  }
+}
