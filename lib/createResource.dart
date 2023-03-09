@@ -34,6 +34,7 @@ const List<Widget> resourceType = <Widget>[
   Text('Online'),
   Text('In Person'),
   Text('App'),
+  Text('Hotline')
 ];
 
 const List<Widget> resourcePrivacy = <Widget>[
@@ -64,8 +65,9 @@ class createResourceState extends State<CreateResource> {
   //For text deletion on textbox submit 
   var _controller = TextEditingController();
 
-  //Bool lists to indicate what box has been selected ( three options ) 
-  final List<bool> _selectedResources = <bool>[ true, false, false ];
+  //Bool lists to indicate what box has been selected ( four options )
+  final List<bool> _selectedResources = <bool>[ true, false, false, false ];
+
   final List<bool> _selectedPrivacy = <bool>[ true, false, false ];
 
   bool vertical = false;
@@ -88,6 +90,10 @@ class createResourceState extends State<CreateResource> {
     else if( _selectedResources[ 1 ] )
     {
       text = "Please provide the address to the resource";
+    }
+    else if( _selectedResources[ 3 ] )
+    {
+      text = "Please provide the phone number to the resource";
     }
     //Third option must be app if prev two not selected
     else
@@ -125,9 +131,13 @@ class createResourceState extends State<CreateResource> {
     {
       resourceType = "In Person";
     }
-    else
+    else if( _selectedResources[ 2 ] )
     {
       resourceType = "App";
+    }
+    else
+    {
+      resourceType = "Hotline";
     }
 
     //Check for privacy options in Bool array, required to convert to string
@@ -301,10 +311,10 @@ class createResourceState extends State<CreateResource> {
                             "Privacy Protections",
                                 style: TextStyle(fontSize: 20.0),
                               ),
-                          ),  
+                          ),
                           new Container(
                               margin: EdgeInsets.only( top: windowSize.maxHeight / 50 + 125, left: windowSize.maxWidth / 1.5 ),
-                              child: 
+                              child:
                               ToggleButtons(
                               direction: vertical ? Axis.vertical : Axis.horizontal,
                               onPressed: ( int index ) {
