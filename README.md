@@ -1,4 +1,16 @@
-# RRDB
+# Resilience Resource Database (RRDB)
+
+## About
+The Resilience Resource Database is a sub-project of the larger Qöyangnuptu Intervention, a National Science Foundation funded project that seeks to increase measures of resilience and mental wellness in tribal communities. [Learn more here!](https://sites.google.com/nau.edu/qoyangnuptu/home) 
+
+The goal of the Resilience Resource Database is to be a dynamic, searchable database that provides information about local, regional, and international resources that support individual resilience and community resilience. The RRDB provides four important features that distinguish it from other health resource databases:
+
+> 1) Explicit communication about privacy protections provided by resources. 
+> 2) Explicit communication about connectivity requirements associated with resources. 
+> 3) Explicit communication about cultural relevance of resources. 
+> 4) Process for collaboratively submitting and reviewing new resources for cultural relevance, privacy, affordability, and connectivity requirements.
+
+Our hope is that this codebase would be a resource for a wider group of tribal communities and organizations that serve American Indian/Alaska Native communities and more resources for supporting the implementation of this resource in other settings will be forthcoming. 
 
 ## Flutter Installation
 > Follow the instructions provided by the following link: https://docs.flutter.dev/get-started/install
