@@ -5,6 +5,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
 
+final now = DateTime.now();
+final date = "${now.month}/${now.day}/${now.year}";
 //List of ages for dropdown
 const List<String> ageItems = [
     "Select age range",
@@ -18,6 +20,34 @@ const List<String> ageItems = [
     "56-75",
     "76+"
   ];
+
+showAlertDialog(BuildContext context) {
+
+  // set up the button
+  Widget okButton = TextButton(
+    child: Text("OK"),
+    onPressed: () {
+      Navigator.pop(context);
+    },
+  );
+
+  // set up the AlertDialog
+  AlertDialog alert = AlertDialog(
+    title: Text("Alert"),
+    content: Text("Your resource has successfully been submitted"),
+    actions: [
+      okButton,
+    ],
+  );
+
+  //show the dialog
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return alert;
+    },
+  );
+}
 
 //Specify page that has state
 class CreateResource extends StatefulWidget {
@@ -105,7 +135,7 @@ class createResourceState extends State<CreateResource> {
   }
 
   //Submit to DB
-  Future<void> submitResource( resourceName, resourceLocation, resourceDescription )
+  Future<void> submitResource( resourceName, resourceLocation, resourceDescription, context )
   {
     String resourceType = "", privacyType = "", culturalResponse = "";
 
@@ -167,9 +197,10 @@ class createResourceState extends State<CreateResource> {
         'privacy': privacyType,
         'culturalResponse': culturalResponse,
         'culturalResponsivness': _currentSliderValue,
-        'tagline': selectedTags
+        'tagline': selectedTags,
+        'dateAdded': date
       }
-    ).then(( value ) => print("Doc Added" ) )
+    ).then(( value ) => showAlertDialog( context ) )
      .catchError((error) => print("Failed to add doc: $error") );
   }
   
@@ -400,7 +431,7 @@ class createResourceState extends State<CreateResource> {
                                     )
                                   ),
                                   onPressed: () { 
-                                    submitResource( resourceName, resourceLocation, resourceDescription );
+                                    submitResource( resourceName, resourceLocation, resourceDescription, context );  
                                   },
                                   child: Text('Submit Resource'),
                                 )
