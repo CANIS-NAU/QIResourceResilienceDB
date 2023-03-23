@@ -23,6 +23,12 @@ class Verify extends StatelessWidget {
       .catchError( (error) => print("Failed to update resource: $error" ) );
   }
 
+  Future<void> deleteResource( name ){
+    return resourceCollection.doc( name.id ).delete()
+      .then( ( value ) => print( "Resource Delete" ) )
+      .catchError( (error) => print("Failed to delete resource: $error" ) );
+  }
+
   //Verification UI  
   @override
   Widget build(BuildContext context) {
@@ -180,7 +186,7 @@ class Verify extends StatelessWidget {
                                     padding: const EdgeInsets.symmetric( vertical: 0),
                                     margin: const EdgeInsets.only(top: 50, right: 0, left: 100),
                                     child: 
-                                    Text( "${data.docs[ index ][ 'name' ]}",
+                                    Text( "${data.docs[ index ]['name'] }",
                                     textAlign: TextAlign.left,
                                         style: TextStyle(
                                         color: Colors.white,
@@ -193,7 +199,7 @@ class Verify extends StatelessWidget {
                                     padding: const EdgeInsets.symmetric( vertical: 0),
                                     margin: const EdgeInsets.only(top: 50, right: 0, left: 250),
                                     child: 
-                                    Text( "${data.docs[ index ][ 'name' ]}",
+                                    Text( "${data.docs[ index ]['resourceType']}",
                                     textAlign: TextAlign.left,
                                         style: TextStyle(
                                         color: Colors.white,
@@ -206,7 +212,7 @@ class Verify extends StatelessWidget {
                                     padding: const EdgeInsets.symmetric( vertical: 0),
                                     margin: const EdgeInsets.only(top: 50, right: 0, left: 450),
                                     child: 
-                                    Text( "${data.docs[ index ][ 'name' ]}",
+                                    Text( "${data.docs[ index ]['privacy']}",
                                     textAlign: TextAlign.left,
                                         style: TextStyle(
                                         color: Colors.white,
@@ -219,7 +225,7 @@ class Verify extends StatelessWidget {
                                     padding: const EdgeInsets.symmetric( vertical: 0),
                                     margin: const EdgeInsets.only(top: 50, right: 0, left: 650),
                                     child: 
-                                    Text( "${data.docs[ index ][ 'name' ]}",
+                                    Text( "${data.docs[ index ]['culturalResponsivness']}",
                                     textAlign: TextAlign.left,
                                         style: TextStyle(
                                         color: Colors.white,
@@ -232,7 +238,7 @@ class Verify extends StatelessWidget {
                                     padding: const EdgeInsets.symmetric( vertical: 0),
                                     margin: const EdgeInsets.only(top: 50, right: 0, left: 900),
                                     child: 
-                                    Text( "${data.docs[ index ][ 'name' ]}",
+                                    Text( "${data.docs[ index ]['location']}",
                                     textAlign: TextAlign.left,
                                         style: TextStyle(
                                         color: Colors.white,
@@ -245,7 +251,7 @@ class Verify extends StatelessWidget {
                                     padding: const EdgeInsets.symmetric( vertical: 0),
                                     margin: const EdgeInsets.only(top: 50, right: 0, left: 1100),
                                     child: 
-                                    Text( "${data.docs[ index ][ 'name' ]}",
+                                    Text( "${data.docs[ index ]['description']}",
                                     textAlign: TextAlign.left,
                                         style: TextStyle(
                                         color: Colors.white,
@@ -258,7 +264,7 @@ class Verify extends StatelessWidget {
                                     padding: const EdgeInsets.symmetric( vertical: 0),
                                     margin: const EdgeInsets.only(top: 50, right: 0, left: 1270),
                                     child: 
-                                    Text( "${data.docs[ index ][ 'name' ]}",
+                                    Text( "${data.docs[ index ]['dateAdded']}",
                                     textAlign: TextAlign.left,
                                         style: TextStyle(
                                         color: Colors.white,
@@ -285,6 +291,30 @@ class Verify extends StatelessWidget {
                                             verifyResource( data.docs[ index ]);
                                         },
                                         child: Text('Verify',
+                                        style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        ),
+                                        ),
+                                    ),                            
+                                ),
+                                new Container(
+                                    margin: const EdgeInsets.only(top: 50, right: 0, left: 5),
+                                    child: 
+                                    TextButton(
+                                        style: ButtonStyle(
+                                        shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                                        RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(18.0),
+                                            side: BorderSide(color: Colors.white)
+                                        )
+                                        ),
+                                        foregroundColor: MaterialStateProperty.all<Color>(Colors.black),
+                                        ),
+                                        onPressed: () { 
+                                            deleteResource( data.docs[ index ]);
+                                        },
+                                        child: Text('Deny',
                                         style: TextStyle(
                                         color: Colors.white,
                                         fontWeight: FontWeight.bold,
