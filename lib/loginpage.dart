@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
 
 class Login extends StatelessWidget
@@ -10,15 +11,32 @@ class Login extends StatelessWidget
   Login( { super.key } );
   static const String route = '/login';
 
-  String username = "";
+  String email = "";
   String password = "";
 
 
-  void login( String username, String password )
+  void login( String email, String password, BuildContext context ) async
   {
-    //Login with user credentials
+    try 
+    {
+      final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: email,
+        password: password
+      );
 
-    //Route to dashboard
+      Navigator.pushNamed( context, '/home' );
+    } 
+    on FirebaseAuthException catch ( error ) {
+
+      if ( error.code == 'user-not-found' )
+      {
+        print( 'No user found for that email.' );
+      } 
+      else if( error.code == 'wrong-password' ) 
+      {
+        print('Wrong password provided for that user.');
+      }
+    }
   }
 
   @override
@@ -42,10 +60,10 @@ class Login extends StatelessWidget
                             obscureText: false,
                             decoration: InputDecoration(
                             border: OutlineInputBorder(),
-                            labelText: 'Username' ),
+                            labelText: 'Email' ),
                             onChanged: ( text )
                             {
-                                username = text;
+                                email = text;
                             },
                         ),
                 ),
@@ -85,8 +103,7 @@ class Login extends StatelessWidget
                             ), 
                             onPressed: () { 
                                 //Login function to return bool and check if login sucess
-                                login( username, password );
-                                Navigator.pushNamed( context, '/dashboard' );
+                                login( email, password, context );
                             },
                             child: Text('Login'),
                     )

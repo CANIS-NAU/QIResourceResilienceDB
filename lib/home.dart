@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
 
@@ -27,6 +28,8 @@ class filterItem {
     required this.category
   });
 }
+bool adminAccess = false;
+bool managerAccess = false;
 
 //Home Page state
 class _MyHomePageState extends State<MyHomePage> {
@@ -499,27 +502,117 @@ final List<String> _menuItems = <String>[
   'Dashboard',
 ];
 
-enum Menu { itemOne, itemTwo, itemThree }
+enum Menu { itemOne, itemTwo, itemThree, itemFour }
+
+void signoutUser() async
+{
+  await FirebaseAuth.instance.signOut();
+}
 
 // adds the menu items for the profile drop down
 class _ProfileIcon extends StatelessWidget {
   const _ProfileIcon({Key? key}) : super(key: key);
-
+  
   @override
   Widget build(BuildContext context) {
-    return PopupMenuButton<Menu>(
-        icon: const Icon(Icons.person),
-        offset: const Offset(0, 40),
-        onSelected: (Menu item) {},
-        itemBuilder: (BuildContext context) => <PopupMenuEntry<Menu>>[
-          const PopupMenuItem<Menu>(
-            value: Menu.itemOne,
-            child: Text('Account'),
-          ),
-          const PopupMenuItem<Menu>(
-            value: Menu.itemTwo,
-            child: Text('Settings'),
-          ),
-        ]);
+    User? user = FirebaseAuth.instance.currentUser;
+
+    return FutureBuilder(
+      future: user?.getIdTokenResult(),
+      builder: ( BuildContext context, AsyncSnapshot<dynamic> snapshot ) {
+        if( snapshot.hasData ) 
+        {
+          Map<String, dynamic>? claims = snapshot.data?.claims;
+
+          if( claims != null ) 
+          {
+            if( claims['admin'] ) 
+            {
+              return PopupMenuButton<Menu>(
+                  icon: const Icon(Icons.person),
+                  offset: const Offset(0, 40),
+                  onSelected: (Menu item) {},
+                  itemBuilder: (BuildContext context) => <PopupMenuEntry<Menu>>[
+                    const PopupMenuItem<Menu>(
+                      value: Menu.itemOne,
+                      child: Text('Account'),
+                    ),
+                    const PopupMenuItem<Menu>(
+                      value: Menu.itemTwo,
+                      child: Text('Settings'),
+                    ),
+                    PopupMenuItem<Menu>(
+                      value: Menu.itemThree,
+                      child: 
+                        InkWell(
+                          child: Text("Register User"),
+                          onTap: () {
+                            Navigator.pushNamed( context, '/register' );
+                          },
+                        )
+                    ),
+                    PopupMenuItem<Menu>(
+                      value: Menu.itemFour,
+                      child: 
+                        InkWell(
+                          child: Text("Sign Out"),
+                          onTap: () {
+                            signoutUser();
+                            Navigator.pushNamed( context, '/home' );
+                          },
+                        )
+                    ),
+                  ]);
+            } 
+            else if( claims['manager'] ) 
+            {
+              return PopupMenuButton<Menu>(
+                  icon: const Icon(Icons.person),
+                  offset: const Offset(0, 40),
+                  onSelected: (Menu item) {},
+                  itemBuilder: (BuildContext context) => <PopupMenuEntry<Menu>>[
+                    const PopupMenuItem<Menu>(
+                      value: Menu.itemOne,
+                      child: Text('Account'),
+                    ),
+                    const PopupMenuItem<Menu>(
+                      value: Menu.itemTwo,
+                      child: Text('Settings'),
+                    ),
+                    PopupMenuItem<Menu>(
+                      value: Menu.itemFour,
+                      child: 
+                        InkWell(
+                          child: Text("Sign Out"),
+                          onTap: () {
+                            signoutUser();
+                            Navigator.pushNamed( context, '/home' );
+                          },
+                        )
+                    ),
+                  ]);
+            }
+          }
+        }
+
+        // build default menu for non-authenticated users
+        return PopupMenuButton<Menu>(
+            icon: const Icon(Icons.person),
+            offset: const Offset(0, 40),
+            onSelected: (Menu item) {},
+            itemBuilder: (BuildContext context) => <PopupMenuEntry<Menu>>[
+              PopupMenuItem<Menu>(
+                value: Menu.itemOne,
+                child: 
+                  InkWell(
+                    child: Text("Login"),
+                    onTap: () {
+                      Navigator.pushNamed( context, '/login' );
+                    },
+                  )
+              ),
+            ]);
+      },
+    );
   }
 }
