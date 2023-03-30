@@ -8,11 +8,40 @@ import 'package:multi_select_flutter/multi_select_flutter.dart';
 
 class Login extends StatelessWidget
 {
+
   Login( { super.key } );
   static const String route = '/login';
 
   String email = "";
   String password = "";
+
+  showAlertDialog( BuildContext context, String statement ) {
+
+    // set up the button
+    Widget okButton = TextButton(
+      child: Text( "OK" ),
+      onPressed: () {
+        Navigator.pop( context );
+      },
+    );
+
+    // set up the AlertDialog
+    AlertDialog alert = AlertDialog(
+      title: Text( "Alert" ),
+      content: Text( statement ),
+      actions: [
+        okButton,
+      ],
+    );
+
+    //show the dialog
+    showDialog(
+      context: context,
+      builder: ( BuildContext context ) {
+        return alert;
+      },
+    );
+  }
 
 
   void login( String email, String password, BuildContext context ) async
@@ -24,17 +53,40 @@ class Login extends StatelessWidget
         password: password
       );
 
-      Navigator.pushNamed( context, '/home' );
+      User? user = credential.user;
+
+      if( user != null )
+      {
+        IdTokenResult? userToken = await user?.getIdTokenResult();
+
+        Map<String, dynamic>? claims = userToken?.claims;
+
+        if( claims != null )
+        {
+          if( !claims['admin'] && !claims['manager'] )
+          {
+            showAlertDialog( context, "You don't have the authority to login on this platform" );
+          }
+          else
+          {
+            Navigator.pushNamed( context, '/home' );  
+          }
+        }
+        else
+        {
+          showAlertDialog( context, "You don't have the authority to login on this platform" );
+        }
+      }
     } 
     on FirebaseAuthException catch ( error ) {
 
       if ( error.code == 'user-not-found' )
       {
-        print( 'No user found for that email.' );
+        showAlertDialog( context, "No user with that email exists" );
       } 
       else if( error.code == 'wrong-password' ) 
       {
-        print('Wrong password provided for that user.');
+        showAlertDialog( context, "Incorrect password for the user with that email" );
       }
     }
   }

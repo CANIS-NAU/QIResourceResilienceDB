@@ -590,7 +590,8 @@ class _ProfileIcon extends StatelessWidget {
                           },
                         )
                     ),
-                  ]);
+                  ]
+               );
             }
           }
         }

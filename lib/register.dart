@@ -17,6 +17,34 @@ class Register extends StatelessWidget
     String password = "";
     String role = "";
 
+    showAlertDialog( BuildContext context, String statement ) {
+
+        // set up the button
+        Widget okButton = TextButton(
+        child: Text( "OK" ),
+        onPressed: () {
+            Navigator.pop( context );
+        },
+        );
+
+        // set up the AlertDialog
+        AlertDialog alert = AlertDialog(
+        title: Text( "Alert" ),
+        content: Text( statement ),
+        actions: [
+            okButton,
+        ],
+        );
+
+        //show the dialog
+        showDialog(
+        context: context,
+        builder: ( BuildContext context ) {
+            return alert;
+        },
+        );
+    }
+
     void registerUser( String email, String password, String role, BuildContext context ) async
     {
         try
@@ -26,10 +54,25 @@ class Register extends StatelessWidget
                 password: password
             );
 
+            showAlertDialog( context, "Successfully created user");
         } 
         on FirebaseAuthException catch ( error ) 
         {
-            print( error );
+            switch( error.code )
+            {
+                case 'email-already-in-use':
+                    showAlertDialog( context, "A user with that email already exists");
+                    break;
+                case 'invalid-email':
+                    showAlertDialog( context, "Invalid email address");
+                    break;
+                case 'operation-not-allowed':
+                    showAlertDialog( context, "Registration disabled. Contact tech team");
+                    break;
+                case 'weak-password':
+                    showAlertDialog( context, "Too weak of a password");
+                    break;
+            }
         }
     }
 
