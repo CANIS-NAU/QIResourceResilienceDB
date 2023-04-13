@@ -29,11 +29,6 @@ class Verify extends StatelessWidget {
           .catchError( (error) => print("Failed to delete resource: $error" ) );
   }
 
-    return resourceCollection.doc( name.id ).delete()
-      .then( ( value ) => print( "Resource Delete" ) )
-      .catchError( (error) => print("Failed to delete resource: $error" ) );
-  }
-
   //Verification UI  
   @override
   Widget build(BuildContext context) {
