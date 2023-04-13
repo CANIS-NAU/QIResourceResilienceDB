@@ -7,7 +7,7 @@ import 'package:multi_select_flutter/multi_select_flutter.dart';
 
 //Shows unverified resources for oppurtunity to be verified
 class Verify extends StatelessWidget {
-  
+
   //Clarify routing for main application
   Verify( { super.key } );
   static const String route = '/verify';
@@ -23,14 +23,20 @@ class Verify extends StatelessWidget {
       .catchError( (error) => print("Failed to update resource: $error" ) );
   }
 
-  //Verification UI  
+  Future<void> deleteResource( name ){
+      return resourceCollection.doc( name.id ).delete()
+          .then( ( value ) => print( "Resource Delete" ) )
+          .catchError( (error) => print("Failed to delete resource: $error" ) );
+  }
+
+  //Verification UI
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Verify Resource'),
       ),
-      body: 
+      body:
           new Container(
               child: new Column(
                 children: [
@@ -41,7 +47,7 @@ class Verify extends StatelessWidget {
                      stream: resources,
                      builder: (
                       BuildContext context,
-                      AsyncSnapshot<QuerySnapshot> snapshot, 
+                      AsyncSnapshot<QuerySnapshot> snapshot,
                     ) {
 
                     //Check for firestore snapshot error
@@ -49,13 +55,13 @@ class Verify extends StatelessWidget {
                     {
                       return Text("Something went wrong");
                     }
-                    
+
                     //Check if connection is being made
                     if( snapshot.connectionState == ConnectionState.waiting )
                     {
                       return Text("Loading Resources From Dataabse");
                     }
-                    
+
                     //Get the snapshot data
                     final data = snapshot.requireData;
 
@@ -68,7 +74,7 @@ class Verify extends StatelessWidget {
                         shrinkWrap: true,
                         itemCount: data.size,
                         itemBuilder: ( context, index ) {
-                        return Container( 
+                        return Container(
                             padding: const EdgeInsets.symmetric( vertical: 20 ),
                             margin: const EdgeInsets.only(top: 30, right: 0, left: 0),
                             decoration: BoxDecoration(
@@ -82,13 +88,13 @@ class Verify extends StatelessWidget {
                                         )
                                       ]
                                     ),
-                            child: 
+                            child:
                             new Stack(
                                 children: [
                                 new Container(
                                     padding: const EdgeInsets.symmetric( vertical: 10),
                                     margin: const EdgeInsets.only(top: 0, right: 0, left: 100),
-                                    child: 
+                                    child:
                                     Text("Title",
                                     textAlign: TextAlign.left,
                                         style: TextStyle(
@@ -101,7 +107,7 @@ class Verify extends StatelessWidget {
                                 new Container(
                                     padding: const EdgeInsets.symmetric( vertical: 10),
                                     margin: const EdgeInsets.only(top: 0, right: 0, left: 250),
-                                    child: 
+                                    child:
                                     Text("Type",
                                     textAlign: TextAlign.left,
                                         style: TextStyle(
@@ -114,7 +120,7 @@ class Verify extends StatelessWidget {
                                 new Container(
                                     padding: const EdgeInsets.symmetric( vertical: 10),
                                     margin: const EdgeInsets.only(top: 0, right: 0, left: 450),
-                                    child: 
+                                    child:
                                     Text("Reporting",
                                     textAlign: TextAlign.left,
                                         style: TextStyle(
@@ -127,7 +133,7 @@ class Verify extends StatelessWidget {
                                 new Container(
                                     padding: const EdgeInsets.symmetric( vertical: 10),
                                     margin: const EdgeInsets.only(top: 0, right: 0, left: 650),
-                                    child: 
+                                    child:
                                     Text("Responsiveness",
                                     textAlign: TextAlign.left,
                                         style: TextStyle(
@@ -140,7 +146,7 @@ class Verify extends StatelessWidget {
                                 new Container(
                                     padding: const EdgeInsets.symmetric( vertical: 10),
                                     margin: const EdgeInsets.only(top: 0, right: 0, left: 900),
-                                    child: 
+                                    child:
                                     Text("Location",
                                     textAlign: TextAlign.left,
                                         style: TextStyle(
@@ -153,7 +159,7 @@ class Verify extends StatelessWidget {
                                 new Container(
                                     padding: const EdgeInsets.symmetric( vertical: 10),
                                     margin: const EdgeInsets.only(top: 0, right: 0, left: 1100),
-                                    child: 
+                                    child:
                                     Text("Description",
                                     textAlign: TextAlign.left,
                                         style: TextStyle(
@@ -166,7 +172,7 @@ class Verify extends StatelessWidget {
                                 new Container(
                                     padding: const EdgeInsets.symmetric( vertical: 10),
                                     margin: const EdgeInsets.only(top: 0, right: 0, left: 1270),
-                                    child: 
+                                    child:
                                     Text("Date Added",
                                     textAlign: TextAlign.left,
                                         style: TextStyle(
@@ -179,33 +185,7 @@ class Verify extends StatelessWidget {
                                 new Container(
                                     padding: const EdgeInsets.symmetric( vertical: 0),
                                     margin: const EdgeInsets.only(top: 50, right: 0, left: 100),
-                                    child: 
-                                    Text( "${data.docs[ index ][ 'name' ]}",
-                                    textAlign: TextAlign.left,
-                                        style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.bold,
-                                        ),
-                                    ),        
-                                ),
-                                new Container(
-                                    padding: const EdgeInsets.symmetric( vertical: 0),
-                                    margin: const EdgeInsets.only(top: 50, right: 0, left: 250),
-                                    child: 
-                                    Text( "${data.docs[ index ][ 'name' ]}",
-                                    textAlign: TextAlign.left,
-                                        style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.bold,
-                                        ),
-                                    ),       
-                                ),
-                                new Container(
-                                    padding: const EdgeInsets.symmetric( vertical: 0),
-                                    margin: const EdgeInsets.only(top: 50, right: 0, left: 450),
-                                    child: 
+                                    child:
                                     Text( "${data.docs[ index ][ 'name' ]}",
                                     textAlign: TextAlign.left,
                                         style: TextStyle(
@@ -217,60 +197,86 @@ class Verify extends StatelessWidget {
                                 ),
                                 new Container(
                                     padding: const EdgeInsets.symmetric( vertical: 0),
-                                    margin: const EdgeInsets.only(top: 50, right: 0, left: 650),
-                                    child: 
-                                    Text( "${data.docs[ index ][ 'name' ]}",
+                                    margin: const EdgeInsets.only(top: 50, right: 0, left: 250),
+                                    child:
+                                    Text( "${data.docs[ index ][ 'resourceType' ]}",
                                     textAlign: TextAlign.left,
                                         style: TextStyle(
                                         color: Colors.white,
                                         fontSize: 15,
                                         fontWeight: FontWeight.bold,
                                         ),
-                                    ),                               
+                                    ),
+                                ),
+                                new Container(
+                                    padding: const EdgeInsets.symmetric( vertical: 0),
+                                    margin: const EdgeInsets.only(top: 50, right: 0, left: 450),
+                                    child:
+                                    Text( "${data.docs[ index ][ 'privacy' ]}",
+                                    textAlign: TextAlign.left,
+                                        style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.bold,
+                                        ),
+                                    ),
+                                ),
+                                new Container(
+                                    padding: const EdgeInsets.symmetric( vertical: 0),
+                                    margin: const EdgeInsets.only(top: 50, right: 0, left: 650),
+                                    child:
+                                    Text( "${data.docs[ index ][ 'culturalResponsiveness' ]}",
+                                    textAlign: TextAlign.left,
+                                        style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.bold,
+                                        ),
+                                    ),
                                 ),
                                 new Container(
                                     padding: const EdgeInsets.symmetric( vertical: 0),
                                     margin: const EdgeInsets.only(top: 50, right: 0, left: 900),
-                                    child: 
-                                    Text( "${data.docs[ index ][ 'name' ]}",
+                                    child:
+                                    Text( "${data.docs[ index ][ 'location' ]}",
                                     textAlign: TextAlign.left,
                                         style: TextStyle(
                                         color: Colors.white,
                                         fontSize: 15,
                                         fontWeight: FontWeight.bold,
                                         ),
-                                    ),                                  
+                                    ),
                                 ),
                                 new Container(
                                     padding: const EdgeInsets.symmetric( vertical: 0),
                                     margin: const EdgeInsets.only(top: 50, right: 0, left: 1100),
-                                    child: 
-                                    Text( "${data.docs[ index ][ 'name' ]}",
+                                    child:
+                                    Text( "${data.docs[ index ][ 'description' ]}",
                                     textAlign: TextAlign.left,
                                         style: TextStyle(
                                         color: Colors.white,
                                         fontSize: 15,
                                         fontWeight: FontWeight.bold,
                                         ),
-                                    ),                                 
+                                    ),
                                 ),
                                 new Container(
                                     padding: const EdgeInsets.symmetric( vertical: 0),
                                     margin: const EdgeInsets.only(top: 50, right: 0, left: 1270),
-                                    child: 
-                                    Text( "${data.docs[ index ][ 'name' ]}",
+                                    child:
+                                    Text( "${data.docs[ index ][ 'dateAdded' ]}",
                                     textAlign: TextAlign.left,
                                         style: TextStyle(
                                         color: Colors.white,
                                         fontSize: 15,
                                         fontWeight: FontWeight.bold,
                                         ),
-                                    ),                                
+                                    ),
                                 ),
-                                //Button onclick verify's resource                            
+                                //Button onclick verify's resource
                                 new Container(
                                     margin: const EdgeInsets.only(top: 20, right: 0, left: 5),
-                                    child: 
+                                    child:
                                     TextButton(
                                         style: ButtonStyle(
                                         shape: MaterialStateProperty.all<RoundedRectangleBorder>(
@@ -281,7 +287,7 @@ class Verify extends StatelessWidget {
                                         ),
                                         foregroundColor: MaterialStateProperty.all<Color>(Colors.black),
                                         ),
-                                        onPressed: () { 
+                                        onPressed: () {
                                             verifyResource( data.docs[ index ]);
                                         },
                                         child: Text('Verify',
@@ -290,8 +296,32 @@ class Verify extends StatelessWidget {
                                         fontWeight: FontWeight.bold,
                                         ),
                                         ),
-                                    ),                            
+                                    ),
                                 ),
+                                new Container(
+                                    margin: const EdgeInsets.only(top: 50, right: 0, left: 5),
+                                    child:
+                                    TextButton(
+                                        style: ButtonStyle(
+                                            shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                                                RoundedRectangleBorder(
+                                                    borderRadius: BorderRadius.circular(18.0),
+                                                    side: BorderSide(color: Colors.white)
+                                                )
+                                            ),
+                                            foregroundColor: MaterialStateProperty.all<Color>(Colors.black),
+                                        ),
+                                        onPressed: () {
+                                            deleteResource( data.docs[ index ]);
+                                            },
+                                        child: Text('Deny',
+                                            style: TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold,
+                                            ),
+                                        ),
+                                    ),
+                                    ),
                                 ],
                             ),
                         );
