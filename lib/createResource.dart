@@ -129,7 +129,7 @@ class createResourceState extends State<CreateResource> {
   //final Stream<QuerySnapshot> resources = FirebaseFirestore.instance.collection('resources').where('verified', isEqualTo: true ).snapshots();
 
   //Submit to DB
-  Future<void> submitResource(resourceName, resourceLocation, resourceDescription, context)
+  Future<void> submitResource( resourceName, resourceLocation, resourceDescription, context )
   {
     String resourceType = "", privacyType = "",
         culturalResponse = "", costType = "";
@@ -220,12 +220,12 @@ class createResourceState extends State<CreateResource> {
         'privacy': selectedPrivacyOptions,
         'culturalResponse': culturalResponse,
         'culturalResponsivness': _currentSliderValue,
-        'cost': costType,
         'tagline': selectedTags,
-        'dateAdded': date
+        'dateAdded': date,
+	'cost': costType
       }
     ).then(( value ) => showAlertDialog( context ) )
-        .catchError((error) => print("Failed to add doc: $error") );
+     .catchError((error) => print("Failed to add doc: $error") );
   }
 
   // widget that creates the input field for resource name
@@ -773,13 +773,13 @@ class createResourceState extends State<CreateResource> {
                                           side: BorderSide(color: Colors.blue)
                                         )
                                       )
-                                    ),
-                                    onPressed: () {
-                                      submitResource( resourceName, resourceLocation, resourceDescription, context );
-                                    },
-                                    child: Text('Submit Resource'),
-                                  )
-                              ),
+                                  ),
+                                  onPressed: () { 
+                                    submitResource( resourceName, resourceLocation, resourceDescription, context );  
+                                  },
+                                  child: Text('Submit Resource'),
+                                )
+                            ),
                             ),
                     ]
                   )
