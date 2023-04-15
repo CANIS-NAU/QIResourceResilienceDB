@@ -1,120 +1,114 @@
 import 'package:flutter/material.dart';
 import 'firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_admin/firebase_admin.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'package:cloud_functions/cloud_functions.dart';
 
-class Register extends StatelessWidget
+class Account extends StatelessWidget
 {
-    Register( { super.key } );
-    static const String route = '/register';
+  Account( { super.key } );
+  static const String route = '/account';
 
-    FirebaseAuth auth = FirebaseAuth.instance;
+  String pass = '';
+  String newPass = '';
+  String reenter = '';
 
-    String email = "";
-    String password = "";
-    String role = "";
+  void signoutUser() async
+  {
+    await FirebaseAuth.instance.signOut();
+  }
 
-    showAlertDialog( BuildContext context, String statement ) 
-    {
-        // set up the button
-        Widget okButton = TextButton(
-        child: Text( "OK" ),
-        onPressed: () {
-            Navigator.pop( context );
-        },
-        );
+  showAlertDialog( BuildContext context, String statement, bool success ) 
+  {
 
-        // set up the AlertDialog
-        AlertDialog alert = AlertDialog(
-        title: Text( "Alert" ),
-        content: Text( statement ),
-        actions: [
-            okButton,
-        ],
-        );
+    // set up the button
+    Widget okButton = TextButton(
+      child: Text( "OK" ),
+      onPressed: () {
+        Navigator.pop( context );
 
-        //show the dialog
-        showDialog(
-        context: context,
-        builder: ( BuildContext context ) {
-            return alert;
-        },
-        );
-    }
-
- Future<void> registerUser(
-      String email, String password, String role, BuildContext context) async 
-    {
-
-        if( email != "" && password != "" && role != "" )
+        if( success )
         {
-            
-            String displayStatement = "";
+          signoutUser();
+          Navigator.pushNamedAndRemoveUntil( context, '/home', (route) => false );
+        }
+      },
+    );
 
-            // Hide before push
-            
+    // set up the AlertDialog
+    AlertDialog alert = AlertDialog(
+      title: Text( "Alert" ),
+      content: Text( statement ),
+      actions: [
+        okButton,
+      ],
+    );
 
-            final Map<String, dynamic> requestBody = {
-                'email': email,
-                'password': password,
-                'role': role,
-            };
+    //show the dialog
+    showDialog(
+      context: context,
+      builder: ( BuildContext context ) {
+        return alert;
+      },
+    );
+  }
 
-            final http.Response response = await http.post(
-                Uri.parse( url ),
-                headers: <String, String>{
-                'Content-Type': 'application/json; charset=UTF-8',
-                },
-                body: jsonEncode( requestBody ),
+  Future<void> changePassword( BuildContext context, String password, String newPassword, String reenteredPass ) async 
+  {
+
+    User? user = FirebaseAuth.instance.currentUser;
+
+    if( user != null )
+    {
+      if( newPassword == '' || reenteredPass == '' || password == '' )
+      {
+        showAlertDialog( context, "None of the fields can be empty", false );
+      }
+      else
+      {
+        if( reenteredPass == newPassword )
+        {
+          String? email = user.email;
+
+          if( email != null && password != null )
+          {
+            AuthCredential credential = EmailAuthProvider.credential(
+              email: email,
+              password: password,
             );
 
-            if( response.statusCode == 200 ) 
+            // Re-authenticate the user
+            await user.reauthenticateWithCredential( credential );
+          }
+          
+          user.updatePassword( newPassword ).then( ( _ ) {
+            showAlertDialog( context, "Password successfully changed. Please log back in with new password", true );
+          }).catchError( ( error ) {
+            switch( error )
             {
-                // Success
-                showAlertDialog( context, "User successfully created" );
-            } 
-            else
-            {
-                Map<String, dynamic> errorSpecs = json.decode( response.body )['error'];
-
-                String errorMessage = errorSpecs['code'];
-            
-                switch( errorMessage )
-                {
-                    case "auth/email-already-exists":
-                        displayStatement = "There is already a user with that email";
-                        break;
-                    case "auth/invalid-email":
-                        displayStatement = "That is not a valid email adress";
-                        break;
-                    case "auth/invalid-password":
-                        displayStatement = "The password is not strong enough( at least six character )";
-                        break;
-                    default:
-                        displayStatement = "An error occured, please contact development team";
-                        break;
-                }
-
-                showAlertDialog( context, displayStatement );
+              case 'weak-password':
+                showAlertDialog( context, "New password too weak", false );
+                break;
+              case 'requires-recent-login':
+                showAlertDialog( context, "Needs a more recent login", false );
+                break;
             }
+          });
         }
         else
         {
-            showAlertDialog( context, "Cannot create user. A required field is empty" );
+          showAlertDialog( context, "Your new password and re-entered password do not match", false );
         }
+      }
+    }
   }
 
-    Widget build( BuildContext context )
-    {
-      return Scaffold(
+  Widget build( BuildContext context )
+  {
+    return Scaffold(
         appBar: AppBar(
-            title: const Text('Register'),
+            title: const Text('Account'),
         ),
         body: LayoutBuilder( builder: ( context, windowSize ) {
             return Container(
@@ -122,18 +116,18 @@ class Register extends StatelessWidget
                 children : [
                     new Container(
                         height: windowSize.maxHeight / 2,
-                        width: windowSize.maxWidth / 2,
-                        padding: const EdgeInsets.symmetric( vertical: 20 ),
+                        width:  windowSize.maxWidth / 2,
+                        padding: const EdgeInsets.symmetric( vertical: 20),
                         margin: EdgeInsets.only( top: 50, right: windowSize.maxWidth / 3, left: windowSize.maxWidth / 3 ),
                         child:
                             TextField(
-                                obscureText: false,
+                                obscureText: true,
                                 decoration: InputDecoration(
                                 border: OutlineInputBorder(),
-                                labelText: 'Email' ),
+                                labelText: 'Current Password' ),
                                 onChanged: ( text )
                                 {
-                                    email = text;
+                                  pass = text;
                                 },
                             ),
                     ),
@@ -147,10 +141,10 @@ class Register extends StatelessWidget
                                 obscureText: true,
                                 decoration: InputDecoration(
                                 border: OutlineInputBorder(),
-                                labelText: 'Password' ),
+                                labelText: 'New Password' ),
                                 onChanged: ( text )
                                 {
-                                    password = text;
+                                  newPass = text;
                                 },
                             ),
                     ),
@@ -164,10 +158,10 @@ class Register extends StatelessWidget
                                 obscureText: true,
                                 decoration: InputDecoration(
                                 border: OutlineInputBorder(),
-                                labelText: 'Role' ),
+                                labelText: 'Re-enter New Password' ),
                                 onChanged: ( text )
                                 {
-                                    role = text;
+                                  reenter = text;
                                 },
                             ),
                     ),
@@ -189,9 +183,9 @@ class Register extends StatelessWidget
                                 )
                                 ), 
                                 onPressed: () { 
-                                    registerUser( email, password, role, context );
+                                  changePassword( context, pass, newPass, reenter );
                                 },
-                                child: Text('Register'),
+                                child: Text('Change Password'),
                         )
                     ),
                 ],
@@ -201,4 +195,4 @@ class Register extends StatelessWidget
         ),
      );
     }
-}
+}  

@@ -28,8 +28,6 @@ class filterItem {
     required this.category
   });
 }
-bool adminAccess = false;
-bool managerAccess = false;
 
 //Home Page state
 class _MyHomePageState extends State<MyHomePage> {
@@ -369,13 +367,13 @@ class _MyHomePageState extends State<MyHomePage> {
                                     contentPadding: EdgeInsets.symmetric(
                                         vertical: 10.0,
                                         horizontal: 30.0),
-                                dense: false,
-                                title: SizedBox( width: index == 0 ? 95 : 80,
-                                child: Text('${data.docs[ index ][ 'name' ]}',
-                                overflow: TextOverflow.visible,
-                                softWrap: true,
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 25),)),
-                                subtitle: SizedBox( width: 80,
+                                        dense: false,
+                                        title: SizedBox( width: index == 0 ? 95 : 80,
+                                        child: Text('${data.docs[ index ][ 'name' ]}',
+                                        overflow: TextOverflow.visible,
+                                        softWrap: true,
+                                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 25),)),
+                                        subtitle: SizedBox( width: 80,
                                     child: Text('Description: ${data.docs[ index ][ 'description' ]}',
                                         overflow: TextOverflow.visible,
                                         softWrap: true,
@@ -470,15 +468,15 @@ class _MyHomePageState extends State<MyHomePage> {
         .map(
           (item) => InkWell(
         onTap: () {
-          switch(item){
+          switch( item ){
             case "Submit Resource":
-              Navigator.pushNamed(context, '/createresource');
+              Navigator.pushNamed( context, '/createresource' );
               break;
             case "Verify Resource":
-              Navigator.pushNamed(context, '/verify');
+              Navigator.pushNamed( context, '/verify' );
               break;
             case "Dashboard":
-              Navigator.pushNamed(context, '/dashboard');
+              Navigator.pushNamed( context, '/dashboard' );
           }
         },
         child: Padding(
@@ -496,11 +494,32 @@ class _MyHomePageState extends State<MyHomePage> {
 }
 
 // list of navigation buttons
-final List<String> _menuItems = <String>[
+
+List<String> menuItems()
+{
+  List<String> _menuItems = <String>[];
+  User? user = FirebaseAuth.instance.currentUser;
+
+  if( user != null )
+  {
+    _menuItems = <String>[
+      'Submit Resource',
+      'Verify Resource',
+      'Dashboard',
+    ];
+  }
+  return _menuItems;
+}
+
+List<String> _menuItems = menuItems();
+
+/*
+List<String> _menuItems = <String>[
   'Submit Resource',
   'Verify Resource',
   'Dashboard',
 ];
+*/
 
 enum Menu { itemOne, itemTwo, itemThree, itemFour }
 
@@ -533,13 +552,15 @@ class _ProfileIcon extends StatelessWidget {
                   offset: const Offset(0, 40),
                   onSelected: (Menu item) {},
                   itemBuilder: (BuildContext context) => <PopupMenuEntry<Menu>>[
-                    const PopupMenuItem<Menu>(
-                      value: Menu.itemOne,
-                      child: Text('Account'),
-                    ),
-                    const PopupMenuItem<Menu>(
+                   PopupMenuItem<Menu>(
                       value: Menu.itemTwo,
-                      child: Text('Settings'),
+                      child: 
+                        InkWell(
+                          child: Text("Account"),
+                          onTap: () {
+                            Navigator.pushNamed( context, '/account' );
+                          },
+                        ),
                     ),
                     PopupMenuItem<Menu>(
                       value: Menu.itemThree,
@@ -558,12 +579,12 @@ class _ProfileIcon extends StatelessWidget {
                           child: Text("Sign Out"),
                           onTap: () {
                             signoutUser();
-                            Navigator.pushNamed( context, '/home' );
+                            Navigator.pushNamedAndRemoveUntil( context, '/home', (route) => false );
                           },
                         )
                     ),
                   ]);
-            } 
+            }
             else if( claims['manager'] ) 
             {
               return PopupMenuButton<Menu>(
@@ -571,9 +592,15 @@ class _ProfileIcon extends StatelessWidget {
                   offset: const Offset(0, 40),
                   onSelected: (Menu item) {},
                   itemBuilder: (BuildContext context) => <PopupMenuEntry<Menu>>[
-                    const PopupMenuItem<Menu>(
+                    PopupMenuItem<Menu>(
                       value: Menu.itemOne,
-                      child: Text('Account'),
+                      child:  
+                        InkWell(
+                          child: Text("Account"),
+                          onTap: () {
+                            Navigator.pushNamed( context, '/account' );
+                          },
+                        ),
                     ),
                     const PopupMenuItem<Menu>(
                       value: Menu.itemTwo,
@@ -586,7 +613,7 @@ class _ProfileIcon extends StatelessWidget {
                           child: Text("Sign Out"),
                           onTap: () {
                             signoutUser();
-                            Navigator.pushNamed( context, '/home' );
+                            Navigator.pushNamedAndRemoveUntil( context, '/home', (route) => false );
                           },
                         )
                     ),

@@ -15,8 +15,8 @@ class Login extends StatelessWidget
   String email = "";
   String password = "";
 
-  showAlertDialog( BuildContext context, String statement ) {
-
+  showAlertDialog( BuildContext context, String statement ) 
+  {
     // set up the button
     Widget okButton = TextButton(
       child: Text( "OK" ),
@@ -43,6 +43,11 @@ class Login extends StatelessWidget
     );
   }
 
+  void signoutUser() async
+  {
+    await FirebaseAuth.instance.signOut();
+  }
+
 
   void login( String email, String password, BuildContext context ) async
   {
@@ -66,19 +71,24 @@ class Login extends StatelessWidget
           if( !claims['admin'] && !claims['manager'] )
           {
             showAlertDialog( context, "You don't have the authority to login on this platform" );
+            
+            //Technically the user is signed in but we dont want this
+            signoutUser();
           }
           else
           {
-            Navigator.pushNamed( context, '/home' );  
+            Navigator.pushNamedAndRemoveUntil( context, '/home', (route) => false ); 
           }
         }
         else
         {
           showAlertDialog( context, "You don't have the authority to login on this platform" );
+          signoutUser();
         }
       }
     } 
-    on FirebaseAuthException catch ( error ) {
+    on FirebaseAuthException catch ( error )
+    {
 
       if ( error.code == 'user-not-found' )
       {
@@ -154,7 +164,6 @@ class Login extends StatelessWidget
                               )
                             ), 
                             onPressed: () { 
-                                //Login function to return bool and check if login sucess
                                 login( email, password, context );
                             },
                             child: Text('Login'),

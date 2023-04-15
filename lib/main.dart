@@ -12,6 +12,7 @@ import './createResource.dart';
 import './loginpage.dart';
 import './dashboard.dart';
 import './register.dart';
+import './account.dart';
 
 //Main fubction
 void main() async  {
@@ -42,6 +43,7 @@ class MyApp extends StatelessWidget {
         '/login': ( context ) => Login(),
         '/dashboard': ( context ) => Dashboard(),
         '/register': ( context ) => Register(),
+        '/account': ( context ) => Account(),
       },
       theme: ThemeData(
         primarySwatch: Colors.blue,

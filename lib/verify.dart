@@ -17,13 +17,39 @@ class Verify extends StatelessWidget {
   CollectionReference resourceCollection = FirebaseFirestore.instance.collection('resources');
 
   //Once verified, update current doc verification to true
-  Future<void> verifyResource( name ){
+  Future<void> verifyResource( name )
+  {
+    /*
+    User? user = Firebase.auth.currentUser; 
+    if( user != null )
+    {
+        if( user.email != name.createdBy )
+        {   
+            return resourceCollection.doc( name.id ).update( {"verified": true } )
+            .then( ( value ) => print( "Updated" ) )
+            .catchError( (error) => print("Failed to update resource: $error" ) );
+        }
+    }
+    */
     return resourceCollection.doc( name.id ).update( {"verified": true } )
-      .then( ( value ) => print( "Updated" ) )
-      .catchError( (error) => print("Failed to update resource: $error" ) );
+    .then( ( value ) => print( "Updated" ) )
+    .catchError( (error) => print("Failed to update resource: $error" ) );
   }
 
-  Future<void> deleteResource( name ){
+  Future<void> deleteResource( name )
+  {
+    /*
+    User? user = Firebase.auth.currentUser; 
+    if( user != null )
+    {
+        if( user.email != name.createdBy )
+        {   
+            return resourceCollection.doc( name.id ).delete()
+            .then( ( value ) => print( "Resource Deleted" ) )
+            .catchError( (error) => print("Failed to delete resource: $error" ) );
+        }
+    }
+    */
     return resourceCollection.doc( name.id ).delete()
       .then( ( value ) => print( "Resource Delete" ) )
       .catchError( (error) => print("Failed to delete resource: $error" ) );

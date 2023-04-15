@@ -4,6 +4,7 @@ import 'firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 final now = DateTime.now();
 final date = "${now.month}/${now.day}/${now.year}";
@@ -21,20 +22,20 @@ const List<String> ageItems = [
     "76+"
   ];
 
-showAlertDialog(BuildContext context) {
+showAlertDialog( BuildContext context, String statement ) {
 
   // set up the button
   Widget okButton = TextButton(
     child: Text("OK"),
     onPressed: () {
-      Navigator.pop(context);
+      Navigator.pop( context );
     },
   );
 
   // set up the AlertDialog
   AlertDialog alert = AlertDialog(
     title: Text("Alert"),
-    content: Text("Your resource has successfully been submitted"),
+    content: Text( statement ),
     actions: [
       okButton,
     ],
@@ -103,10 +104,6 @@ class createResourceState extends State<CreateResource> {
   bool vertical = false;
   bool verified = false;
 
-  //Init collection from db
-  CollectionReference resourceCollection = FirebaseFirestore.instance.collection('resources');
-  //final Stream<QuerySnapshot> resources = FirebaseFirestore.instance.collection('resources').where('verified', isEqualTo: true ).snapshots();
-
   //Change corresponding textbox text based on resource type 
   String changeLocationText(){
     String text = "";
@@ -135,73 +132,87 @@ class createResourceState extends State<CreateResource> {
   }
 
   //Submit to DB
-  Future<void> submitResource( resourceName, resourceLocation, resourceDescription, context )
+  void submitResource( resourceName, resourceLocation, resourceDescription, context )
   {
-    String resourceType = "", privacyType = "", culturalResponse = "";
+    User? user = FirebaseAuth.instance.currentUser;
 
-    if( _currentSliderValue >= 0 && _currentSliderValue <= 1 )
+    if( user != null )
     {
-      culturalResponse = "Low Cultural Responsivness";
-    }
-    else if( _currentSliderValue >= 2 && _currentSliderValue <= 3 )
-    {
-      culturalResponse = "Medium Cultural Responsivness";
-    }
-    else
-    {
-      culturalResponse = "High Cultural Responsivness";
-    }
+      CollectionReference resourceCollection = FirebaseFirestore.instance.collection('resources');
 
-    //Check for resource type, required to convert to string( useful for db store )
-    if( _selectedResources[ 0 ] )
-    {
-      resourceType = "Online";
-    }
-    else if( _selectedResources[ 1 ] )
-    {
-      resourceType = "In Person";
-    }
-    else if( _selectedResources[ 2 ] )
-    {
-      resourceType = "App";
-    }
-    else
-    {
-      resourceType = "Hotline";
-    }
+      String resourceType = "", privacyType = "", culturalResponse = "";
 
-    //Check for privacy options in Bool array, required to convert to string
-    if( _selectedPrivacy[ 0 ] )
-    {
-      privacyType = "HIPAA Compliant";
-    }
-    else if( _selectedPrivacy[ 1 ] )
-    {
-      privacyType = "Anonymous";
-    }
-    else
-    {
-      privacyType = "Mandatory Reporting";
-    }
+      String? userEmail = user.email;
 
-    //Add resource to db with provided values
-    //TODO: Need better error handling here
-    return resourceCollection.add(
+      if( _currentSliderValue >= 0 && _currentSliderValue <= 1 )
       {
-        'name': resourceName,
-        'location': resourceLocation,
-        'description': resourceDescription,
-        'agerange': _currentDropDownValue,
-        'verified': verified, //Always false upon creation
-        'resourceType': resourceType,
-        'privacy': privacyType,
-        'culturalResponse': culturalResponse,
-        'culturalResponsivness': _currentSliderValue,
-        'tagline': selectedTags,
-        'dateAdded': date
+        culturalResponse = "Low Cultural Responsivness";
       }
-    ).then(( value ) => showAlertDialog( context ) )
-     .catchError((error) => print("Failed to add doc: $error") );
+      else if( _currentSliderValue >= 2 && _currentSliderValue <= 3 )
+      {
+        culturalResponse = "Medium Cultural Responsivness";
+      }
+      else
+      {
+        culturalResponse = "High Cultural Responsivness";
+      }
+
+      //Check for resource type, required to convert to string( useful for db store )
+      if( _selectedResources[ 0 ] )
+      {
+        resourceType = "Online";
+      }
+      else if( _selectedResources[ 1 ] )
+      {
+        resourceType = "In Person";
+      }
+      else if( _selectedResources[ 2 ] )
+      {
+        resourceType = "App";
+      }
+      else
+      {
+        resourceType = "Hotline";
+      }
+
+      //Check for privacy options in Bool array, required to convert to string
+      if( _selectedPrivacy[ 0 ] )
+      {
+        privacyType = "HIPAA Compliant";
+      }
+      else if( _selectedPrivacy[ 1 ] )
+      {
+        privacyType = "Anonymous";
+      }
+      else
+      {
+        privacyType = "Mandatory Reporting";
+      }
+
+      //TODO: Need better error handling here
+      resourceCollection.add(
+      {
+            'name': resourceName,
+            'location': resourceLocation,
+            'description': resourceDescription,
+            'agerange': _currentDropDownValue,
+            'verified': verified, //Always false upon creation
+            'resourceType': resourceType,
+            'privacy': privacyType,
+            'culturalResponse': culturalResponse,
+            'culturalResponsivness': _currentSliderValue,
+            'tagline': selectedTags,
+            'dateAdded': date,
+            'createdBy': userEmail
+      }
+      )
+      .then( ( value ) => showAlertDialog( context, "Submitted resource for review" ) )
+      .catchError( ( error ) => showAlertDialog( context, "Unable to submit. Please try again" ) );
+    }
+    else
+    {
+      showAlertDialog( context, "You need to login to submit a resource" );
+    }
   }
   
   //Create resource UI
