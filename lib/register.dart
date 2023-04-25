@@ -54,10 +54,10 @@ class Register extends StatelessWidget
 
         if( email != "" && password != "" && role != "" )
         {
-            
             String displayStatement = "";
 
             // Hide before push
+            
             
 
             final Map<String, dynamic> requestBody = {

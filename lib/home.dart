@@ -226,6 +226,9 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build( BuildContext context ) {
     final width = MediaQuery.of(context).size.width;
     final bool isLargeScreen = width > 800;
+    setState(() {
+      _menuItems = menuItems();
+    });
     return Scaffold(
       key: _scaffoldKey,
       appBar: AppBar(
@@ -489,7 +492,7 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
       ),
     )
-        .toList(),
+    .toList(),
   );
 }
 
@@ -512,14 +515,6 @@ List<String> menuItems()
 }
 
 List<String> _menuItems = menuItems();
-
-/*
-List<String> _menuItems = <String>[
-  'Submit Resource',
-  'Verify Resource',
-  'Dashboard',
-];
-*/
 
 enum Menu { itemOne, itemTwo, itemThree, itemFour }
 
