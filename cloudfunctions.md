@@ -42,27 +42,32 @@
 > const email = requestBody.email;
 > const pass = requestBody.pass;
 
-> 8) Returning the response to the client side:
+> 8) Setting user custom claims
+> ``` javascript
+> await admin.auth().setCustomUserClaims(uid, {
+>   'role': 'user',
+>});
+  
+
+> 9) Returning the response to the client side:
 > ``` javascript
 > return res.status( 500 ).send( { 'error': "This is indicating an error being sent back to sender" } );
 > return res.status( 200 ).send( { 'success': "This is indicating that the cloud function did what it was supposed to with no errors" } );
 
-> 9) Declaring the cloud functions name
+> 10) Declaring the cloud functions name
 > ``` javascript
 > exports.cloudFunctionName = functions.https.onRequest(app);
 
-> 10) Deploying the cloud functions( must be in functions directory )
+> 11) Deploying the cloud functions( must be in functions directory )
 > ``` cmd 
 > firebase deploy --only functions
 
-> 11) Calling from the client side application( Dart ):
+> 12) Calling from the client side application( Dart ):
 > ``` dart
->             String displayStatement = "";
 >
 >            // Hide before push
 >            String url = "exampleUrl";
 >            
->
 >            final Map<String, dynamic> requestBody = {
 >                'email': email,
 >                'password': password,
@@ -89,6 +94,21 @@
 >                
 >               //DO SOMETHING WITH THE ERROR
 >            }
+
+>13) Getting users custom claims on client side ( Dart )
+> ``` Dart
+>     User? user = credential.user;
+>     if( user != null )
+>     {
+>        IdTokenResult? userToken = await user?.getIdTokenResult();
+>
+>        Map<String, dynamic>? claims = userToken?.claims;
+>
+>        if( claims != null )
+>        {
+>           //Do something
+>        }
+>      }
 
 ># Conclusion 
 > This was an example of post requests cloud functions using https.
