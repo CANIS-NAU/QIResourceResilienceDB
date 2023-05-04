@@ -42,6 +42,7 @@ dependencies:
   firebase_auth: ^3.11.2
   firebase_admin: ^0.2.0
   cloud_functions: ^3.3.9
+  flutter_dotenv: ^5.0.2
 
 dev_dependencies:
   flutter_test:
@@ -66,6 +67,7 @@ flutter:
   uses-material-design: true
   assets:
      - assets/rrdb_logo.png
+     - hide.env
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

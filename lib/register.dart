@@ -8,6 +8,7 @@ import 'package:multi_select_flutter/multi_select_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class Register extends StatelessWidget
 {
@@ -57,8 +58,7 @@ class Register extends StatelessWidget
             String displayStatement = "";
 
             // Hide before push
-            
-            
+            String? url = dotenv.env['REGISTER_URL'];
 
             final Map<String, dynamic> requestBody = {
                 'email': email,
@@ -66,41 +66,49 @@ class Register extends StatelessWidget
                 'role': role,
             };
 
-            final http.Response response = await http.post(
-                Uri.parse( url ),
-                headers: <String, String>{
-                'Content-Type': 'application/json; charset=UTF-8',
-                },
-                body: jsonEncode( requestBody ),
-            );
-
-            if( response.statusCode == 200 ) 
+            if( url != null )
             {
-                // Success
-                showAlertDialog( context, "User successfully created" );
-            } 
+                final http.Response response = await http.post(
+                    Uri.parse( url ),
+                    headers: <String, String>{
+                    'Content-Type': 'application/json; charset=UTF-8',
+                    },
+                    body: jsonEncode( requestBody ),
+                );
+
+                if( response.statusCode == 200 ) 
+                {
+                    // Success
+                    showAlertDialog( context, "User successfully created" );
+                } 
+                else
+                {
+                    Map<String, dynamic> errorSpecs = json.decode( response.body )['error'];
+
+                    String errorMessage = errorSpecs['code'];
+                
+                    switch( errorMessage )
+                    {
+                        case "auth/email-already-exists":
+                            displayStatement = "There is already a user with that email";
+                            break;
+                        case "auth/invalid-email":
+                            displayStatement = "That is not a valid email adress";
+                            break;
+                        case "auth/invalid-password":
+                            displayStatement = "The password is not strong enough( at least six character )";
+                            break;
+                        default:
+                            displayStatement = "An error occured, please contact development team";
+                            break;
+                    }
+
+                    showAlertDialog( context, displayStatement );
+                }
+            }
             else
             {
-                Map<String, dynamic> errorSpecs = json.decode( response.body )['error'];
-
-                String errorMessage = errorSpecs['code'];
-            
-                switch( errorMessage )
-                {
-                    case "auth/email-already-exists":
-                        displayStatement = "There is already a user with that email";
-                        break;
-                    case "auth/invalid-email":
-                        displayStatement = "That is not a valid email adress";
-                        break;
-                    case "auth/invalid-password":
-                        displayStatement = "The password is not strong enough( at least six character )";
-                        break;
-                    default:
-                        displayStatement = "An error occured, please contact development team";
-                        break;
-                }
-
+                displayStatement = "Something went wrong";
                 showAlertDialog( context, displayStatement );
             }
         }

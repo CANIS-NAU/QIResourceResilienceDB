@@ -4,6 +4,7 @@ import 'firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 //Screen or class imports
 import './home.dart';
@@ -19,6 +20,10 @@ void main() async  {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
      options: DefaultFirebaseOptions.currentPlatform
+  );
+
+  await dotenv.load(
+    fileName: './hide.env'
   );
   runApp( const MyApp() );
 }

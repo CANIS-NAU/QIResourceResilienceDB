@@ -125,33 +125,6 @@ class createResourceState extends State<CreateResource> {
   bool vertical = false;
   bool verified = false;
 
-  //Change corresponding textbox text based on resource type 
-  String changeLocationText(){
-    String text = "";
-
-    //First bool in List corresponds to "Online", check if selected
-    if( _selectedResources[ 0 ] )
-    {
-      text = "Link to the resource";
-    }
-    //Second bool in List corresponds to In Person, check if selcted
-    else if( _selectedResources[ 1 ] )
-    {
-      text = "Please provide the address to the resource";
-    }
-    else if( _selectedResources[ 3 ] )
-    {
-      text = "Please provide the phone number to the resource";
-    }
-    //Third option must be app if prev two not selected
-    else
-    {
-      text = "Please provide the link to the app store where the resource is found";
-    }
-    //Return new box text
-    return text;
-  }
-
   //Submit to DB
   void submitResource( resourceName, resourceLocation, resourceDescription, context )
   {
@@ -162,8 +135,7 @@ class createResourceState extends State<CreateResource> {
       CollectionReference resourceCollection = FirebaseFirestore.instance.collection('resources');
 
       String resourceType = "", privacyType = "", culturalResponse = "";
-    String resourceType = "", privacyType = "",
-        culturalResponse = "", costType = "";
+      String costType = "";
 
       String? userEmail = user.email;
 
@@ -180,59 +152,42 @@ class createResourceState extends State<CreateResource> {
         culturalResponse = "High Cultural Responsivness";
       }
 
-    //Check for resource type, required to convert to string(useful for db store)
-    if( resourceTypeIndex == 0 )
-    {
-      resourceType = "In Person";
-    }
-    else if(resourceTypeIndex == 1 )
-    {
-      resourceType = "Hotline";
-    }
-    else if( resourceTypeIndex == 2 )
-    {
-      resourceType = "Online";
-    }
-    else
-    {
-      resourceType = "App";
-    }
+      //Check for resource type, required to convert to string(useful for db store)
+      if( resourceTypeIndex == 0 )
+      {
+        resourceType = "In Person";
+      }
+      else if(resourceTypeIndex == 1 )
+      {
+        resourceType = "Hotline";
+      }
+      else if( resourceTypeIndex == 2 )
+      {
+        resourceType = "Online";
+      }
+      else
+      {
+        resourceType = "App";
+      }
 
-    //Check for privacy options in Bool array, required to convert to string
-    if( _selectedPrivacy[ 0 ] )
-    {
-      privacyType = "HIPAA Compliant";
-    }
-    else if( _selectedPrivacy[ 1 ] )
-    {
-      privacyType = "Anonymous";
-    }
-    else if(_selectedPrivacy [2])
-    {
-      privacyType = "Mandatory Reporting";
-    }
-    else
-    {
-      privacyType = "None Stated";
-    }
 
-    // check for cost options
-    if( resourceCost == 0  )
-    {
-      costType = "Free";
-    }
-    else if( resourceCost == 1  )
-    {
-      costType = "Covered by Insurance";
-    }
-    else if(resourceCost == 2)
-    {
-      costType = "Subscription";
-    }
-    else
-    {
-      costType = "Fees associated";
-    }
+      // check for cost options
+      if( resourceCost == 0  )
+      {
+        costType = "Free";
+      }
+      else if( resourceCost == 1  )
+      {
+        costType = "Covered by Insurance";
+      }
+      else if(resourceCost == 2)
+      {
+        costType = "Subscription";
+      }
+      else
+      {
+        costType = "Fees associated";
+      }
 
       //TODO: Need better error handling here
       resourceCollection.add(
@@ -240,12 +195,12 @@ class createResourceState extends State<CreateResource> {
             'name': resourceName,
             'location': resourceLocation,
             'address': resourceAddress,
-        'building': resourceBldg,
-        'city': resourceCity,
-        'state': resourceState,
-        'zipcode': resourceZip,
-        'phoneNumber': resourcePhoneNumber,
-        'description': resourceDescription,
+            'building': resourceBldg,
+            'city': resourceCity,
+            'state': resourceState,
+            'zipcode': resourceZip,
+            'phoneNumber': resourcePhoneNumber,
+            'description': resourceDescription,
             'agerange': _currentDropDownValue,
             'verified': verified, //Always false upon creation
             'resourceType': resourceType,
@@ -255,7 +210,7 @@ class createResourceState extends State<CreateResource> {
             'tagline': selectedTags,
             'dateAdded': date,
             'createdBy': userEmail,
-	'cost': costType
+	          'cost': costType
       }
       )
       .then( ( value ) => showAlertDialog( context, "Submitted resource for review" ) )
