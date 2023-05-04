@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
 
@@ -225,6 +226,9 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build( BuildContext context ) {
     final width = MediaQuery.of(context).size.width;
     final bool isLargeScreen = width > 800;
+    setState(() {
+      _menuItems = menuItems();
+    });
     return Scaffold(
       key: _scaffoldKey,
       appBar: AppBar(
@@ -366,13 +370,13 @@ class _MyHomePageState extends State<MyHomePage> {
                                     contentPadding: EdgeInsets.symmetric(
                                         vertical: 10.0,
                                         horizontal: 30.0),
-                                dense: false,
-                                title: SizedBox( width: index == 0 ? 95 : 80,
-                                child: Text('${data.docs[ index ][ 'name' ]}',
-                                overflow: TextOverflow.visible,
-                                softWrap: true,
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 25),)),
-                                subtitle: SizedBox( width: 80,
+                                        dense: false,
+                                        title: SizedBox( width: index == 0 ? 95 : 80,
+                                        child: Text('${data.docs[ index ][ 'name' ]}',
+                                        overflow: TextOverflow.visible,
+                                        softWrap: true,
+                                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 25),)),
+                                        subtitle: SizedBox( width: 80,
                                     child: Text('Description: ${data.docs[ index ][ 'description' ]}',
                                         overflow: TextOverflow.visible,
                                         softWrap: true,
@@ -467,15 +471,15 @@ class _MyHomePageState extends State<MyHomePage> {
         .map(
           (item) => InkWell(
         onTap: () {
-          switch(item){
+          switch( item ){
             case "Submit Resource":
-              Navigator.pushNamed(context, '/createresource');
+              Navigator.pushNamed( context, '/createresource' );
               break;
             case "Verify Resource":
-              Navigator.pushNamed(context, '/verify');
+              Navigator.pushNamed( context, '/verify' );
               break;
             case "Dashboard":
-              Navigator.pushNamed(context, '/dashboard');
+              Navigator.pushNamed( context, '/dashboard' );
           }
         },
         child: Padding(
@@ -488,38 +492,150 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
       ),
     )
-        .toList(),
+    .toList(),
   );
 }
 
 // list of navigation buttons
-final List<String> _menuItems = <String>[
-  'Submit Resource',
-  'Verify Resource',
-  'Dashboard',
-];
 
-enum Menu { itemOne, itemTwo, itemThree }
+List<String> menuItems()
+{
+  List<String> _menuItems = <String>[];
+  User? user = FirebaseAuth.instance.currentUser;
+
+  if( user != null )
+  {
+    _menuItems = <String>[
+      'Submit Resource',
+      'Verify Resource',
+      'Dashboard',
+    ];
+  }
+  return _menuItems;
+}
+
+List<String> _menuItems = menuItems();
+
+enum Menu { itemOne, itemTwo, itemThree, itemFour }
+
+void signoutUser() async
+{
+  await FirebaseAuth.instance.signOut();
+}
 
 // adds the menu items for the profile drop down
 class _ProfileIcon extends StatelessWidget {
   const _ProfileIcon({Key? key}) : super(key: key);
-
+  
   @override
   Widget build(BuildContext context) {
-    return PopupMenuButton<Menu>(
-        icon: const Icon(Icons.person),
-        offset: const Offset(0, 40),
-        onSelected: (Menu item) {},
-        itemBuilder: (BuildContext context) => <PopupMenuEntry<Menu>>[
-          const PopupMenuItem<Menu>(
-            value: Menu.itemOne,
-            child: Text('Account'),
-          ),
-          const PopupMenuItem<Menu>(
-            value: Menu.itemTwo,
-            child: Text('Settings'),
-          ),
-        ]);
+    User? user = FirebaseAuth.instance.currentUser;
+
+    return FutureBuilder(
+      future: user?.getIdTokenResult(),
+      builder: ( BuildContext context, AsyncSnapshot<dynamic> snapshot ) {
+        if( snapshot.hasData ) 
+        {
+          Map<String, dynamic>? claims = snapshot.data?.claims;
+
+          if( claims != null ) 
+          {
+            if( claims['admin'] ) 
+            {
+              return PopupMenuButton<Menu>(
+                  icon: const Icon(Icons.person),
+                  offset: const Offset(0, 40),
+                  onSelected: (Menu item) {},
+                  itemBuilder: (BuildContext context) => <PopupMenuEntry<Menu>>[
+                   PopupMenuItem<Menu>(
+                      value: Menu.itemTwo,
+                      child: 
+                        InkWell(
+                          child: Text("Account"),
+                          onTap: () {
+                            Navigator.pushNamed( context, '/account' );
+                          },
+                        ),
+                    ),
+                    PopupMenuItem<Menu>(
+                      value: Menu.itemThree,
+                      child: 
+                        InkWell(
+                          child: Text("Register User"),
+                          onTap: () {
+                            Navigator.pushNamed( context, '/register' );
+                          },
+                        )
+                    ),
+                    PopupMenuItem<Menu>(
+                      value: Menu.itemFour,
+                      child: 
+                        InkWell(
+                          child: Text("Sign Out"),
+                          onTap: () {
+                            signoutUser();
+                            Navigator.pushNamedAndRemoveUntil( context, '/home', (route) => false );
+                          },
+                        )
+                    ),
+                  ]);
+            }
+            else if( claims['manager'] ) 
+            {
+              return PopupMenuButton<Menu>(
+                  icon: const Icon(Icons.person),
+                  offset: const Offset(0, 40),
+                  onSelected: (Menu item) {},
+                  itemBuilder: (BuildContext context) => <PopupMenuEntry<Menu>>[
+                    PopupMenuItem<Menu>(
+                      value: Menu.itemOne,
+                      child:  
+                        InkWell(
+                          child: Text("Account"),
+                          onTap: () {
+                            Navigator.pushNamed( context, '/account' );
+                          },
+                        ),
+                    ),
+                    const PopupMenuItem<Menu>(
+                      value: Menu.itemTwo,
+                      child: Text('Settings'),
+                    ),
+                    PopupMenuItem<Menu>(
+                      value: Menu.itemFour,
+                      child: 
+                        InkWell(
+                          child: Text("Sign Out"),
+                          onTap: () {
+                            signoutUser();
+                            Navigator.pushNamedAndRemoveUntil( context, '/home', (route) => false );
+                          },
+                        )
+                    ),
+                  ]
+               );
+            }
+          }
+        }
+
+        // build default menu for non-authenticated users
+        return PopupMenuButton<Menu>(
+            icon: const Icon(Icons.person),
+            offset: const Offset(0, 40),
+            onSelected: (Menu item) {},
+            itemBuilder: (BuildContext context) => <PopupMenuEntry<Menu>>[
+              PopupMenuItem<Menu>(
+                value: Menu.itemOne,
+                child: 
+                  InkWell(
+                    child: Text("Login"),
+                    onTap: () {
+                      Navigator.pushNamed( context, '/login' );
+                    },
+                  )
+              ),
+            ]);
+      },
+    );
   }
 }

@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
 
@@ -16,17 +17,77 @@ class Verify extends StatelessWidget {
   final Stream<QuerySnapshot> resources = FirebaseFirestore.instance.collection('resources').where('verified', isEqualTo: false ).snapshots();
   CollectionReference resourceCollection = FirebaseFirestore.instance.collection('resources');
 
-  //Once verified, update current doc verification to true
-  Future<void> verifyResource( name ){
-    return resourceCollection.doc( name.id ).update( {"verified": true } )
-      .then( ( value ) => print( "Updated" ) )
-      .catchError( (error) => print("Failed to update resource: $error" ) );
+  showAlertDialog( BuildContext context, String statement ) 
+  {
+        // set up the button
+        Widget okButton = TextButton(
+        child: Text( "OK" ),
+        onPressed: () {
+            Navigator.pop( context );
+        },
+        );
+
+        // set up the AlertDialog
+        AlertDialog alert = AlertDialog(
+        title: Text( "Alert" ),
+        content: Text( statement ),
+        actions: [
+            okButton,
+        ],
+        );
+
+        //show the dialog
+        showDialog(
+        context: context,
+        builder: ( BuildContext context ) {
+            return alert;
+        },
+        );
   }
 
-  Future<void> deleteResource( name ){
-      return resourceCollection.doc( name.id ).delete()
-          .then( ( value ) => print( "Resource Delete" ) )
-          .catchError( (error) => print("Failed to delete resource: $error" ) );
+  //Once verified, update current doc verification to true
+  Future<void> verifyResource( dynamic name, String createdBy, BuildContext context )
+  {
+    User? user = FirebaseAuth.instance.currentUser;
+    if( user != null )
+    {
+        if( user.email != createdBy )
+        {  
+            return resourceCollection.doc( name.id ).update( {"verified": true } )
+            .then( ( value ) => showAlertDialog( context, "Successfully verified the resource" ) )
+            .catchError( ( error ) => showAlertDialog( context, "Unable to verify resource" ) );
+        }
+        else
+        {
+            showAlertDialog( context, "Cannot verify your own submission" );
+        }
+    }
+
+    return Future.value();
+  }
+
+  Future<void> deleteResource( dynamic name, String createdBy, BuildContext context )
+  {
+    User? user = FirebaseAuth.instance.currentUser;
+    if( user != null )
+    {
+        if( user.email != createdBy )
+        {  
+            return resourceCollection.doc( name.id ).delete()
+            .then( ( value ) => showAlertDialog( context, "Successfully denied resource" ) )
+            .catchError( (error) => showAlertDialog( context, "Unable to deny resource" ) );
+        }
+        else
+        {
+            showAlertDialog( context, "Cannot verify your own submission" );
+        }
+    }
+    else
+    {
+        showAlertDialog( context, "Cannot deny your own submission" );
+    }
+
+    return Future.value();
   }
 
   //Verification UI  
@@ -287,8 +348,8 @@ class Verify extends StatelessWidget {
                                         ),
                                         foregroundColor: MaterialStateProperty.all<Color>(Colors.black),
                                         ),
-                                        onPressed: () {
-                                            verifyResource( data.docs[ index ]);
+                                        onPressed: () { 
+                                            verifyResource( data.docs[ index ], data.docs[ index ]['createdBy'], context );
                                         },
                                         child: Text('Verify',
                                         style: TextStyle(
@@ -312,7 +373,7 @@ class Verify extends StatelessWidget {
                                         foregroundColor: MaterialStateProperty.all<Color>(Colors.black),
                                         ),
                                         onPressed: () { 
-                                            deleteResource( data.docs[ index ]);
+                                            deleteResource( data.docs[ index ], data.docs[ index ]['createdBy'], context );
                                         },
                                         child: Text('Deny',
                                         style: TextStyle(

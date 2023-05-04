@@ -4,6 +4,7 @@ import 'firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 final now = DateTime.now();
 final date = "${now.month}/${now.day}/${now.year}";
@@ -21,20 +22,20 @@ const List<String> ageItems = [
     "76+"
   ];
 
-showAlertDialog(BuildContext context) {
+showAlertDialog( BuildContext context, String statement ) {
 
   // set up the button
   Widget okButton = TextButton(
     child: Text("OK"),
     onPressed: () {
-      Navigator.pop(context);
+      Navigator.pop( context );
     },
   );
 
   // set up the AlertDialog
   AlertDialog alert = AlertDialog(
     title: Text("Alert"),
-    content: Text("Your resource has successfully been submitted"),
+    content: Text( statement ),
     actions: [
       okButton,
     ],
@@ -124,28 +125,60 @@ class createResourceState extends State<CreateResource> {
   bool vertical = false;
   bool verified = false;
 
-  //Init collection from db
-  CollectionReference resourceCollection = FirebaseFirestore.instance.collection('resources');
-  //final Stream<QuerySnapshot> resources = FirebaseFirestore.instance.collection('resources').where('verified', isEqualTo: true ).snapshots();
+  //Change corresponding textbox text based on resource type 
+  String changeLocationText(){
+    String text = "";
+
+    //First bool in List corresponds to "Online", check if selected
+    if( _selectedResources[ 0 ] )
+    {
+      text = "Link to the resource";
+    }
+    //Second bool in List corresponds to In Person, check if selcted
+    else if( _selectedResources[ 1 ] )
+    {
+      text = "Please provide the address to the resource";
+    }
+    else if( _selectedResources[ 3 ] )
+    {
+      text = "Please provide the phone number to the resource";
+    }
+    //Third option must be app if prev two not selected
+    else
+    {
+      text = "Please provide the link to the app store where the resource is found";
+    }
+    //Return new box text
+    return text;
+  }
 
   //Submit to DB
-  Future<void> submitResource( resourceName, resourceLocation, resourceDescription, context )
+  void submitResource( resourceName, resourceLocation, resourceDescription, context )
   {
+    User? user = FirebaseAuth.instance.currentUser;
+
+    if( user != null )
+    {
+      CollectionReference resourceCollection = FirebaseFirestore.instance.collection('resources');
+
+      String resourceType = "", privacyType = "", culturalResponse = "";
     String resourceType = "", privacyType = "",
         culturalResponse = "", costType = "";
 
-    if( _currentSliderValue >= 0 && _currentSliderValue <= 1 )
-    {
-      culturalResponse = "Low Cultural Responsivness";
-    }
-    else if( _currentSliderValue >= 2 && _currentSliderValue <= 3 )
-    {
-      culturalResponse = "Medium Cultural Responsivness";
-    }
-    else
-    {
-      culturalResponse = "High Cultural Responsivness";
-    }
+      String? userEmail = user.email;
+
+      if( _currentSliderValue >= 0 && _currentSliderValue <= 1 )
+      {
+        culturalResponse = "Low Cultural Responsivness";
+      }
+      else if( _currentSliderValue >= 2 && _currentSliderValue <= 3 )
+      {
+        culturalResponse = "Medium Cultural Responsivness";
+      }
+      else
+      {
+        culturalResponse = "High Cultural Responsivness";
+      }
 
     //Check for resource type, required to convert to string(useful for db store)
     if( resourceTypeIndex == 0 )
@@ -201,31 +234,37 @@ class createResourceState extends State<CreateResource> {
       costType = "Fees associated";
     }
 
-    //Add resource to db with provided values
-    //TODO: Need better error handling here
-    return resourceCollection.add(
+      //TODO: Need better error handling here
+      resourceCollection.add(
       {
-        'name': resourceName,
-        'location': resourceLocation,
-        'address': resourceAddress,
+            'name': resourceName,
+            'location': resourceLocation,
+            'address': resourceAddress,
         'building': resourceBldg,
         'city': resourceCity,
         'state': resourceState,
         'zipcode': resourceZip,
         'phoneNumber': resourcePhoneNumber,
         'description': resourceDescription,
-        'agerange': _currentDropDownValue,
-        'verified': verified, //Always false upon creation
-        'resourceType': resourceType,
-        'privacy': selectedPrivacyOptions,
-        'culturalResponse': culturalResponse,
-        'culturalResponsivness': _currentSliderValue,
-        'tagline': selectedTags,
-        'dateAdded': date,
+            'agerange': _currentDropDownValue,
+            'verified': verified, //Always false upon creation
+            'resourceType': resourceType,
+            'privacy': selectedPrivacyOptions,
+            'culturalResponse': culturalResponse,
+            'culturalResponsivness': _currentSliderValue,
+            'tagline': selectedTags,
+            'dateAdded': date,
+            'createdBy': userEmail,
 	'cost': costType
       }
-    ).then(( value ) => showAlertDialog( context ) )
-     .catchError((error) => print("Failed to add doc: $error") );
+      )
+      .then( ( value ) => showAlertDialog( context, "Submitted resource for review" ) )
+      .catchError( ( error ) => showAlertDialog( context, "Unable to submit. Please try again" ) );
+    }
+    else
+    {
+      showAlertDialog( context, "You need to login to submit a resource" );
+    }
   }
 
   // widget that creates the input field for resource name
