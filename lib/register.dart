@@ -52,64 +52,88 @@ class Register extends StatelessWidget
  Future<void> registerUser(
       String email, String password, String role, BuildContext context) async 
     {
-
         if( email != "" && password != "" && role != "" )
         {
             String displayStatement = "";
 
-            // Hide before push
             String? url = dotenv.env['REGISTER_URL'];
 
-            final Map<String, dynamic> requestBody = {
-                'email': email,
-                'password': password,
-                'role': role,
-            };
+            User? admin = FirebaseAuth.instance.currentUser;
 
-            if( url != null )
+            if( admin != null )
             {
-                final http.Response response = await http.post(
-                    Uri.parse( url ),
-                    headers: <String, String>{
-                    'Content-Type': 'application/json; charset=UTF-8',
-                    },
-                    body: jsonEncode( requestBody ),
-                );
+                IdTokenResult? adminToken = await admin?.getIdTokenResult();
 
-                if( response.statusCode == 200 ) 
+                Map<String, dynamic>? claims = adminToken?.claims;
+
+                if( claims != null )
                 {
-                    // Success
-                    showAlertDialog( context, "User successfully created" );
-                } 
+                    Bool adminRole = claims['admin'];
+
+                    final Map<String, dynamic> requestBody = {
+                        'adminToken': adminRole,
+                        'email': email,
+                        'password': password,
+                        'role': role,
+                    };
+
+                    if( url != null )
+                    {
+                        final http.Response response = await http.post(
+                            Uri.parse( url ),
+                            headers: <String, String>{
+                            'Content-Type': 'application/json; charset=UTF-8',
+                            },
+                            body: jsonEncode( requestBody ),
+                        );
+
+                        if( response.statusCode == 200 ) 
+                        {
+                            // Success
+                            showAlertDialog( context, "User successfully created" );
+                        } 
+                        else
+                        {
+                            Map<String, dynamic> errorSpecs = json.decode( response.body )['error'];
+
+                            String errorMessage = errorSpecs['code'];
+                        
+                            switch( errorMessage )
+                            {
+                                case "auth/email-already-exists":
+                                    displayStatement = "There is already a user with that email";
+                                    break;
+                                case "auth/invalid-email":
+                                    displayStatement = "That is not a valid email adress";
+                                    break;
+                                case "auth/invalid-password":
+                                    displayStatement = "The password is not strong enough( at least six character )";
+                                    break;
+                                default:
+                                    displayStatement = "An error occured, please contact development team";
+                                    break;
+                            }
+
+                            showAlertDialog( context, displayStatement );
+                        }
+                    }
+                    else
+                    {
+                        displayStatement = "Something went wrong. Please contact tech team.";
+                        showAlertDialog( context, displayStatement );                       
+                    }
+                    
+                }
                 else
                 {
-                    Map<String, dynamic> errorSpecs = json.decode( response.body )['error'];
-
-                    String errorMessage = errorSpecs['code'];
-                
-                    switch( errorMessage )
-                    {
-                        case "auth/email-already-exists":
-                            displayStatement = "There is already a user with that email";
-                            break;
-                        case "auth/invalid-email":
-                            displayStatement = "That is not a valid email adress";
-                            break;
-                        case "auth/invalid-password":
-                            displayStatement = "The password is not strong enough( at least six character )";
-                            break;
-                        default:
-                            displayStatement = "An error occured, please contact development team";
-                            break;
-                    }
-
+                    displayStatement = "Something went wrong. Please contact tech team.";
                     showAlertDialog( context, displayStatement );
                 }
             }
             else
             {
-                displayStatement = "Something went wrong";
-                showAlertDialog( context, displayStatement );
+                displayStatement = "You do not have the authority to do that";
+                showAlertDialog( context, displayStatement );     
             }
         }
         else

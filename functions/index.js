@@ -23,43 +23,51 @@ app.post('/handleWebSignUpRole', async (req, res) => {
   const email = reqBody.email;
   const password = reqBody.password;
   const role = reqBody.role;
+  const adminRole = reqBody.adminToken;
 
-  var adminBool = false;
-  var managerBool = false;
+  if( adminRole )
+  {
+    var adminBool = false;
+    var managerBool = false;
 
-  if( role === "manager" )
-  {
-    managerBool = true;
-  }
-  else if( role === "admin" )
-  {
-    adminBool = true;
+    if( role === "manager" )
+    {
+      managerBool = true;
+    }
+    else if( role === "admin" )
+    {
+      adminBool = true;
+    }
+    else
+    {
+      return res.status( 500 ).send( { 'error': "Not a correct role" } );
+    }
+
+    try 
+    {
+      const userRecord = await admin.auth().createUser({
+        email: email,
+        password: password,
+      });
+
+      const uid = userRecord.uid;
+
+      await admin.auth().setCustomUserClaims( uid, {
+        'manager': managerBool,
+        'admin': adminBool,
+      });
+    
+      return res.status( 200 ).send( { 'data': 'User record created successfully' } );
+
+    } 
+    catch( error )
+    {
+      return res.status(500).send({ 'error': error });
+    }
   }
   else
   {
-    return res.status( 500 ).send( { 'error': "Not a correct role" } );
-  }
-
-  try 
-  {
-    const userRecord = await admin.auth().createUser({
-      email: email,
-      password: password,
-    });
-
-    const uid = userRecord.uid;
-
-    await admin.auth().setCustomUserClaims(uid, {
-      'manager': managerBool,
-      'admin': adminBool,
-    });
-  
-    return res.status( 200 ).send( { 'data': 'User record created successfully' } );
-
-  } 
-  catch( error )
-  {
-    return res.status(500).send({ 'error': error });
+    return res.status( 500 ).send({'error': error });
   }
 });
 
