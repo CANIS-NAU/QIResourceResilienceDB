@@ -11,6 +11,7 @@ import './verify.dart';
 import './createResource.dart';
 import './loginpage.dart';
 import './dashboard.dart';
+import './reviewResource.dart';
 
 //Main fubction
 void main() async  {
@@ -40,6 +41,7 @@ class MyApp extends StatelessWidget {
         '/createresource': ( context ) => CreateResource(),
         '/login': ( context ) => Login(),
         '/dashboard': ( context ) => Dashboard(),
+        '/reviewresource' :  ( context ) => ReviewResource(resourceData: ModalRoute.of(context)!.settings.arguments as QueryDocumentSnapshot),
       },
       theme: ThemeData(
         primarySwatch: Colors.blue,

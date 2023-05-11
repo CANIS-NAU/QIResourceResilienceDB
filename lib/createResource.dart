@@ -131,7 +131,7 @@ class createResourceState extends State<CreateResource> {
   //Submit to DB
   Future<void> submitResource( resourceName, resourceLocation, resourceDescription, context )
   {
-    String resourceType = "", privacyType = "",
+    String resourceType = "",
         culturalResponse = "", costType = "";
 
     if( _currentSliderValue >= 0 && _currentSliderValue <= 1 )
@@ -163,24 +163,6 @@ class createResourceState extends State<CreateResource> {
     else
     {
       resourceType = "App";
-    }
-
-    //Check for privacy options in Bool array, required to convert to string
-    if( _selectedPrivacy[ 0 ] )
-    {
-      privacyType = "HIPAA Compliant";
-    }
-    else if( _selectedPrivacy[ 1 ] )
-    {
-      privacyType = "Anonymous";
-    }
-    else if(_selectedPrivacy [2])
-    {
-      privacyType = "Mandatory Reporting";
-    }
-    else
-    {
-      privacyType = "None Stated";
     }
 
     // check for cost options
