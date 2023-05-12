@@ -89,6 +89,7 @@ class Verify extends StatelessWidget {
 
     return Future.value();
   }
+
   //Verification UI  
   @override
   Widget build(BuildContext context) {
