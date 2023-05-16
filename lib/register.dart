@@ -68,7 +68,7 @@ class Register extends StatelessWidget
 
                 if( claims != null )
                 {
-                    Bool adminRole = claims['admin'];
+                    bool adminRole = claims['admin'];
 
                     final Map<String, dynamic> requestBody = {
                         'adminToken': adminRole,
