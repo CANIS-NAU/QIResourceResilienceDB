@@ -1,6 +1,0 @@
-2022/09/28-00:07:14.687 5c10 Creating DB C:\Users\baile\AppData\Local\Temp\flutter_tools.28e28e24\flutter_tools_chrome_device.da98f522\Default\IndexedDB\https_googleads.g.doubleclick.net_0.indexeddb.leveldb since it was missing.
-2022/09/28-00:07:14.690 5c10 Reusing MANIFEST C:\Users\baile\AppData\Local\Temp\flutter_tools.28e28e24\flutter_tools_chrome_device.da98f522\Default\IndexedDB\https_googleads.g.doubleclick.net_0.indexeddb.leveldb/MANIFEST-000001
-2022/09/28-00:07:23.506 5c10 Level-0 table #5: started
-2022/09/28-00:07:23.507 5c10 Level-0 table #5: 385 bytes OK
-2022/09/28-00:07:23.508 5c10 Delete type=0 #3
-2022/09/28-00:07:23.508 5c10 Manual compaction at level-0 from (begin) .. (end); will stop at (end)
