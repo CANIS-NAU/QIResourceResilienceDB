@@ -11,7 +11,7 @@ import './home.dart';
 import './verify.dart';
 import './createResource.dart';
 import './loginpage.dart';
-import './dashboard.dart';
+//import './dashboard.dart';
 import './register.dart';
 import './account.dart';
 import './reviewResource.dart';
@@ -47,7 +47,7 @@ class MyApp extends StatelessWidget {
         '/verify': ( context ) => Verify(),
         '/createresource': ( context ) => CreateResource(),
         '/login': ( context ) => Login(),
-        '/dashboard': ( context ) => Dashboard(),
+        //'/dashboard': ( context ) => Dashboard(),
         '/register': ( context ) => Register(),
         '/account': ( context ) => Account(),
         '/reviewresource' :  ( context ) => ReviewResource(resourceData: ModalRoute.of(context)!.settings.arguments as QueryDocumentSnapshot),

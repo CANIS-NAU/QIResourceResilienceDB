@@ -193,9 +193,10 @@ class Register extends StatelessWidget
                         margin: EdgeInsets.only( top: 250, right: windowSize.maxWidth / 3, left: windowSize.maxWidth / 3 ),
                         child:
                             TextField(
-                                obscureText: true,
+                                obscureText: false,
                                 decoration: InputDecoration(
                                 border: OutlineInputBorder(),
+                                hintText: 'manager or admin',
                                 labelText: 'Role' ),
                                 onChanged: ( text )
                                 {

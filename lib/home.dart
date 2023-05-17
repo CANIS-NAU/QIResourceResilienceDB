@@ -453,8 +453,10 @@ class _MyHomePageState extends State<MyHomePage> {
             case "Verify Resource":
               Navigator.pushNamed(context, '/verify');
               break;
+            /*
             case "Dashboard":
               Navigator.pushNamed(context, '/dashboard');
+            */
           }
         },
         title: Text(item),
@@ -478,8 +480,10 @@ class _MyHomePageState extends State<MyHomePage> {
             case "Verify Resource":
               Navigator.pushNamed( context, '/verify' );
               break;
+            /*
             case "Dashboard":
               Navigator.pushNamed( context, '/dashboard' );
+            */
           }
         },
         child: Padding(
@@ -508,7 +512,7 @@ List<String> menuItems()
     _menuItems = <String>[
       'Submit Resource',
       'Verify Resource',
-      'Dashboard',
+      //'Dashboard',
     ];
   }
   return _menuItems;
