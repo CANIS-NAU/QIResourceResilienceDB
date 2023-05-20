@@ -15,13 +15,27 @@ class Login extends StatelessWidget
   String email = "";
   String password = "";
 
-  showAlertDialog( BuildContext context, String statement ) 
+  showAlertDialog( BuildContext context, String statement, User? user ) 
   {
     // set up the button
     Widget okButton = TextButton(
       child: Text( "OK" ),
       onPressed: () {
         Navigator.pop( context );
+      },
+    );
+    
+    Widget verifyButton = TextButton(
+      child: Text( "Send Verify Email" ),
+      onPressed: () {
+        //Send a verification to users email
+        sendEmailVerif( user );
+
+        //Pop context on screen
+        Navigator.pop( context );
+
+        //Show that an email sent to user
+        showAlertDialog( context, "Sent verification to corresponding email. Check spam.", user );
       },
     );
 
@@ -33,6 +47,19 @@ class Login extends StatelessWidget
         okButton,
       ],
     );
+
+    if( statement == "You have not verified your email" )
+    {
+      // set up the AlertDialog
+      alert = AlertDialog(
+        title: Text( "Alert" ),
+        content: Text( statement ),
+        actions: [
+          okButton,
+          verifyButton,
+        ],
+      );
+    }
 
     //show the dialog
     showDialog(
@@ -62,41 +89,68 @@ class Login extends StatelessWidget
 
       if( user != null )
       {
-        IdTokenResult? userToken = await user?.getIdTokenResult();
-
-        Map<String, dynamic>? claims = userToken?.claims;
-
-        if( claims != null )
+        if( user.emailVerified )
         {
-          if( !claims['admin'] && !claims['manager'] )
+          IdTokenResult? userToken = await user?.getIdTokenResult();
+
+          Map<String, dynamic>? claims = userToken?.claims;
+
+          if( claims != null )
           {
-            showAlertDialog( context, "You don't have the authority to login on this platform" );
-            
-            //Technically the user is signed in but we dont want this
-            signoutUser();
+            if( !claims['admin'] && !claims['manager'] )
+            {
+              showAlertDialog( context, "You don't have the authority to login on this platform", user );
+              
+              //Technically the user is signed in but we dont want this
+              signoutUser();
+            }
+            else
+            {
+              Navigator.pushNamedAndRemoveUntil( context, '/home', (route) => false ); 
+            }
           }
           else
           {
-            Navigator.pushNamedAndRemoveUntil( context, '/home', (route) => false ); 
+            showAlertDialog( context, "You don't have the authority to login on this platform", user );
+            signoutUser();
           }
         }
         else
         {
-          showAlertDialog( context, "You don't have the authority to login on this platform" );
-          signoutUser();
+          showAlertDialog( context, "You have not verified your email", user );
         }
       }
     } 
     on FirebaseAuthException catch ( error )
     {
+      switch( error.code )
+      {
+        case 'user-not-found':
+          showAlertDialog( context, "No user with that email exists", null );
+          break;
+        case 'wrong-password': 
+          showAlertDialog( context, "Incorrect password for the user with that email", null );
+          break;
+        case 'invalid-email':
+          showAlertDialog( context, "Invalid email.", null );
+          break;
+        case 'user-disabled':
+          showAlertDialog( context, "User disabled", null );
+          break;
+        default:
+          showAlertDialog( context, "Something went wrong. Check that password is correct.", null );
+          break;
+      }
+    }
+  }
 
-      if ( error.code == 'user-not-found' )
+  Future< void > sendEmailVerif( User? user ) async
+  {
+    if( user != null )
+    {
+      if( !user.emailVerified )
       {
-        showAlertDialog( context, "No user with that email exists" );
-      } 
-      else if( error.code == 'wrong-password' ) 
-      {
-        showAlertDialog( context, "Incorrect password for the user with that email" );
+        await user.sendEmailVerification();
       }
     }
   }
