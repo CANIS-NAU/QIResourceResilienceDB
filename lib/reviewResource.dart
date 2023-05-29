@@ -25,6 +25,10 @@ class _ReviewResourceState extends State<ReviewResource> {
   final CollectionReference resourceCollection = FirebaseFirestore.instance
       .collection('resources');
 
+
+  final CollectionReference inboxRef = FirebaseFirestore.instance
+      .collection('rrdbInbox');
+
   // function to verify a resource
   Future<void> verifyResource(name) {
     return resourceCollection.doc(name.id).update({"verified": true})
@@ -66,6 +70,40 @@ class _ReviewResourceState extends State<ReviewResource> {
     return resourceCollection.doc(resource.id).update({'rubric': rubric}).then(
             (value) => print("Resource successfully updated"))
         .catchError( (error) => print("Error updating document $error"));
+  }
+
+  Future<void> submitToInbox( QueryDocumentSnapshot currentResource, 
+                                                                String status )
+  {
+    String email = "${currentResource['createdBy']}";
+    String resourceName = "${currentResource['name']}";
+    
+    String description = "" +
+      "Cultural Rating: ${ culturalRating } / 5, " +
+      "Experience Rating: ${ experienceRating } / 5, " +
+      "Social Rating: ${ socialRating } / 5, " +
+      "Production Rating: ${ productionRating } / 5, " +
+      "Relevance Rating: ${ relevanceRating } / 5, " +
+      "Consistency Rating: ${ consistencyRating } / 5, " +
+      "Modularity Rating: ${ modularityRating }/ 5, " +
+      "Authenticity Rating: ${ authenticityRating } / 5, " +
+      "Moral Rating: ${ moralRating } / 5, " +
+      "Accuracy Rating: ${ accurateRating } / 5, " +
+      "Trustworthy Rating: ${ trustworthyRating } / 5, " +
+      "Current Rating: ${ currentRating } / 5, " +
+      "Language Rating: ${ languageRating } / 5";
+
+    final inboxInstance = {
+      'email': email,
+      'status': status,
+      'description': description,
+      'submittedName': resourceName
+    };
+
+    return inboxRef.add( inboxInstance ).then( ( value ) => 
+      print("Inbox instance added.") ).catchError( ( error ) => 
+      print("Error creating document $error")
+    );
   }
 
   // initialize all ratings to 0
@@ -646,6 +684,7 @@ class _ReviewResourceState extends State<ReviewResource> {
                   onPressed: () {
                     verifyResource(widget.resourceData);
                     updateResourceRubric(widget.resourceData, userComments, totalScore);
+                    submitToInbox( widget.resourceData, "Approved" );
                   },
                   child: Text(
                     'Verify',
@@ -669,6 +708,7 @@ class _ReviewResourceState extends State<ReviewResource> {
                   ),
                   onPressed: () {
                     deleteResource(widget.resourceData);
+                    submitToInbox( widget.resourceData, "Denied" );
                   },
                   child: Text(
                     'Deny',
