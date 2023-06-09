@@ -155,9 +155,16 @@ class _ReviewResourceState extends State<ReviewResource> {
 
   // builds the radio button ratings
   Widget buildRating(rating, Function(int) updateRating, screenSize) {
-    final ratingItemWidth = screenSize.width > 850
-        ? screenSize.width / 10
-        : screenSize.width / 8;
+
+    double ratingItemWidth;
+
+    if (screenSize.width > 850) {
+      ratingItemWidth = screenSize.width / 10;
+    } else if (screenSize.width > 600) {
+      ratingItemWidth = screenSize.width / 8;
+    } else {
+      ratingItemWidth = screenSize.width / 6;
+    }
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -307,44 +314,42 @@ class _ReviewResourceState extends State<ReviewResource> {
                       ),
                       SizedBox(height: 10.0),
                       // create check boxes to display possible genders
-                      SizedBox(
-                        width: screenSize.width > 850 ? MediaQuery
-                            .of(context).size.width / 1.5
-                            : MediaQuery.of(context).size.width / 1,
-                        child: GridView.count(
-                          crossAxisCount: screenSize.width > 850 ? 2 : 1,
-                          padding: EdgeInsets.only(right: 30.0),
-                          childAspectRatio: 15,
-                          shrinkWrap: true,
-                          children: List<CheckboxListTile>.generate(
-                              genderOptions.length,
-                                  (int index) =>
-                                  CheckboxListTile(
-                                    title: Text(
-                                        genderOptions[index], style: TextStyle(
-                                        fontSize: 14)),
-                                    value: selectedGenders[index],
-                                    onChanged: (value) {
-                                      setState(() {
-                                        selectedGenders[index] = value!;
-                                        if (value) {
-                                          selectedGenderOptions.add(
-                                              genderOptions[index]);
-                                        } else {
-                                          selectedGenderOptions.remove(
-                                              genderOptions[index]);
-                                        }
-                                      });
-                                    },
-                                    controlAffinity: ListTileControlAffinity
-                                        .leading,
-                                    contentPadding: EdgeInsets.zero,
-                                    dense: true,
-                                  )
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: 15),
+                            SizedBox(
+                                width: screenSize.width > 850
+                                    ? screenSize.width / 1.5
+                                    : screenSize.width / 1,
+                                child: GridView.count(
+                                  crossAxisCount:
+                                      screenSize.width > 850 ? 2 : 1,
+                                  padding: EdgeInsets.only(right: 30.0),
+                                  childAspectRatio: screenSize.width > 850 ? 8 : 15,
+                                  shrinkWrap: true,
+                                  children: List<CheckboxListTile>.generate(
+                                      genderOptions.length,
+                                      (int index) => CheckboxListTile(
+                                            title: Text(genderOptions[index],
+                                                style: TextStyle(fontSize: 14)),
+                                            value: selectedGenders[index],
+                                            onChanged: (value) {
+                                              setState(() {
+                                                selectedGenders[index] = value!;
+                                                if (value) {
+                                                  selectedGenderOptions.add(
+                                                      genderOptions[index]);
+                                                } else {
+                                                  selectedGenderOptions.remove(
+                                                      genderOptions[index]);
+                                                }
+                                              });
+                                            },
+                                            controlAffinity:
+                                                ListTileControlAffinity.leading,
+                                            contentPadding: EdgeInsets.zero,
+                                            dense: true,
+                                          )),
+                                ),
+                              ),
+                              SizedBox(height: 15),
 
                       // age balance standard
                       buildStandardTitle(
@@ -362,46 +367,44 @@ class _ReviewResourceState extends State<ReviewResource> {
                       ),
                       SizedBox(height: 10.0),
                       // create check boxes for ages
-                      SizedBox(
-                          width: screenSize.width > 850 ? MediaQuery
-                              .of(context)
-                              .size
-                              .width / 1.1 : MediaQuery
-                              .of(context)
-                              .size
-                              .width / 1,
-                          child: GridView.count(
-                              crossAxisCount: screenSize.width > 850 ? 3 : 1,
-                              padding: EdgeInsets.only(right: 30.0),
-                              childAspectRatio: 15,
-                              shrinkWrap: true,
-                              children: List<CheckboxListTile>.generate(
-                                  ageRanges.length, (index) =>
-                                  CheckboxListTile(
-                                    title: Text(
-                                        ageRanges[index], style: TextStyle(
-                                        fontSize: 14.0)),
-                                    value: selectedAges[index],
-                                    onChanged: (value) {
-                                      setState(() {
-                                        selectedAges[index] = value!;
-                                        if (value) {
-                                          selectedAgeRanges.add(
-                                              ageRanges[index]);
-                                        } else {
-                                          selectedAgeRanges.remove(
-                                              ageRanges[index]);
-                                        }
-                                      });
-                                    },
-                                    controlAffinity: ListTileControlAffinity
-                                        .leading,
-                                    contentPadding: EdgeInsets.zero,
-                                    dense: true,
-                                  ))
-                          )
-                      ),
-                      SizedBox(height: 15),
+                            SizedBox(
+                                  width: screenSize.width > 850
+                                      ? screenSize.width / 1.1
+                                      : screenSize.width / 1,
+                                  child: GridView.count(
+                                      crossAxisCount:
+                                          screenSize.width > 850 ? 3 : 1,
+                                      padding: EdgeInsets.only(right: 30.0),
+                                      childAspectRatio:
+                                          screenSize.width > 850 ? 8 : 15,
+                                      shrinkWrap: true,
+                                      children: List<CheckboxListTile>.generate(
+                                          ageRanges.length,
+                                          (index) => CheckboxListTile(
+                                                title: Text(ageRanges[index],
+                                                    style: TextStyle(
+                                                        fontSize: 14.0)),
+                                                value: selectedAges[index],
+                                                onChanged: (value) {
+                                                  setState(() {
+                                                    selectedAges[index] =
+                                                        value!;
+                                                    if (value) {
+                                                      selectedAgeRanges.add(
+                                                          ageRanges[index]);
+                                                    } else {
+                                                      selectedAgeRanges.remove(
+                                                          ageRanges[index]);
+                                                    }
+                                                  });
+                                                },
+                                                controlAffinity:
+                                                    ListTileControlAffinity
+                                                        .leading,
+                                                contentPadding: EdgeInsets.zero,
+                                                dense: true,
+                                              )))),
+                              SizedBox(height: 15),
                       // experience balance standard
                       buildStandardTitle(
                           "Experience balance",

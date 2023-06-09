@@ -93,6 +93,7 @@ class Verify extends StatelessWidget {
   //Verification UI  
   @override
   Widget build(BuildContext context) {
+    final bool isSmallScreen = MediaQuery.of(context).size.width < 800;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Verify Resource'),
@@ -156,15 +157,17 @@ class Verify extends StatelessWidget {
                                             dense: false,
                                             title: SizedBox(width: index == 0? 95:80,
                                                 child: Text('${data.docs[index]['name']}',
-                                                overflow: TextOverflow.visible,
+                                                overflow: TextOverflow.clip,
                                                 softWrap: true,
-                                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 25))
+                                                maxLines: isSmallScreen ? 2 : null,
+                                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: isSmallScreen ? 18 : 25))
                                             ),
                                             subtitle: SizedBox( width: 80,
                                                 child: Text('Description: ${data.docs[ index ][ 'description' ]}',
-                                                    overflow: TextOverflow.visible,
+                                                    overflow: TextOverflow.ellipsis,
+                                                    maxLines: 2,
                                                     softWrap: true,
-                                                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                                                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: isSmallScreen ? 12 : 14)),
                                             ),
                                             trailing: Row(
                                               mainAxisSize: MainAxisSize.min,

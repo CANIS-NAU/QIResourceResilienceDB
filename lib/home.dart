@@ -60,28 +60,29 @@ class _MyHomePageState extends State<MyHomePage> {
     filterItem(id: 16, name: "36-55", category: "Age Range"),
     filterItem(id: 17, name: "56-75", category: "Age Range"),
     filterItem(id: 18, name: "76+", category: "Age Range"),
+    filterItem(id: 19, name: "All ages", category: "Age Range"),
   ];
 
   // for possibly grouping filter items by category
-  Map<String, List<filterItem>> groupedFilterItems() {
-    return {
-      "Type": [
+  List<MapEntry<String, List<filterItem>>> groupedFilterItems() {
+    return [
+      MapEntry("Type", [
         filterItems[0],
         filterItems[1],
         filterItems[2],
         filterItems[3]
-      ],
-      "Cultural Responsiveness": [
+      ]),
+      MapEntry("Cultural Responsiveness", [
         filterItems[4],
         filterItems[5],
         filterItems[6],
-      ],
-      "Privacy": [
+      ]),
+      MapEntry("Privacy", [
         filterItems[7],
         filterItems[8],
         filterItems[9],
-      ],
-      "Age Range": [
+      ]),
+      MapEntry("Age Range",[
         filterItems[10],
         filterItems[11],
         filterItems[12],
@@ -91,8 +92,9 @@ class _MyHomePageState extends State<MyHomePage> {
         filterItems[16],
         filterItems[17],
         filterItems[18],
-      ],
-    };
+        filterItems[19],
+      ]),
+    ];
   }
 
   //Create a list that is casted dynamic, to hold filter items
@@ -206,7 +208,7 @@ class _MyHomePageState extends State<MyHomePage> {
         reportingType = true;
       }
       // Note:
-      else if( selectedFilterId >= 10 && selectedFilterId <= 18 )
+      else if( selectedFilterId >= 10 && selectedFilterId <= 19 )
       {
         ageFilter = true;
       }
@@ -225,7 +227,10 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build( BuildContext context ) {
     final width = MediaQuery.of(context).size.width;
+    final screenSize = MediaQuery.of(context).size;
     final bool isLargeScreen = width > 800;
+    final bool isSmallScreen = screenSize.width < 800;
+
     setState(() {
       _menuItems = menuItems();
     });
@@ -303,7 +308,9 @@ class _MyHomePageState extends State<MyHomePage> {
                           borderRadius: BorderRadius.all(Radius.circular(18.0)),
                         ),
                         chipDisplay: MultiSelectChipDisplay.none(),
-                        items: filterItems.map( (e) => MultiSelectItem(e, e.name) ).toList(),
+                        items: filterItems
+                            .map((e) => MultiSelectItem(e, e.name))
+                            .toList(),
                         listType: MultiSelectListType.CHIP,
                         onConfirm: (values) {
                           setState(() {
@@ -311,6 +318,7 @@ class _MyHomePageState extends State<MyHomePage> {
                             resources = filter( selectedFilter );
                           });
                         },
+
                       ),
                     ),
                     MultiSelectChipDisplay(
@@ -357,6 +365,28 @@ class _MyHomePageState extends State<MyHomePage> {
                               shrinkWrap: true,
                               itemCount: data.size,
                               itemBuilder: (context, index) {
+
+                                // get resource information for pop-up
+                                String resourceInfo = 'Description: ${data.docs[ index ][ 'description']}\n\n'
+                                    'Type: ${data.docs[ index ][ 'resourceType' ]}\n\n';
+                                if(data.docs[index]['resourceType'] == "Hotline" ||
+                                   data.docs[index]['resourceType'] == "In Person")
+                                  {
+                                    resourceInfo += 'Phone Number: ${data.docs[index]['phoneNumber']}\n\n';
+                                  }
+                                if(data.docs[index]['resourceType'] == "In Person" &&
+                                    data.docs[index]['address'] != null)
+                                {
+                                  resourceInfo += 'Address: ${data.docs[index]['address']} ${data.docs[index]['building']!} '
+                                      '${data.docs[index]['city']}, '
+                                      '${data.docs[index]['state']}, '
+                                      '${data.docs[index]['zipcode']}\n\n';
+                                }
+                                resourceInfo += 'URL: ${data.docs[ index ][ 'location' ]}\n\n'
+                                'Privacy: ${data.docs[ index ][ 'privacy' ]}\n\n'
+                                'Cultural Responsiveness: ${data.docs[ index ][ 'culturalResponsivness' ]} \n\n';
+                                //'Cost: ${data.docs[index]['cost']}\n';
+
                                 return Container(
                                   height: 100,
                                   child: Card(
@@ -371,16 +401,20 @@ class _MyHomePageState extends State<MyHomePage> {
                                         vertical: 10.0,
                                         horizontal: 30.0),
                                         dense: false,
-                                        title: SizedBox( width: index == 0 ? 95 : 80,
+                                        title: SizedBox(
+                                            width: index == 0 ? 95 : 80,
                                         child: Text('${data.docs[ index ][ 'name' ]}',
+                                        textAlign: TextAlign.left,
                                         overflow: TextOverflow.visible,
                                         softWrap: true,
-                                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 25),)),
+                                        maxLines: isSmallScreen ? 2 : null,
+                                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: isSmallScreen? 18: 25),)),
                                         subtitle: SizedBox( width: 80,
-                                    child: Text('Description: ${data.docs[ index ][ 'description' ]}',
-                                        overflow: TextOverflow.visible,
-                                        softWrap: true,
-                                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14))),
+                                    child: Text('${data.docs[ index ][ 'description' ]}',
+                                        overflow: TextOverflow.ellipsis,
+                                        maxLines: 2,
+                                        // softWrap: true,
+                                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: isSmallScreen? 12: 14))),
                                       trailing: GestureDetector(
                                         child: Icon(
                                           Icons.arrow_forward_rounded,
@@ -395,13 +429,9 @@ class _MyHomePageState extends State<MyHomePage> {
                                                     style: TextStyle(fontSize: 25.0, fontWeight: FontWeight.bold)),
                                                 content: Container(
                                                   child: SizedBox(
-                                                    // include cost when there is data for it
+                                                    // display resource information in pop-up
                                                     child: Text(
-                                                        'Type: ${data.docs[ index ][ 'resourceType' ]}\n\n'
-                                                        'Privacy: ${data.docs[ index ][ 'privacy' ]}\n\n'
-                                                        'Cultural Responsiveness: ${data.docs[ index ][ 'culturalResponsivness' ]} \n\n'
-                                                        'Location: ${data.docs[ index ][ 'location' ]}\n\n'
-                                                        'Description: ${data.docs[ index ][ 'description']}',
+                                                        resourceInfo,
                                                         overflow: TextOverflow.visible, softWrap: true,
                                                         style: TextStyle(fontSize: 16.0)),
                                                   ),

@@ -1,3 +1,12 @@
+/*
+This page allows users to submit a resource for review by
+entering resource information such as:
+name, description, link, address (if in person),
+phone number (if hotline or in person), type, privacy,
+cost, cultural responsiveness, and age range.
+*/
+
+
 //Import packages
 import 'package:flutter/material.dart';
 import 'firebase_options.dart';
@@ -8,6 +17,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 final now = DateTime.now();
 final date = "${now.month}/${now.day}/${now.year}";
+
 //List of ages for dropdown
 const List<String> ageItems = [
     "All ages",
@@ -70,7 +80,7 @@ const List<String> resourceTypeOptions = [
 
 // list of privacy options
 const List<String> resourcePrivacy = <String>[
-  'HIPAA Compliant',
+  'HIPAA \nCompliant',
   'Anonymous',
   'Mandatory Reporting',
   'None Stated',
@@ -134,7 +144,7 @@ class createResourceState extends State<CreateResource> {
     {
       CollectionReference resourceCollection = FirebaseFirestore.instance.collection('resources');
 
-      String resourceType = "", privacyType = "", culturalResponse = "";
+      String resourceType = "", culturalResponse = "";
       String costType = "";
 
       String? userEmail = user.email;
@@ -223,12 +233,16 @@ class createResourceState extends State<CreateResource> {
   }
 
   // widget that creates the input field for resource name
-  Widget buildNameField(windowSize) {
+  Widget buildNameField(windowSize, bool isSmallScreen) {
     return Container(
-      margin: EdgeInsets.only(
+      margin: isSmallScreen
+      ? EdgeInsets.symmetric(
+          horizontal: windowSize.maxWidth / 20,
+          vertical: windowSize.maxHeight / 20)
+      : EdgeInsets.only(
           top: windowSize.maxHeight / 50,
-          right: windowSize.maxWidth / 2,
-          left: windowSize.maxWidth / 10),
+          right: windowSize.maxWidth / 1.7,
+          left: windowSize.maxWidth / 20),
       child: TextField(
         obscureText: false,
         decoration: InputDecoration(
@@ -243,12 +257,16 @@ class createResourceState extends State<CreateResource> {
   }
 
   // widget that creates the input field for resource link
-  Widget buildLinkField(windowSize) {
+  Widget buildLinkField(windowSize, bool isSmallScreen) {
     return Container(
-      margin: EdgeInsets.only(
+      margin: isSmallScreen
+          ? EdgeInsets.symmetric(
+          horizontal: windowSize.maxWidth / 20,
+          vertical: windowSize.maxHeight / 20 + 75)
+      : EdgeInsets.only(
           top: windowSize.maxHeight / 50 + 75,
-          right: windowSize.maxWidth / 2,
-          left: windowSize.maxWidth / 10 ),
+          right: windowSize.maxWidth / 1.7,
+          left: windowSize.maxWidth / 20 ),
       child: TextField(
         obscureText: false,
         decoration: InputDecoration(
@@ -263,15 +281,27 @@ class createResourceState extends State<CreateResource> {
   }
 
   // widget that creates the input field for in person address (line one)
-  Widget buildAddressField(windowSize){
+  Widget buildAddressField(windowSize, bool isSmallScreen) {
     return Container(
-      margin: EdgeInsets.only(
-          right: windowSize.maxWidth / 2,
-          left: windowSize.maxWidth / 10,
-          top: isInPersonSelected
-              ? windowSize.maxHeight / 50 + 150
-              : windowSize.maxWidth / 50 + 50
-      ),
+      margin: isInPersonSelected
+          ? (isSmallScreen
+              ? EdgeInsets.symmetric(
+                  horizontal: windowSize.maxWidth / 20,
+                  vertical: windowSize.maxHeight / 20 + 150,
+                )
+              : EdgeInsets.only(
+                  right: windowSize.maxWidth / 1.7,
+                  left: windowSize.maxWidth / 20,
+                  top: windowSize.maxHeight / 50 + 150))
+          : (isSmallScreen
+              ? EdgeInsets.symmetric(
+                  horizontal: windowSize.maxWidth / 20,
+                  vertical: windowSize.maxHeight / 20,
+                )
+              : EdgeInsets.only(
+                  right: windowSize.maxWidth / 1.7,
+                  left: windowSize.maxWidth / 20,
+                  top: windowSize.maxWidth / 50 + 50)),
       child: Visibility(
         visible: isInPersonSelected,
         child: TextField(
@@ -289,15 +319,27 @@ class createResourceState extends State<CreateResource> {
   }
 
   // widget that creates the input field for in person address (apt num, bldg num)
-  Widget buildBldgNumField(windowSize){
+  Widget buildBldgNumField(windowSize, bool isSmallScreen) {
     return Container(
-      margin: EdgeInsets.only(
-          right: windowSize.maxWidth / 2,
-          left: windowSize.maxWidth / 10,
-          top: isInPersonSelected
-              ? windowSize.maxHeight / 50 + 210
-              : windowSize.maxWidth / 50 + 50
-      ),
+      margin: isInPersonSelected
+          ? (isSmallScreen
+              ? EdgeInsets.symmetric(
+                  horizontal: windowSize.maxWidth / 20,
+                  vertical: windowSize.maxHeight / 20 + 210)
+              : EdgeInsets.only(
+                  right: windowSize.maxWidth / 1.7,
+                  left: windowSize.maxWidth / 20,
+                  top: windowSize.maxHeight / 50 + 210))
+          : (isSmallScreen
+              ? EdgeInsets.symmetric(
+                  horizontal: windowSize.maxWidth / 20,
+                  vertical: windowSize.maxHeight / 20,
+                )
+              : EdgeInsets.only(
+                  right: windowSize.maxWidth / 1.7,
+                  left: windowSize.maxWidth / 20,
+                  top: windowSize.maxWidth / 50 + 50,
+                )),
       child: Visibility(
         visible: isInPersonSelected,
         child: TextField(
@@ -315,15 +357,27 @@ class createResourceState extends State<CreateResource> {
   }
 
   // widget that creates the inout field for in person address (city)
-  Widget buildCityField(windowSize){
+  Widget buildCityField(windowSize, bool isSmallScreen) {
     return Container(
-      margin: EdgeInsets.only(
-          right: windowSize.maxWidth / 2,
-          left: windowSize.maxWidth / 10,
-          top: isInPersonSelected
-              ? windowSize.maxHeight / 50 + 270
-              : windowSize.maxWidth / 50 + 50
-      ),
+      margin: isInPersonSelected
+          ? (isSmallScreen
+              ? EdgeInsets.symmetric(
+                  horizontal: windowSize.maxWidth / 20,
+                  vertical: windowSize.maxHeight / 20 + 270)
+              : EdgeInsets.only(
+                  right: windowSize.maxWidth / 1.7,
+                  left: windowSize.maxWidth / 20,
+                  top: windowSize.maxHeight / 50 + 270))
+          : (isSmallScreen
+              ? EdgeInsets.symmetric(
+                  horizontal: windowSize.maxWidth / 20,
+                  vertical: windowSize.maxHeight / 20,
+                )
+              : EdgeInsets.only(
+                  right: windowSize.maxWidth / 1.7,
+                  left: windowSize.maxWidth / 20,
+                  top: windowSize.maxWidth / 50 + 50,
+                )),
       child: Visibility(
         visible: isInPersonSelected,
         child: TextField(
@@ -341,16 +395,28 @@ class createResourceState extends State<CreateResource> {
   }
 
   // widget that creates the input field for in person address (state)
-  Widget buildStateField(windowSize){
+  Widget buildStateField(windowSize, bool isSmallScreen) {
     return Container(
       width: windowSize.maxWidth / 6,
-      margin: EdgeInsets.only(
-          right: windowSize.maxWidth / 2,
-          left: windowSize.maxWidth / 10,
-          top: isInPersonSelected
-              ? windowSize.maxHeight / 50 + 330
-              : windowSize.maxWidth / 50 + 50
-      ),
+      margin: isInPersonSelected
+          ? (isSmallScreen
+              ? EdgeInsets.symmetric(
+                  horizontal: windowSize.maxWidth / 20,
+                  vertical: windowSize.maxHeight / 20 + 330)
+              : EdgeInsets.only(
+                  right: windowSize.maxWidth / 1.7,
+                  left: windowSize.maxWidth / 20,
+                  top: windowSize.maxHeight / 50 + 330))
+          : (isSmallScreen
+              ? EdgeInsets.symmetric(
+                  horizontal: windowSize.maxWidth / 20,
+                  vertical: windowSize.maxHeight / 20,
+                )
+              : EdgeInsets.only(
+                  right: windowSize.maxWidth / 1.7,
+                  left: windowSize.maxWidth / 20,
+                  top: windowSize.maxWidth / 50 + 50,
+                )),
       child: Visibility(
         visible: isInPersonSelected,
         child: TextField(
@@ -368,15 +434,30 @@ class createResourceState extends State<CreateResource> {
   }
 
   // widget that creates the input field for in person address (zipcode)
-  Widget buildZipCodeField(windowSize){
+  Widget buildZipCodeField(windowSize, bool isSmallScreen) {
     return Container(
       width: windowSize.maxWidth / 6,
-      margin: EdgeInsets.only(
-          left: windowSize.maxWidth / 3,
-          top: isInPersonSelected
-              ? windowSize.maxHeight / 50 + 330
-              : windowSize.maxWidth / 50 + 50
-      ),
+      margin: isInPersonSelected
+          ? (isSmallScreen
+              ? EdgeInsets.symmetric(
+                  horizontal: windowSize.maxWidth / 20 + 150,
+                  vertical: windowSize.maxHeight / 20 + 330,
+                )
+              : EdgeInsets.only(
+                  right: windowSize.maxWidth / 1.7,
+                  left: windowSize.maxWidth / 4.10,
+                  top: windowSize.maxHeight / 50 + 330,
+                ))
+          : (isSmallScreen
+              ? EdgeInsets.symmetric(
+                  horizontal: windowSize.maxWidth / 20,
+                  vertical: windowSize.maxHeight / 20,
+                )
+              : EdgeInsets.only(
+                  right: windowSize.maxWidth / 1.7,
+                  left: windowSize.maxWidth / 20,
+                  top: windowSize.maxWidth / 50 + 50,
+                )),
       child: Visibility(
         visible: isInPersonSelected,
         child: TextField(
@@ -392,16 +473,35 @@ class createResourceState extends State<CreateResource> {
       ),
     );
   }
+
   // widget that creates the input field for phone number for hotline and in-person
-  Widget buildPhoneNumField(windowSize){
+  Widget buildPhoneNumField(windowSize, bool isSmallScreen) {
     return Container(
-      margin: EdgeInsets.only(
-        right: windowSize.maxWidth / 2,
-        left: windowSize.maxWidth / 10,
-        top: isInPersonSelected
-            ? windowSize.maxHeight / 50 + 405
-            : windowSize.maxHeight / 50 + 150,
-      ),
+      margin: isHotlineSelected || isInPersonSelected
+          ? (isSmallScreen
+              ? EdgeInsets.symmetric(
+                  horizontal: windowSize.maxWidth / 20,
+                  vertical: isHotlineSelected
+                      ? windowSize.maxHeight / 20 + 150
+                      : windowSize.maxHeight / 20 + 405,
+                )
+              : EdgeInsets.only(
+                  right: windowSize.maxWidth / 1.7,
+                  left: windowSize.maxWidth / 20,
+                  top: isInPersonSelected
+                      ? windowSize.maxHeight / 50 + 405
+                      : windowSize.maxHeight / 50 + 150,
+                ))
+          : (isSmallScreen
+              ? EdgeInsets.symmetric(
+                  horizontal: windowSize.maxWidth / 20,
+                  vertical: windowSize.maxHeight / 20,
+                )
+              : EdgeInsets.only(
+                  right: windowSize.maxWidth / 1.7,
+                  left: windowSize.maxWidth / 20,
+                  top: windowSize.maxHeight / 50 + 150,
+                )),
       child: Visibility(
         visible: isHotlineSelected || isInPersonSelected,
         child: TextField(
@@ -419,367 +519,628 @@ class createResourceState extends State<CreateResource> {
   }
 
   // widget that creates the input field for resource description
-  Widget buildDescriptionField(windowSize){
+  Widget buildDescriptionField(windowSize, bool isSmallScreen) {
     return Container(
-      margin: EdgeInsets.only(
-        right: windowSize.maxWidth / 2,
-        left: windowSize.maxWidth / 10,
-        top: isHotlineSelected
-            ? windowSize.maxHeight / 50 + 225
-            : (isInPersonSelected
-            ? windowSize.maxHeight / 50 + 480
-            : windowSize.maxHeight / 50 + 150),
-      ),
-      child:
-      TextField(
+      margin: isHotlineSelected
+          ? (isSmallScreen
+              ? EdgeInsets.symmetric(
+                  horizontal: windowSize.maxWidth / 20,
+                  vertical: windowSize.maxHeight / 20 + 225,
+                )
+              : EdgeInsets.only(
+                  right: windowSize.maxWidth / 1.7,
+                  left: windowSize.maxWidth / 20,
+                  top: windowSize.maxHeight / 50 + 225,
+                ))
+          : (isInPersonSelected
+              ? (isSmallScreen
+                  ? EdgeInsets.symmetric(
+                      horizontal: windowSize.maxWidth / 20,
+                      vertical: windowSize.maxHeight / 20 + 480,
+                    )
+                  : EdgeInsets.only(
+                      right: windowSize.maxWidth / 1.7,
+                      left: windowSize.maxWidth / 20,
+                      top: windowSize.maxHeight / 50 + 480,
+                    ))
+              : (isSmallScreen
+                  ? EdgeInsets.symmetric(
+                      horizontal: windowSize.maxWidth / 20,
+                      vertical: windowSize.maxHeight / 20 + 150,
+                    )
+                  : EdgeInsets.only(
+                      right: windowSize.maxWidth / 1.7,
+                      left: windowSize.maxWidth / 20,
+                      top: windowSize.maxHeight / 50 + 150,
+                    ))),
+      child: TextField(
         obscureText: false,
         decoration: InputDecoration(
           border: OutlineInputBorder(),
           labelText: 'Description of the Resource',
         ),
-        onChanged: ( text ) {
+        onChanged: (text) {
           resourceDescription = text;
         },
       ),
     );
   }
 
-  //Create resource UI
+  // widget that builds all the text input fields
+  Widget buildInputFields (windowSize, bool isSmallScreen)
+  {
+    return Stack (
+      children:[
+        // container for resource name input
+        buildNameField(windowSize, isSmallScreen),
+        // container for the resource link input
+        buildLinkField(windowSize, isSmallScreen),
+        // container for in-person address input
+        buildAddressField(windowSize, isSmallScreen),
+        // use a container for in-person building input
+        buildBldgNumField(windowSize, isSmallScreen),
+        // use a container for in-person city input
+        buildCityField(windowSize, isSmallScreen),
+        // container for in-person state input
+        buildStateField(windowSize, isSmallScreen),
+        // container for in-person zipcode input
+        buildZipCodeField(windowSize, isSmallScreen),
+        // input box for phone number for in person or hotline
+        buildPhoneNumField(windowSize, isSmallScreen),
+        // container for resource description
+        buildDescriptionField(windowSize, isSmallScreen),
+      ]
+    );
+  }
+
+  // widget for building the input box for tags
+  Widget buildTagsInput(windowSize, topDivisor, rightDivisor) {
+    return // container to display tags input field
+        new Container(
+      margin: EdgeInsets.only(
+        right: windowSize.maxWidth / rightDivisor,
+        left: windowSize.maxWidth / 20,
+        top: isHotlineSelected
+            ? windowSize.maxHeight / topDivisor + 300
+            : (isInPersonSelected
+                ? windowSize.maxHeight / topDivisor + 555
+                : windowSize.maxHeight / topDivisor + 225),
+      ),
+      child: TextField(
+        obscureText: false,
+        controller: _controller,
+        decoration: InputDecoration(
+          border: OutlineInputBorder(),
+          labelText: 'Please provide tags for the resource',
+        ),
+        onSubmitted: (text) {
+          if (text != "") {
+            setState(() {
+              _controller.clear();
+              selectedTags.add(text);
+            });
+          }
+        },
+      ),
+    );
+  }
+
+  // widget for displaying active tags
+  Widget buildActiveTagsDisplay(windowSize, topDivisor, rightDivisor) {
+    return new Container(
+      margin: EdgeInsets.only(
+        right: windowSize.maxWidth / rightDivisor,
+        left: windowSize.maxWidth / 20,
+        top: isHotlineSelected
+            ? windowSize.maxHeight / topDivisor + 355
+            : (isInPersonSelected
+                ? windowSize.maxHeight / topDivisor + 610
+                : windowSize.maxHeight / topDivisor + 280),
+      ),
+      child: new Stack(
+        children: [
+          Text(
+            "Your active tags. Click to remove",
+            style: TextStyle(fontSize: 15.0),
+          ),
+          Container(
+            child: Wrap(
+              spacing: 5.0,
+              children: selectedTags.map((tag) {
+                return Padding(
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 4.0, vertical: 20.0),
+                  child: InputChip(
+                    label: Text(tag),
+                    backgroundColor: Colors.blue[200],
+                    onDeleted: () {
+                      setState(() {
+                        selectedTags.remove(tag);
+                      });
+                    },
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildResourceTypeTitle(windowSize, isSmallScreen){
+    // resource type title
+    return Padding(
+      padding: EdgeInsets.only(
+          top: isSmallScreen ?
+          isHotlineSelected
+              ? windowSize.maxHeight / 20 + 415
+              : (isInPersonSelected
+              ? windowSize.maxHeight / 20 + 670
+              : windowSize.maxHeight / 20 + 340)
+          : windowSize.maxHeight / 50,
+          left: isSmallScreen ? windowSize.maxWidth / 20 : windowSize.maxWidth / 1.9,
+          right: isSmallScreen ? windowSize.maxWidth / 20 : 0),
+      child: Text(
+        "Resource Type",
+        style: TextStyle(fontSize: 20.0),
+      ),
+    );
+  }
+
+  // widget for building the resource type selection (radio buttons)
+  Widget buildResourceTypeOptions(windowSize, isSmallScreen, leftDivisor) {
+    //  container of radio buttons for resource type
+    return
+      Container(
+      margin: EdgeInsets.only(
+          top: isSmallScreen
+              ? isHotlineSelected
+                  ? windowSize.maxHeight / 20 + 440
+                  : (isInPersonSelected
+                      ? windowSize.maxHeight / 20 + 695
+                      : windowSize.maxHeight / 20 + 365)
+              : windowSize.maxHeight / 50 + 50,
+          left: windowSize.maxWidth / leftDivisor),
+      child: SizedBox(
+        child: ListView(
+          padding: EdgeInsets.only(right: 30.0),
+          scrollDirection: Axis.vertical,
+          shrinkWrap: true,
+          children: [
+            Column(
+              children: resourceTypeOptions.map((option) {
+                int index = resourceTypeOptions.indexOf(option);
+                return ListTile(
+                  dense: true,
+                  leading: Radio(
+                    value: index,
+                    groupValue: resourceTypeIndex,
+                    onChanged: (value) {
+                      setState(() {
+                        resourceTypeIndex = value!;
+                        isHotlineSelected =
+                            (resourceTypeOptions[value] == "Hotline");
+                        isInPersonSelected =
+                            (resourceTypeOptions[value] == "In Person");
+                      });
+                    },
+                  ),
+                  title: Text(
+                    option,
+                    style: TextStyle(fontSize: 16),
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget buildPrivacyTitle(windowSize, isSmallScreen)
+  {
+    return Padding(
+      padding: EdgeInsets.only(
+          top: isSmallScreen ?
+          isHotlineSelected
+          ? windowSize.maxHeight / 20 + 415
+              : (isInPersonSelected
+          ? windowSize.maxHeight / 20 + 670
+              : windowSize.maxHeight / 20 + 340)
+          : windowSize.maxHeight / 50,
+          right: isSmallScreen ? windowSize.maxWidth / 20 : windowSize.maxWidth / 15,
+          left: isSmallScreen ? windowSize.maxWidth / 1.8 : windowSize.maxWidth / 1.27),
+      child: Text(
+        "Privacy Protections",
+        style: TextStyle(fontSize: 20.0),
+      ),
+    );
+  }
+
+  // widget for building the privacy option selection (check boxes)
+  Widget buildPrivacyOptions(windowSize, isSmallScreen, leftDivisor) {
+    return Container(
+      margin: EdgeInsets.only(
+          top: isSmallScreen
+              ? isHotlineSelected
+                  ? windowSize.maxHeight / 20 + 440
+                  : (isInPersonSelected
+                      ? windowSize.maxHeight / 20 + 695
+                      : windowSize.maxHeight / 20 + 365)
+              : windowSize.maxHeight / 50 + 50,
+          left: windowSize.maxWidth / leftDivisor),
+      child: SizedBox(
+        child: ListView(
+          padding: EdgeInsets.only(right: 30.0),
+          shrinkWrap: true,
+          children: [
+            Column(
+              children: List<CheckboxListTile>.generate(
+                  _selectedPrivacy.length,
+                  (int index) => CheckboxListTile(
+                        title: Text(resourcePrivacy[index],
+                            style: TextStyle(fontSize: 16)),
+                        value: _selectedPrivacy[index],
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedPrivacy[index] = value!;
+                            if (value) {
+                              selectedPrivacyOptions
+                                  .add(resourcePrivacy[index]);
+                            } else {
+                              selectedPrivacyOptions
+                                  .remove(resourcePrivacy[index]);
+                            }
+                          });
+                        },
+                        controlAffinity: ListTileControlAffinity.leading,
+                        dense: true,
+                      )),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget buildCostTitle(windowSize, isSmallScreen)
+  {
+    return Center(
+      child: Container(
+        child: Padding(
+          padding: EdgeInsets.only(
+              top: isSmallScreen ?
+              isHotlineSelected
+              ? windowSize.maxHeight / 20 + 640
+                  : (isInPersonSelected
+              ? windowSize.maxHeight / 20 + 895
+                  : windowSize.maxHeight / 20 + 565)
+              : windowSize.maxHeight / 50 + 250,
+              left: isSmallScreen ? 0 : windowSize.maxWidth / 2.5),
+          child: Text(
+            "Resource Cost",
+            style: TextStyle(fontSize: 20.0),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // widget for building the resource cost option selection ( radio buttons)
+  Widget buildCostOptions(windowSize, isSmallScreen, leftDivisor, leftPadding) {
+    return Center(
+      child: new Container(
+        margin: EdgeInsets.only(
+            top: isSmallScreen
+                ? isHotlineSelected
+                    ? windowSize.maxHeight / 20 + 665
+                    : (isInPersonSelected
+                        ? windowSize.maxHeight / 20 + 920
+                        : windowSize.maxHeight / 20 + 590)
+                : windowSize.maxHeight / 50 + 275,
+            left: windowSize.maxWidth / leftDivisor),
+        child: SizedBox(
+          child: GridView.count(
+            crossAxisCount: 2,
+            // number of columns
+            padding: EdgeInsets.only(right: 40.0, left: leftPadding),
+            childAspectRatio: !isSmallScreen
+                ? windowSize.maxWidth >= 1200
+                    ? 8
+                    : (windowSize.maxWidth >= 900 &&
+                            windowSize.maxWidth <= 1000)
+                        ? 5
+                        : 6
+                : windowSize.maxWidth > 600
+                    ? 8
+                    : 5.5,
+            shrinkWrap: true,
+            children: resourceCostOptions.getRange(0, 4).map((option) {
+              int index = resourceCostOptions.indexOf(option);
+              return ListTile(
+                dense: true,
+                leading: Radio(
+                  value: index,
+                  groupValue: resourceCost,
+                  onChanged: (value) {
+                    setState(() {
+                      resourceCost = value!;
+                    });
+                  },
+                ),
+                title: Text(option, style: TextStyle(fontSize: 16)),
+              );
+            }).toList(),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // widget to display cultural responsiveness title
+  Widget buildCulturalResponTitle (windowSize, isSmallScreen)
+  {
+    return Center(
+      child: Container(
+        child: Padding(
+          padding: EdgeInsets.only(
+              top: isSmallScreen ?
+              isHotlineSelected
+              ? windowSize.maxHeight / 20 + 780
+                  : (isInPersonSelected
+              ? windowSize.maxHeight / 20 + 1045
+                  : windowSize.maxHeight / 20 + 715)
+              : windowSize.maxHeight / 50 + 400,
+              left: isSmallScreen ? 0 : windowSize.maxWidth / 2.5),
+          child: Text(
+            "Cultural Responsiveness",
+            style: TextStyle(fontSize: 20.0),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // widget for building the cultural responsiveness slider
+  Widget buildCulturalResponSlider(windowSize, isSmallScreen) {
+    return Center(
+      child: new Container(
+        margin: EdgeInsets.only(
+            top: isSmallScreen
+                ? isHotlineSelected
+                    ? windowSize.maxHeight / 20 + 805
+                    : (isInPersonSelected
+                        ? windowSize.maxHeight / 20 + 1070
+                        : windowSize.maxHeight / 20 + 740)
+                : windowSize.maxHeight / 50 + 435,
+            left: isSmallScreen ? 0 : windowSize.maxWidth / 2.5),
+        height: 50,
+        width: windowSize.maxWidth / 50 + 450,
+        child: Center(
+          child: Stack(
+            children: [
+              SliderTheme(
+                data: SliderTheme.of(context).copyWith(
+                  valueIndicatorColor: Colors.blue,
+                  valueIndicatorTextStyle: TextStyle(color: Colors.white),
+                ),
+                child: Slider(
+                  value: _currentSliderValue,
+                  max: 5,
+                  divisions: 5,
+                  label: _currentSliderValue.round().toString(),
+                  onChanged: (double value) {
+                    setState(() {
+                      _currentSliderValue = value;
+                    });
+                  },
+                ),
+              ),
+              // anchor descriptions for slider
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Tooltip(
+                      message:
+                          "Not culturally specific to Hopi or Indigenous communities",
+                      child: Text("Low ")),
+                  Spacer(),
+                  Tooltip(
+                      message: "Specific resource for Hopi community",
+                      child: Text("High")),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // widget for displaying the age range title
+  Widget buildAgeRangeTitle(windowSize, isSmallScreen) {
+    return Center(
+      child: Container(
+        child: Padding(
+          padding: EdgeInsets.only(
+              top: isSmallScreen ?
+              isHotlineSelected
+              ? windowSize.maxHeight / 20 + 880
+                  : (isInPersonSelected
+              ? windowSize.maxHeight / 20 + 1145
+                  : windowSize.maxHeight / 20 + 815)
+                  : windowSize.maxHeight / 50 + 500,
+              left: isSmallScreen ? 0 : windowSize.maxWidth / 2.5),
+          child: Text(
+            "Age Range of Resource",
+            style: TextStyle(fontSize: 20.0),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // widget for building the age range selector
+  Widget buildAgeSelector(windowSize, isSmallScreen) {
+    return Center(
+      child: new Container(
+        margin: EdgeInsets.only(
+            top: isSmallScreen
+                ? isHotlineSelected
+                    ? windowSize.maxHeight / 20 + 905
+                    : (isInPersonSelected
+                        ? windowSize.maxHeight / 20 + 1170
+                        : windowSize.maxHeight / 20 + 840)
+                : windowSize.maxHeight / 50 + 525,
+            left: isSmallScreen ? 0 : windowSize.maxWidth / 2.5),
+        child: DropdownButton(
+          value: _currentDropDownValue,
+          onChanged: (String? newValue) {
+            setState(() {
+              _currentDropDownValue = newValue!;
+            });
+          },
+          items: ageItems.map<DropdownMenuItem<String>>((String value) {
+            return DropdownMenuItem<String>(
+              value: value,
+              child: Text(value),
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+
+  // widget for building the submit button to submit the resource for verification
+  Widget buildSubmitButton(
+      windowSize, int divisor, bool isSmallScreen, int height) {
+    return Center(
+      child: new Container(
+          margin: EdgeInsets.only(
+            top: windowSize.maxHeight / divisor + height,
+          ),
+          child: TextButton(
+            style: ButtonStyle(
+                minimumSize: MaterialStateProperty.all<Size>(Size(150, 45)),
+                foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
+                backgroundColor: MaterialStateProperty.all<Color>(Colors.blue),
+                shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                    RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18.0),
+                        side: BorderSide(color: Colors.blue)))),
+            onPressed: () {
+              submitResource(
+                  resourceName, resourceLocation, resourceDescription, context);
+            },
+            child: Text('Submit Resource'),
+          )),
+    );
+  }
+
+  // widget to build screen layout if the screen is large
+  Widget buildLargeScreenLayout(windowSize, isSmallScreen) {
+    return SingleChildScrollView(
+      child: Container(
+          child: new Stack(children: [
+        // displays the resource text input fields
+        buildInputFields(windowSize, isSmallScreen),
+        // displays the tag input field
+        buildTagsInput(windowSize, 50, 1.7),
+        // displays the active tags
+        buildActiveTagsDisplay(windowSize, 50, 1.7),
+        // resource type title
+        buildResourceTypeTitle(windowSize, isSmallScreen),
+        // resource type selection
+        buildResourceTypeOptions(windowSize, isSmallScreen, 1.95),
+        SizedBox(height: 20),
+        // privacy protection title
+        buildPrivacyTitle(windowSize, isSmallScreen),
+        // container of checkboxes for privacy options
+        buildPrivacyOptions(windowSize, isSmallScreen, 1.3),
+        SizedBox(height: 20),
+        // cost of resource title
+        buildCostTitle(windowSize, isSmallScreen),
+        // list of cost radio buttons
+        buildCostOptions(windowSize, isSmallScreen, 1.9, 0),
+        SizedBox(height: 20),
+        // cultural responsiveness title
+        buildCulturalResponTitle(windowSize, isSmallScreen),
+        // cultural responsiveness slider with anchors
+        buildCulturalResponSlider(windowSize, isSmallScreen),
+        // age range title
+        buildAgeRangeTitle(windowSize, isSmallScreen),
+        // age selection drop down
+        buildAgeSelector(windowSize, isSmallScreen),
+
+        // create the submit button and display relative to screen size
+        buildSubmitButton(windowSize, 50, isSmallScreen, 650),
+      ])),
+    );
+  }
+
+  // widget to build the screen layout if the screen is small
+  Widget buildSmallScreenLayout(windowSize, isSmallScreen) {
+    return SingleChildScrollView(
+        child: Container(
+            child: Stack(children: [
+      // display all text input fields for a resource
+      buildInputFields(windowSize, isSmallScreen),
+      // display the tag input field
+      buildTagsInput(windowSize, 20, 20),
+      // display active tags
+      buildActiveTagsDisplay(windowSize, 20, 20),
+      // resource type title
+      buildResourceTypeTitle(windowSize, isSmallScreen),
+      //  container of radio buttons for resource type
+      buildResourceTypeOptions(windowSize, isSmallScreen, 30),
+      SizedBox(height: 20),
+      buildPrivacyTitle(windowSize, isSmallScreen),
+      // container of checkboxes for privacy options
+      buildPrivacyOptions(windowSize, isSmallScreen, 1.8),
+      SizedBox(height: 20),
+      // cost of resource title
+      buildCostTitle(windowSize, isSmallScreen),
+      // list of cost radio buttons
+      buildCostOptions(windowSize, isSmallScreen, 15, 40),
+      SizedBox(height: 20),
+      // cultural responsiveness title
+      buildCulturalResponTitle(windowSize, isSmallScreen),
+      // cultural responsiveness slider with anchors
+      buildCulturalResponSlider(windowSize, isSmallScreen),
+      // age range title
+      buildAgeRangeTitle(windowSize, isSmallScreen),
+      // age selection drop down
+      buildAgeSelector(windowSize, isSmallScreen),
+
+      // create the submit button and display relative to screen size
+      buildSubmitButton(windowSize, 20, isSmallScreen,
+          isHotlineSelected ? 980 : (isInPersonSelected ? 1245 : 915)),
+    ])));
+  }
+
+  //Create resource UI depending on screen size
   @override
-  Widget build( BuildContext context ) {
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Submit Resource'),
       ),
-      body: LayoutBuilder( builder: ( context, windowSize ) {
-        return Container(
-                    child: new Stack( children: [
-                      // container for resource name input
-                      buildNameField(windowSize),
-                      // container for the resource link input
-                      buildLinkField(windowSize),
-                      // container for in-person address input
-                      buildAddressField(windowSize),
-                      // use a container for in-person building input
-                      buildBldgNumField(windowSize),
-                      // use a container for in-person city input
-                      buildCityField(windowSize),
-                      // container for in-person state input
-                      buildStateField(windowSize),
-                      // container for in-person zipcode input
-                      buildZipCodeField(windowSize),
-                      // input box for phone number for in person or hotline
-                      buildPhoneNumField(windowSize),
-                      // container for resource description
-                      buildDescriptionField(windowSize),
-
-                      // container to display tags input field
-                      new Container(
-                        margin: EdgeInsets.only(
-                          right: windowSize.maxWidth / 2,
-                          left: windowSize.maxWidth / 10,
-                          top: isHotlineSelected
-                              ? windowSize.maxHeight / 50 + 300
-                              : (isInPersonSelected
-                              ? windowSize.maxHeight / 50 + 555
-                              : windowSize.maxHeight / 50 + 225),
-                        ),
-                        child:
-                        TextField(
-                          obscureText: false,
-                          controller: _controller,
-                          decoration: InputDecoration(
-                            border: OutlineInputBorder(),
-                            labelText: 'Please provide tags for the resource',
-                          ),
-                          onSubmitted: ( text ) {
-                            if( text != "" )
-                            {
-                              setState(() {
-                                _controller.clear();
-                                selectedTags.add( text );
-                              });
-                            }
-                            },
-                        ),
-                      ),
-                      // displays the active tags
-                      new Container(
-                        margin: EdgeInsets.only(
-                          right: windowSize.maxWidth / 2,
-                          left: windowSize.maxWidth / 10,
-                          top: isHotlineSelected
-                              ? windowSize.maxHeight / 50 + 355
-                              : (isInPersonSelected
-                              ? windowSize.maxHeight / 50 + 605
-                              : windowSize.maxHeight / 50 + 280),
-                        ),
-                        child:
-                        new Stack(
-                          children: [
-                            Text(
-                              "Your active tags. Click to remove",
-                              style: TextStyle(fontSize: 15.0),
-                            ),
-                            Container(
-                              child: Wrap(
-                                spacing: 5.0,
-                                runSpacing: 5.0,
-                                children: selectedTags.map((tag) {
-                                  return Padding(
-                                    padding: EdgeInsets.symmetric(
-                                        horizontal: 4.0, vertical: 20.0),
-                                    child: InputChip(
-                                      label: Text(tag),
-                                      backgroundColor: Colors.blue[200],
-                                      onDeleted: () {
-                                        setState(() {
-                                          selectedTags.remove(tag);
-                                        });
-                                        },
-                                    ),
-                                  );
-                                }).toList(),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      // resource type title
-                          Padding(
-                            padding: EdgeInsets.only(
-                                top: windowSize.maxHeight / 50,
-                                right: windowSize.maxWidth / 9,
-                                left: windowSize.maxWidth / 1.6 ),
-                            child: Text("Resource Type",
-                              style: TextStyle( fontSize: 20.0 ),
-                            ),
-                          ),
-                            //  container of radio buttons for resource type
-                            new Container(
-                                margin: EdgeInsets.only( top: windowSize.maxHeight / 50 + 25,
-                                    left: windowSize.maxWidth / 1.65 ),
-                                child: SizedBox(
-                                  child: ListView(
-                                    padding: EdgeInsets.only(right: 30.0),
-                                    scrollDirection: Axis.vertical,
-                                    shrinkWrap: true,
-                                    children: [
-                                      Column(
-                                        children:
-                                        resourceTypeOptions.map((option) {
-                                          int index = resourceTypeOptions.indexOf(option);
-                                          return ListTile(
-                                            dense: true,
-                                            leading: Radio(
-                                              value: index,
-                                              groupValue: resourceTypeIndex,
-                                              onChanged: (value) {
-                                                setState(() {
-                                                  resourceTypeIndex = value!;
-                                                  isHotlineSelected = (resourceTypeOptions[value] == "Hotline");
-                                                  isInPersonSelected = (resourceTypeOptions[value] == "In Person");
-                                                });
-                                              },
-                                            ),
-                                            title: Text(option, style: TextStyle(fontSize: 16),),
-                                          );
-                                        }).toList(),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-
-                            ),
-                            SizedBox(height: 20 ),
-                            Padding(
-                            padding: EdgeInsets.only( top: windowSize.maxHeight / 50 ,
-                                right: windowSize.maxWidth / 12,
-                                left: windowSize.maxWidth / 1.27 ),
-                            child: Text("Privacy Protections",
-                                  style: TextStyle(fontSize: 20.0),
-                                ),
-                          ),
-                          // container of checkboxes for privacy options
-                          new Container(
-                                margin: EdgeInsets.only( top: windowSize.maxHeight / 50 + 25,
-                                    left: windowSize.maxWidth / 1.3 ),
-                                child: SizedBox(
-                                  child: ListView(
-                                  padding: EdgeInsets.only(right: 30.0),
-                                  shrinkWrap: true,
-                                    children: [
-                                      Column(
-                                      children: List<CheckboxListTile>.generate(
-                                        _selectedPrivacy.length,
-                                          (int index) => CheckboxListTile(
-                                            title: Text(resourcePrivacy[index], style: TextStyle(fontSize: 16)),
-                                            value: _selectedPrivacy[index],
-                                            onChanged: (value) {
-                                              setState(() {
-                                                _selectedPrivacy[index] = value!;
-                                                if(value) {
-                                                  selectedPrivacyOptions.add(resourcePrivacy[index]);
-                                                } else {
-                                                  selectedPrivacyOptions.remove(resourcePrivacy[index]);
-                                                }
-                                              });
-                                            },
-                                            controlAffinity: ListTileControlAffinity.leading,
-                                            dense: true,
-                                              )
-                                      ),
-                                    ),
-                                    ],
-                                  ),
-                                ),
-                          ),
-                            // cost of resource title
-                          SizedBox(height: 20 ),
-                          Padding(
-                            padding: EdgeInsets.only( top: windowSize.maxHeight / 50 + 225,
-                                right: windowSize.maxWidth / 9,
-                                left: windowSize.maxWidth / 1.40 ),
-                            child: Text("Resource Cost",
-                                style: TextStyle(fontSize: 20.0),
-                            ),
-                          ),
-                          // list of cost radio buttons
-                          new Container(
-                            margin: EdgeInsets.only( top: windowSize.maxHeight / 50 + 250,
-                                left: windowSize.maxWidth / 1.65 ),
-                                child: SizedBox(
-                                  child: GridView.count(
-                                    crossAxisCount: 2, // number of columns
-                                    padding: EdgeInsets.only(right: 30.0),
-                                    childAspectRatio: 7,
-                                    shrinkWrap: true,
-                                      children:
-                                      resourceCostOptions.getRange(0, 4).map((option) {
-                                        int index = resourceCostOptions.indexOf(option);
-                                        return ListTile(
-                                          dense: true,
-                                          leading: Radio(
-                                            value: index,
-                                            groupValue: resourceCost,
-                                            onChanged: (value) {
-                                              setState(() {
-                                                resourceCost = value!;
-                                              });
-                                            },
-                                          ),
-                                          title: Text(option, style: TextStyle(fontSize: 16)),
-                                        );
-                                      }).toList(),
-                                  ),
-                                ),
-                          ),
-
-                            SizedBox(height: 20 ),
-                            Padding(
-                            padding: EdgeInsets.only( top: windowSize.maxHeight / 50 + 375,
-                                right: windowSize.maxWidth / 9,
-                                left: windowSize.maxWidth / 1.43 ),
-                            child: Text("Cultural Responsiveness",
-                                  style: TextStyle( fontSize: 20.0 ),
-                            ),
-                        ),
-                        // cultural responsiveness slider with anchors
-                          new Container(
-                          margin: EdgeInsets.only( top: windowSize.maxHeight / 50 + 400,
-                              left: windowSize.maxWidth / 1.63 ),
-                          height: 50,
-                          width: windowSize.maxWidth/ 50 + 450,
-                                child:
-                                    Center( child: Stack(
-                                        children: [
-                                         SliderTheme(
-                                            data: SliderTheme.of(context).copyWith(
-                                              valueIndicatorColor: Colors.blue,
-                                              valueIndicatorTextStyle: TextStyle(color: Colors.white),
-                                            ),
-                                            child: Slider(
-                                              value: _currentSliderValue,
-                                              max: 5,
-                                              divisions: 5,
-                                              label: _currentSliderValue.round().toString(),
-                                              onChanged: ( double value ) {
-                                              setState(() {
-                                                _currentSliderValue = value;
-                                              });
-                                            },
-                                            ),
-                                          ),
-                                        // anchor descriptions for slider
-                                        Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Tooltip(message:"Not culturally specific to Hopi or Indigenous communities",
-                                                child: Text("Low ")),
-                                            Spacer(),
-                                            Tooltip(message: "Specific resource for Hopi community",
-                                                child: Text("High")),
-                                          ],
-                                          ),
-                                      ],
-                                      ),
-                                    ),
-                            ),
-                            Padding(
-                            padding: EdgeInsets.only( top: windowSize.maxHeight / 50 + 475,
-                                right: windowSize.maxWidth / 9,
-                                left: windowSize.maxWidth / 1.43 ),
-                            child: Text("Age Range of Resource",
-                                  style: TextStyle( fontSize: 20.0 ),
-                                ),
-                          ),
-                           // age selection drop down
-                           new Container(
-                            margin: EdgeInsets.only( top: windowSize.maxHeight / 50 + 500,
-                                left: windowSize.maxWidth / 1.35 ),
-                            child:
-                            DropdownButton(
-                                value: _currentDropDownValue,
-                                onChanged: (String? newValue){
-                                setState(() {
-                                  _currentDropDownValue = newValue!;
-                                });
-                            },
-                            items: ageItems.map<DropdownMenuItem<String>>((String value) {
-                                return DropdownMenuItem<String>(
-                                  value: value,
-                                  child: Text(value),
-                                 );
-                                }).toList(),
-                            ),),
-                            Center( child: new Container(
-                                margin: EdgeInsets.only( top: windowSize.maxHeight / 50 + 600,),
-                                child:
-                                  TextButton(
-                                    style: ButtonStyle(
-                                      minimumSize: MaterialStateProperty.all<Size>(Size(150, 45)),
-                                      foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
-                                      backgroundColor: MaterialStateProperty.all<Color>(Colors.blue),
-                                      shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                                        RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(18.0),
-                                          side: BorderSide(color: Colors.blue)
-                                        )
-                                      )
-                                  ),
-                                  onPressed: () { 
-                                    submitResource( resourceName, resourceLocation, resourceDescription, context );  
-                                  },
-                                  child: Text('Submit Resource'),
-                                )
-                            ),
-                            ),
-                    ]
-                  )
-      );
-     },
-    ),
-   );
+      body: LayoutBuilder(
+        builder: (context, windowSize) {
+          // get the screen size
+          bool isSmallScreen = windowSize.maxWidth < 900;
+          // check if the screen is large
+          if (!isSmallScreen) {
+            return buildLargeScreenLayout(windowSize, isSmallScreen);
+          }
+          // otherwise, screen is small
+          else {
+            return buildSmallScreenLayout(windowSize, isSmallScreen);
+          }
+        },
+      ),
+    );
   }
 }
