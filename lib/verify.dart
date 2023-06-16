@@ -45,49 +45,22 @@ class Verify extends StatelessWidget {
         );
   }
 
-  //Once verified, update current doc verification to true
-  Future<void> verifyResource( dynamic name, String createdBy, BuildContext context )
+  void reviewResource( dynamic name, String createdBy,
+                                      BuildContext context )
   {
     User? user = FirebaseAuth.instance.currentUser;
     if( user != null )
     {
         if( user.email != createdBy )
         {  
-            return resourceCollection.doc( name.id ).update( {"verified": true } )
-            .then( ( value ) => showAlertDialog( context, "Successfully verified the resource" ) )
-            .catchError( ( error ) => showAlertDialog( context, "Unable to verify resource" ) );
+          Navigator.pushNamed(context, '/reviewresource',
+            arguments: name );
         }
         else
         {
-            showAlertDialog( context, "Cannot verify your own submission" );
+            showAlertDialog( context, "Cannot review your own submission" );
         }
     }
-
-    return Future.value();
-  }
-
-  Future<void> deleteResource( dynamic name, String createdBy, BuildContext context )
-  {
-    User? user = FirebaseAuth.instance.currentUser;
-    if( user != null )
-    {
-        if( user.email != createdBy )
-        {  
-            return resourceCollection.doc( name.id ).delete()
-            .then( ( value ) => showAlertDialog( context, "Successfully denied resource" ) )
-            .catchError( (error) => showAlertDialog( context, "Unable to deny resource" ) );
-        }
-        else
-        {
-            showAlertDialog( context, "Cannot verify your own submission" );
-        }
-    }
-    else
-    {
-        showAlertDialog( context, "Cannot deny your own submission" );
-    }
-
-    return Future.value();
   }
 
   //Verification UI  
@@ -188,8 +161,10 @@ class Verify extends StatelessWidget {
                                                             Color>(Colors.black),
                                                   ),
                                                   onPressed: () {
-                                                    Navigator.pushNamed(context, '/reviewresource',
-                                                      arguments: data.docs[index]);
+                                                    reviewResource( 
+                                                      data.docs[ index ],
+                                                      data.docs[ index ]['createdBy'],
+                                                      context );
                                                   },
                                                   child: Text(
                                                     'Review',
@@ -216,7 +191,10 @@ class Verify extends StatelessWidget {
                                                             Color>(Colors.black),
                                                   ),
                                                   onPressed: () {
-                                                    deleteResource( data.docs[ index ], data.docs[ index ]['createdBy'], context );
+                                                    reviewResource( 
+                                                      data.docs[ index ],
+                                                      data.docs[ index ]['createdBy'],
+                                                      context );
                                                   },
                                                   child: Icon(
                                                     Icons.delete_outlined,
