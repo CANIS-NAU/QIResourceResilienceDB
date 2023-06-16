@@ -24,9 +24,19 @@ class Inbox extends StatelessWidget
         return email;
     }
 
+    String displayString( int docIndex, 
+                                    List<QueryDocumentSnapshot<Object?>> data )
+    {
+        return 'Your resource ${data[ docIndex ][ 'submittedName' ]} has been ${data[ docIndex ][ 'status' ]}. \n' +
+               'Description: \n ${data[ docIndex ][ 'description' ]}\n' + 
+               'Additional Information: ${data[ docIndex ][ 'comments' ]}\n'
+               'Timestamp: ${data[ docIndex ][ 'timestamp' ]}';
+    }
+
     Stream<QuerySnapshot> getInboxItems()
     {
-        return FirebaseFirestore.instance.collection('rrdbInbox').where('email', isEqualTo: returnEmail() ).snapshots();
+        return FirebaseFirestore.instance.collection('rrdbInbox').where('email',
+                                         isEqualTo: returnEmail() ).snapshots();
     } 
 
     Widget build( BuildContext context )
@@ -57,49 +67,47 @@ class Inbox extends StatelessWidget
 
                             if(data.size != 0)
                             {
-                            return Container(
-                                height: 500,
-                                child: ListView.builder(
-                                scrollDirection: Axis.vertical,
-                                shrinkWrap: true,
-                                itemCount: data.size,
-                                itemBuilder: (context, index) {
-                                    return Container(
-                                    height: 100,
-                                    child: Card(
-                                        color: Colors.white,
-                                        elevation: 4,
-                                        shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.all(Radius.circular(0)),
-                                        ),
-                                    // the format for each resource box
-                                        child: ListTile(
-                                        contentPadding: EdgeInsets.symmetric(
-                                            vertical: 10.0,
-                                            horizontal: 30.0),
-                                            dense: false,
-                                            title: SizedBox( width: index == 0 ? 95 : 80,
-                                            child: Text('Your resource ${data.docs[ index ][ 'submittedName' ]} has been ${data.docs[ index ][ 'status' ]}.',
-                                            overflow: TextOverflow.visible,
-                                            softWrap: true,
-                                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 25),)),
-                                            subtitle: SizedBox( width: 80,
-                                        child: Text('Description: ${data.docs[ index ][ 'description' ]}',
-                                            overflow: TextOverflow.visible,
-                                            softWrap: true,
-                                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14))),
-                                        ),
-                                    ),
-                                    );
-                                }
-                                )
 
-                            );
+                                return Container(
+                                    height: 500,
+                                    child: ListView.builder(
+                                    scrollDirection: Axis.vertical,
+                                    shrinkWrap: true,
+                                    itemCount: data.size,
+                                    itemBuilder: (context, index) {
+                                        return Container(
+                                        height: 100,
+                                        child: Card(
+                                            color: Colors.white,
+                                            elevation: 4,
+                                            shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.all(Radius.circular(0)),
+                                            ),
+                                            // the format for each resource box
+                                            child: 
+                                                Container(
+                                                    child: SingleChildScrollView(
+                                                        child: Column(
+                                                        children: [ 
+                                                            Text(displayString( index, data.docs ),
+                                                            overflow: TextOverflow.visible,
+                                                            softWrap: true,
+                                                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                                                        ],
+                                                    ),
+                                                ),
+                                                
+                                            ),
+                                        ));
+                                    }
+                                    )
+
+                                );
                             }
                         else
-                            {
-                            return Text('No resources');
-                            }
+                        {
+                            return Text('No Inbox Messages');
+                        }
                         }
                     ),
                 ),

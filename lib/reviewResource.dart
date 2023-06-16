@@ -73,10 +73,14 @@ class _ReviewResourceState extends State<ReviewResource> {
   }
 
   Future<void> submitToInbox( QueryDocumentSnapshot currentResource, 
-                                                                String status )
+                                                String status, String comments )
   {
     String email = "${currentResource['createdBy']}";
     String resourceName = "${currentResource['name']}";
+
+    DateTime currentTime = DateTime.now();
+
+    String timestamp = "${currentTime}";
     
     String description = "" +
       "Cultural Rating: ${ culturalRating } / 5, " +
@@ -97,7 +101,9 @@ class _ReviewResourceState extends State<ReviewResource> {
       'email': email,
       'status': status,
       'description': description,
-      'submittedName': resourceName
+      'submittedName': resourceName,
+      'comments': comments,
+      'timestamp': timestamp
     };
 
     return inboxRef.add( inboxInstance ).then( ( value ) => 
@@ -659,9 +665,7 @@ class _ReviewResourceState extends State<ReviewResource> {
                       border: InputBorder.none,
                     ),
                     onChanged: (value) {
-                      setState(() {
                         userComments = value;
-                      });
                     }
                 ),
               ),
@@ -683,8 +687,10 @@ class _ReviewResourceState extends State<ReviewResource> {
                   ),
                   onPressed: () {
                     verifyResource(widget.resourceData);
-                    updateResourceRubric(widget.resourceData, userComments, totalScore);
-                    submitToInbox( widget.resourceData, "Approved" );
+                    updateResourceRubric(widget.resourceData, userComments,
+                                                                    totalScore);
+                    submitToInbox( widget.resourceData, "Approved", 
+                                                                 userComments );
                   },
                   child: Text(
                     'Verify',
@@ -708,7 +714,7 @@ class _ReviewResourceState extends State<ReviewResource> {
                   ),
                   onPressed: () {
                     deleteResource(widget.resourceData);
-                    submitToInbox( widget.resourceData, "Denied" );
+                    submitToInbox( widget.resourceData, "Denied",userComments );
                   },
                   child: Text(
                     'Deny',
