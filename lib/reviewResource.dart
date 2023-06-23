@@ -6,6 +6,8 @@ choose to verify or deny a resource.
 
 //Package imports
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 import 'firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -191,6 +193,146 @@ class _ReviewResourceState extends State<ReviewResource> {
     );
   }
 
+  // creates an active phone number link
+  Widget buildPhoneLink(phoneUrl, phoneNumStr, resourceType) {
+    // check if resource has a phone number
+    if(resourceType == "Hotline" || resourceType == "In Person") {
+      return Column(children: [
+        GestureDetector(
+            onTap: () async {
+              if (await canLaunchUrlString(phoneUrl)) {
+                await launchUrlString(phoneUrl);
+              } else {
+                showDialog(
+                    context: context,
+                    builder: (context) =>
+                        AlertDialog(
+                            title: Text("Error"),
+                            content: Text("Failed to call phone number"),
+                            actions: [
+                              TextButton(
+                                child: Text("OK"),
+                                onPressed: () => Navigator.pop(context),
+                              )
+                            ]));
+              }
+            },
+            // display phone number link
+            child: RichText(
+                text: TextSpan(
+                    text: 'Phone Number: ',
+                    style: TextStyle(color: Colors.black, fontSize: 14),
+                    children: [
+                      TextSpan(
+                          text: '$phoneNumStr\n',
+                          style: TextStyle(
+                            color: Colors.blue,
+                            fontSize: 14,
+                            decoration: TextDecoration.underline,
+                          ))
+                    ]))),
+      ]);
+    }
+    else{
+      // returns an empty widget if resource is not in person or hotline
+      // (doesn't have a phone number)
+      return SizedBox.shrink();
+    }
+    }
+
+    // creates an active address link
+    Widget buildAddressLink(addressUrl, fullAddress, resourceType) {
+    if(resourceType == "In Person") {
+      return Column(children: [
+        GestureDetector(
+            onTap: () async {
+              String formattedAddress = fullAddress.replaceAll(" ", "+");
+              String mapUrl = 'https://maps.google.com/?q=$formattedAddress';
+              if (await canLaunchUrlString(mapUrl)) {
+                await launchUrlString(mapUrl);
+              } else {
+                showDialog(
+                    context: context,
+                    builder: (context) =>
+                        AlertDialog(
+                            title: Text("Error"),
+                            content: Text("Failed to launch address"),
+                            actions: [
+                              TextButton(
+                                child: Text("OK"),
+                                onPressed: () => Navigator.pop(context),
+                              )
+                            ]));
+              }
+            },
+            // display address link
+            child: RichText(
+                text: TextSpan(
+                    text: 'Address: ',
+                    style: TextStyle(color: Colors.black, fontSize: 14),
+                    children: [
+                      TextSpan(
+                          text: '$fullAddress\n',
+                          style: TextStyle(
+                            color: Colors.blue,
+                            fontSize: 14,
+                            decoration: TextDecoration.underline,
+                          ))
+                    ]))),
+      ]);
+    }
+    else{
+      // returns an empty widget if resource is not in person
+      // (doesn't have an address)
+      return SizedBox.shrink();
+    }
+    }
+
+    // creates an active url link
+    Widget buildUrlLink(url, urlStr){
+    return Column(
+      children: [
+        GestureDetector(
+            onTap: () async {
+              if (await canLaunchUrl(url)) {
+                await launchUrl(url);
+              } else {
+                showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                        title: Text("Error"),
+                        content: Text(
+                            "Failed to launch URL"),
+                        actions: [
+                          TextButton(
+                            child: Text("OK"),
+                            onPressed: () =>
+                                Navigator.pop(context),
+                          )
+                        ]));
+              }
+            },
+            child: RichText(
+                text: TextSpan(
+                    text: "URL: ",
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 14,
+                    ),
+                    children: [
+                      TextSpan(
+                          text: urlStr,
+                          style: TextStyle(
+                            color: Colors.blue,
+                            fontSize: 14,
+                            decoration:
+                            TextDecoration.underline,
+                          ))
+                    ])))
+      ]
+    );
+    }
+
   @override
   Widget build(BuildContext context) {
     // get the screen size
@@ -208,22 +350,35 @@ class _ReviewResourceState extends State<ReviewResource> {
         'Description: ${widget.resourceData['description']}\n\n'
         'Type: ${widget.resourceData['resourceType']}\n\n';
 
-    if (widget.resourceData['resourceType'] == 'Hotline' ||
-        widget.resourceData['resourceType'] == 'In Person') {
-      resourceInfo += 'Phone Number: ${widget.resourceData['phoneNumber']}\n\n';
-    }
-    if (widget.resourceData['resourceType'] == 'In Person') {
-      resourceInfo += 'Address: ${widget.resourceData['address']} ${widget
-          .resourceData['building']!} '
-          '${widget.resourceData['city']}, ${widget
-          .resourceData['state']}, ${widget.resourceData['zipcode']}\n\n';
-    }
-
     resourceInfo += 'Privacy: ${widget.resourceData['privacy'].join(', ')}\n\n'
         'Cultural Responsiveness: ${widget
-        .resourceData['culturalResponsivness']}\n\n'
-        'URL: ${widget.resourceData['location']}\n\n'
-        'Date Added: ${widget.resourceData['dateAdded']}';
+        .resourceData['culturalResponsivness']}\n';
+
+
+    // create a full address if it is an in person resource
+    String fullAddress = "";
+    String addressUrl = "";
+    if (widget.resourceData['resourceType'] == 'In Person') {
+      fullAddress = widget.resourceData['address'] + ' ' +
+          widget.resourceData['building']! + ' ' + widget.resourceData['city'] +
+          ' ' + widget.resourceData['state'] +  ' ' + widget.resourceData['zipcode'];
+    }
+
+    // create a phone url if it is a hotline or in person resource
+    String phoneNumStr="";
+    String phoneUrl = "";
+    if (widget.resourceData['resourceType'] == 'Hotline' ||
+        widget.resourceData['resourceType'] == 'In Person') {
+      phoneNumStr = widget.resourceData['phoneNumber'];
+      phoneUrl = "tel:$phoneNumStr";
+    }
+
+    // create a url link
+    String urlStr = widget.resourceData['location'];
+    final Uri url = Uri.parse(urlStr);
+
+    // initialize the data a resource was created
+    String date = '\nDate Added: ${widget.resourceData['dateAdded']}';
 
     return Scaffold(
         appBar: AppBar(
@@ -256,10 +411,18 @@ class _ReviewResourceState extends State<ReviewResource> {
                       borderRadius: BorderRadius.circular(10.0),
                     ),
                     child: SingleChildScrollView(
-                        child: Text(resourceInfo,
-                            style: TextStyle(
-                              fontSize: 14.0,
-                            )))),
+                        child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(resourceInfo, style: TextStyle(
+                                      fontSize: 14.0,
+                                    )),
+                              // display active links
+                              buildAddressLink(addressUrl, fullAddress, widget.resourceData['resourceType']),
+                              buildPhoneLink(phoneUrl, phoneNumStr, widget.resourceData['resourceType']),
+                              buildUrlLink(url, urlStr),
+                              Text(date, style: TextStyle(fontSize: 14.0,)),
+                              ]))),
                 SizedBox(height: 20),
                 // display the rubric for the resource
                 Text('Rubric',

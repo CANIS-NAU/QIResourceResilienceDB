@@ -1,3 +1,10 @@
+/*
+This page is the homepage that displays the verified resources to users.
+When the user is not logged in, they can only view the resources or log in.
+Once a user is logged in, the homepage displays options for submitting a resource,
+verifying a resource, and a dashboard.
+ */
+
 //Package imports
 
 import 'package:flutter/material.dart';
@@ -6,6 +13,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 //Declare class that has state
 class MyHomePage extends StatefulWidget {
@@ -223,6 +232,154 @@ class _MyHomePageState extends State<MyHomePage> {
   int _selectedIndex = 0;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
+  Widget buildAddressLink(fullAddress, resourceType) {
+    if(resourceType == "In Person") {
+      return Column(children: [
+        GestureDetector(
+            onTap: () async {
+              String formattedAddress = fullAddress.replaceAll(" ", "+");
+              String mapUrl = 'https://maps.google.com/?q=$formattedAddress';
+              if (await canLaunchUrlString(mapUrl)) {
+                await launchUrlString(mapUrl);
+              } else {
+                showDialog(
+                    context: context,
+                    builder: (context) =>
+                        AlertDialog(
+                            title: Text("Error"),
+                            content: Text("Failed to launch address"),
+                            actions: [
+                              TextButton(
+                                child: Text("OK"),
+                                onPressed: () => Navigator.pop(context),
+                              )
+                            ]));
+              }
+            },
+            // display phone number
+            child: RichText(
+                text: TextSpan(
+                    text: 'Address: ',
+                    style: TextStyle(color: Colors.black, fontSize: 16),
+                    children: [
+                      TextSpan(
+                          text: '$fullAddress\n',
+                          style: TextStyle(
+                            color: Colors.blue,
+                            fontSize: 16,
+                            decoration: TextDecoration.underline,
+                          ))
+                    ]))),
+      ]);
+    }
+    else{
+      // returns an empty widget if resource is not in person
+      // (doesn't have an address)
+      return SizedBox.shrink();
+    }
+  }
+
+  Widget buildPhoneLink (phoneUrl, phoneNumStr, resourceType) {
+    if(resourceType == "Hotline" || resourceType == "In Person")
+      {
+        return Column (
+          children: [
+            GestureDetector(
+                onTap: () async {
+                  if(await canLaunchUrlString(phoneUrl)) {
+                    await launchUrlString(phoneUrl);
+                  }
+                  else{
+                    showDialog(
+                        context:
+                        context,
+                        builder: (context) =>
+                            AlertDialog(
+                                title: Text("Error"),
+                                content: Text("Failed to call phone number"),
+                                actions: [
+                                  TextButton(
+                                    child: Text("OK"),
+                                    onPressed: () => Navigator.pop(context),
+                                  )
+                                ]));
+                  }
+                },
+                // display phone number
+                child: RichText(
+                    text: TextSpan(
+                        text: 'Phone Number: ',
+                        style: TextStyle(
+                            color: Colors.black,
+                            fontSize: 16),
+                        children: [
+                          TextSpan(
+                              text: '$phoneNumStr\n',
+                              style:
+                              TextStyle(
+                                color: Colors.blue,
+                                fontSize: 16,
+                                decoration: TextDecoration.underline,
+                              ))
+                        ]))
+            ),
+          ],
+        );
+      }
+    else{
+      // returns an empty widget if resource is not in person or hotline
+      // (doesn't have a phone number)
+      return SizedBox.shrink();
+    }
+  }
+
+  Widget buildUrlLink (url, urlStr) {
+    return Column(
+      children: [
+        GestureDetector(
+            onTap: () async {
+              // if possible, launch url
+              if (await canLaunchUrl(url)) {
+                await launchUrl(url);
+              }
+              // otherwise display error
+              else {
+                showDialog(
+                    context:
+                    context,
+                    builder: (context) =>
+                        AlertDialog(
+                            title: Text("Error"),
+                            content: Text("Failed to launch URL"),
+                            actions: [
+                              TextButton(
+                                child: Text("OK"),
+                                onPressed: () => Navigator.pop(context),
+                              )
+                            ]));
+              }
+            },
+            // display url
+            child: RichText(
+                text: TextSpan(
+                    text: 'URL: ',
+                    style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 16),
+                    children: [
+                      TextSpan(
+                          text: urlStr,
+                          style:
+                          TextStyle(
+                            color: Colors.blue,
+                            fontSize: 16,
+                            decoration: TextDecoration.underline,
+                          ))
+                    ])))
+      ]
+    );
+  }
+
   //Home screen UI 
   @override
   Widget build( BuildContext context ) {
@@ -358,33 +515,50 @@ class _MyHomePageState extends State<MyHomePage> {
                       //Return a list of the data (resources)
                       if(data.size != 0)
                         {
-                          return Container(
-                            height: 500,
-                            child: ListView.builder(
+                      return Container(
+                          height: 500,
+                          child: ListView.builder(
                               scrollDirection: Axis.vertical,
                               shrinkWrap: true,
                               itemCount: data.size,
                               itemBuilder: (context, index) {
 
                                 // get resource information for pop-up
-                                String resourceInfo = 'Description: ${data.docs[ index ][ 'description']}\n\n'
-                                    'Type: ${data.docs[ index ][ 'resourceType' ]}\n\n';
-                                if(data.docs[index]['resourceType'] == "Hotline" ||
-                                   data.docs[index]['resourceType'] == "In Person")
-                                  {
-                                    resourceInfo += 'Phone Number: ${data.docs[index]['phoneNumber']}\n\n';
-                                  }
-                                if(data.docs[index]['resourceType'] == "In Person" &&
-                                    data.docs[index]['address'] != null)
-                                {
-                                  resourceInfo += 'Address: ${data.docs[index]['address']} ${data.docs[index]['building']!} '
-                                      '${data.docs[index]['city']}, '
-                                      '${data.docs[index]['state']}, '
-                                      '${data.docs[index]['zipcode']}\n\n';
+
+                                // get url data for resource
+                                String urlStr = data.docs[index]['location'];
+                                final Uri url = Uri.parse(urlStr);
+
+                                // get phone number data for resource
+                                String phoneUrl = "";
+                                String phoneNumStr = "";
+                                if (data.docs[index]['resourceType'] == "Hotline" ||
+                                    data.docs[index]['resourceType'] == "In Person") {
+                                  phoneNumStr = data.docs[index]['phoneNumber'];
+                                  phoneUrl = "tel:$phoneNumStr";
                                 }
-                                resourceInfo += 'URL: ${data.docs[ index ][ 'location' ]}\n\n'
-                                'Privacy: ${data.docs[ index ][ 'privacy' ]}\n\n'
-                                'Cultural Responsiveness: ${data.docs[ index ][ 'culturalResponsivness' ]} \n\n';
+
+                                // get full address data for resource
+                                String fullAddress = "";
+                                if (data.docs[index]['resourceType'] == 'In Person') {
+                                  fullAddress = data.docs[index]['address'] +
+                                      ' ' +
+                                      data.docs[index]['building']! +
+                                      ' ' +
+                                      data.docs[index]['city'] +
+                                      ' ' +
+                                      data.docs[index]['state'] +
+                                      ' ' +
+                                      data.docs[index]['zipcode'];
+                                }
+
+                                // get the rest of the resource information that
+                                // are not active links
+                                String resourceInfo =
+                                    'Description: ${data.docs[index]['description']}\n\n'
+                                    'Type: ${data.docs[index]['resourceType']}\n\n'
+                                    'Privacy: ${data.docs[index]['privacy']}\n\n'
+                                    'Cultural Responsiveness: ${data.docs[index]['culturalResponsivness']} \n';
                                 //'Cost: ${data.docs[index]['cost']}\n';
 
                                 return Container(
@@ -393,28 +567,39 @@ class _MyHomePageState extends State<MyHomePage> {
                                     color: Colors.white,
                                     elevation: 4,
                                     shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.all(Radius.circular(0)),
+                                      borderRadius:
+                                          BorderRadius.all(Radius.circular(0)),
                                     ),
-                                // the format for each resource box
+                                    // the format for each resource box
                                     child: ListTile(
-                                    contentPadding: EdgeInsets.symmetric(
-                                        vertical: 10.0,
-                                        horizontal: 30.0),
-                                        dense: false,
-                                        title: SizedBox(
-                                            width: index == 0 ? 95 : 80,
-                                        child: Text('${data.docs[ index ][ 'name' ]}',
-                                        textAlign: TextAlign.left,
-                                        overflow: TextOverflow.visible,
-                                        softWrap: true,
-                                        maxLines: isSmallScreen ? 2 : null,
-                                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: isSmallScreen? 18: 25),)),
-                                        subtitle: SizedBox( width: 80,
-                                    child: Text('${data.docs[ index ][ 'description' ]}',
-                                        overflow: TextOverflow.ellipsis,
-                                        maxLines: 2,
-                                        // softWrap: true,
-                                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: isSmallScreen? 12: 14))),
+                                      contentPadding: EdgeInsets.symmetric(
+                                          vertical: 10.0, horizontal: 30.0),
+                                      dense: false,
+                                      title: SizedBox(
+                                          width: index == 0 ? 95 : 80,
+                                          child: Text(
+                                            '${data.docs[index]['name']}',
+                                            textAlign: TextAlign.left,
+                                            overflow: TextOverflow.visible,
+                                            softWrap: true,
+                                            maxLines: isSmallScreen ? 2 : null,
+                                            style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize:
+                                                    isSmallScreen ? 18 : 25),
+                                          )),
+                                      subtitle: SizedBox(
+                                          width: 80,
+                                          child: Text(
+                                              '${data.docs[index]['description']}',
+                                              overflow: TextOverflow.ellipsis,
+                                              maxLines: 2,
+                                              // softWrap: true,
+                                              style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: isSmallScreen
+                                                      ? 12
+                                                      : 14))),
                                       trailing: GestureDetector(
                                         child: Icon(
                                           Icons.arrow_forward_rounded,
@@ -423,26 +608,44 @@ class _MyHomePageState extends State<MyHomePage> {
                                         // pop up for a resource with information
                                         onTap: () {
                                           showDialog(
-                                              context: context,
-                                              builder: (context) => AlertDialog(
-                                                title: Text('${data.docs[ index ][ 'name' ]}',
-                                                    style: TextStyle(fontSize: 25.0, fontWeight: FontWeight.bold)),
+                                            context: context,
+                                            builder: (context) => AlertDialog(
+                                                title: Text(
+                                                    '${data.docs[index]['name']}',
+                                                    style: TextStyle(
+                                                        fontSize: 25.0,
+                                                        fontWeight: FontWeight.bold)),
                                                 content: Container(
                                                   child: SizedBox(
                                                     // display resource information in pop-up
-                                                    child: Text(
-                                                        resourceInfo,
-                                                        overflow: TextOverflow.visible, softWrap: true,
-                                                        style: TextStyle(fontSize: 16.0)),
+                                                    child: Column(
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .start,
+                                                        children: [
+                                                          Text(resourceInfo,
+                                                              overflow: TextOverflow.visible,
+                                                              softWrap: true,
+                                                              style: TextStyle(
+                                                                  fontSize:
+                                                                      16.0)),
+                                                          // display address active link if resource is in person
+                                                          buildAddressLink(fullAddress, data.docs[index]['resourceType']),
+                                                          // display phone number active link if the resource is in person
+                                                          // or a hotline
+                                                          buildPhoneLink (phoneUrl, phoneNumStr, data.docs[index]['resourceType']),
+                                                          // display url active link for all resource types
+                                                          buildUrlLink(url, urlStr)
+                                                        ]),
                                                   ),
                                                 ),
-                                                actions:[
+                                                actions: [
                                                   TextButton(
                                                     child: Text('OK'),
-                                                    onPressed: () => Navigator.pop(context),
+                                                    onPressed: () =>
+                                                        Navigator.pop(context),
                                                   )
-                                                ]
-                                              ),
+                                                ]),
                                           );
                                         },
                                       ),
@@ -451,7 +654,6 @@ class _MyHomePageState extends State<MyHomePage> {
                                 );
                               }
                             )
-
                           );
                         }
                       else
