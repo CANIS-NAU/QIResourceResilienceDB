@@ -60,7 +60,7 @@ app.post('/handleWebSignUpRole', async (req, res) => {
           'admin': adminBool,
         });
         
-        return res.status( successfulResponse ).send( { 'data': 'User record created successfully' } );
+        return res.status( successfulResponse ).send( { 'data': userRecord } );
     
       } 
       catch( error )

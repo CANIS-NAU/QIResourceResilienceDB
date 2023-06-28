@@ -15,6 +15,7 @@ import './dashboard.dart';
 import './register.dart';
 import './account.dart';
 import './reviewResource.dart';
+import './inbox.dart';
 
 //Main fubction
 void main() async  {
@@ -50,6 +51,7 @@ class MyApp extends StatelessWidget {
         '/dashboard': ( context ) => Dashboard(),
         '/register': ( context ) => Register(),
         '/account': ( context ) => Account(),
+        '/inbox': ( context ) => Inbox(),
         '/reviewresource' :  ( context ) => ReviewResource(resourceData: ModalRoute.of(context)!.settings.arguments as QueryDocumentSnapshot),
       },
       theme: ThemeData(

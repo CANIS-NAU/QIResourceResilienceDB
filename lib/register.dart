@@ -87,10 +87,37 @@ class Register extends StatelessWidget
                             body: jsonEncode( requestBody ),
                         );
 
+                        //Success
                         if( response.statusCode == 200 ) 
                         {
                             // Success
                             showAlertDialog( context, "User successfully created" );
+
+                            /*
+                            Map<String, dynamic> userCredentials = jsonDecode( response.body );
+
+                            userCredentials = userCredentials['data'];
+
+                            String uid = userCredentials['uid'];
+
+                            print( uid );
+
+                            User? newUser = await FirebaseAuth.instance.userChanges().firstWhere( ( user ) => user?.uid == uid );
+
+                            print( newUser );
+
+                            if( newUser != null )
+                            {
+                                newUser.sendEmailVerification();
+
+                                print("Email Sent");
+                            }
+                            else
+                            {
+                                print("NULL");
+                            }
+                            */
+
                         } 
                         else
                         {

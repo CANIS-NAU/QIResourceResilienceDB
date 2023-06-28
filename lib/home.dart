@@ -485,6 +485,7 @@ class _MyHomePageState extends State<MyHomePage> {
               break;
             case "Dashboard":
               Navigator.pushNamed(context, '/dashboard');
+              break;
           }
         },
         title: Text(item),
@@ -510,6 +511,7 @@ class _MyHomePageState extends State<MyHomePage> {
               break;
             case "Dashboard":
               Navigator.pushNamed( context, '/dashboard' );
+              break;
           }
         },
         child: Padding(
@@ -588,6 +590,16 @@ class _ProfileIcon extends StatelessWidget {
                         ),
                     ),
                     PopupMenuItem<Menu>(
+                      value: Menu.itemOne,
+                      child:  
+                        InkWell(
+                          child: Text("Inbox"),
+                          onTap: () {
+                            Navigator.pushNamed( context, '/inbox' );
+                          },
+                        ),
+                    ),
+                    PopupMenuItem<Menu>(
                       value: Menu.itemThree,
                       child: 
                         InkWell(
@@ -624,6 +636,16 @@ class _ProfileIcon extends StatelessWidget {
                           child: Text("Account"),
                           onTap: () {
                             Navigator.pushNamed( context, '/account' );
+                          },
+                        ),
+                    ),
+                    PopupMenuItem<Menu>(
+                      value: Menu.itemOne,
+                      child:  
+                        InkWell(
+                          child: Text("Inbox"),
+                          onTap: () {
+                            Navigator.pushNamed( context, '/inbox' );
                           },
                         ),
                     ),

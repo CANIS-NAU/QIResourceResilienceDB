@@ -5,6 +5,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
+import 'package:flutter/gestures.dart';
 
 class Login extends StatelessWidget
 {
@@ -14,14 +15,29 @@ class Login extends StatelessWidget
 
   String email = "";
   String password = "";
+  FirebaseAuth auth = FirebaseAuth.instance;
 
-  showAlertDialog( BuildContext context, String statement ) 
+  showAlertDialog( BuildContext context, String statement, User? user ) 
   {
     // set up the button
     Widget okButton = TextButton(
       child: Text( "OK" ),
       onPressed: () {
         Navigator.pop( context );
+      },
+    );
+    
+    Widget verifyButton = TextButton(
+      child: Text( "Send Verify Email" ),
+      onPressed: () {
+        //Send a verification to users email
+        sendEmailVerif( user );
+
+        //Pop context on screen
+        Navigator.pop( context );
+
+        //Show that an email sent to user
+        showAlertDialog( context, "Sent verification to corresponding email. Check spam.", user );
       },
     );
 
@@ -33,6 +49,19 @@ class Login extends StatelessWidget
         okButton,
       ],
     );
+
+    if( statement == "You have not verified your email" )
+    {
+      // set up the AlertDialog
+      alert = AlertDialog(
+        title: Text( "Alert" ),
+        content: Text( statement ),
+        actions: [
+          okButton,
+          verifyButton,
+        ],
+      );
+    }
 
     //show the dialog
     showDialog(
@@ -48,55 +77,130 @@ class Login extends StatelessWidget
     await FirebaseAuth.instance.signOut();
   }
 
+  Future< void > sendResetPasswordEmail( String email, BuildContext context ) async
+  {
+    if( email != "" )
+    {
+      try
+      {
+        await auth.sendPasswordResetEmail( email: email );
+
+        showAlertDialog( context, "Sent password request to the email: ${ email }. If you cannot find it, please check the spam folder or wait a few minutes.", null );
+      }
+      on FirebaseAuthException catch ( error )
+      {
+        String errorMessage = "";
+        switch( error.code )
+        {
+          case "auth/invalid-email":
+            errorMessage = "The email you provided is not valid";
+            break;
+          case "auth/user-not-found":
+            errorMessage = "There is no user with the email provided";
+            break;
+          default:
+            errorMessage = "Something went wrong";
+            break;
+        }
+        //Display pop-up with corresponding error
+        showAlertDialog( context, errorMessage, null );
+      }
+    }
+    else
+    {
+      //Email box left empty
+      showAlertDialog( context, "Please enter your valid email address in the email box.", null );
+    }
+  }
+
 
   void login( String email, String password, BuildContext context ) async
   {
-    try 
+    if( email != "" && password != "" )
     {
-      final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: email,
-        password: password
-      );
-
-      User? user = credential.user;
-
-      if( user != null )
+      try 
       {
-        IdTokenResult? userToken = await user?.getIdTokenResult();
+        final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: email,
+          password: password
+        );
 
-        Map<String, dynamic>? claims = userToken?.claims;
+        User? user = credential.user;
 
-        if( claims != null )
+        if( user != null )
         {
-          if( !claims['admin'] && !claims['manager'] )
+          if( user.emailVerified )
           {
-            showAlertDialog( context, "You don't have the authority to login on this platform" );
-            
-            //Technically the user is signed in but we dont want this
-            signoutUser();
+            IdTokenResult? userToken = await user?.getIdTokenResult();
+
+            Map<String, dynamic>? claims = userToken?.claims;
+
+            if( claims != null )
+            {
+              if( !claims['admin'] && !claims['manager'] )
+              {
+                showAlertDialog( context, "You don't have the authority to login on this platform", user );
+                
+                //Technically the user is signed in but we dont want this
+                signoutUser();
+              }
+              else
+              {
+                Navigator.pushNamedAndRemoveUntil( context, '/home', (route) => false ); 
+              }
+            }
+            else
+            {
+              showAlertDialog( context, "You don't have the authority to login on this platform", user );
+
+              signoutUser();
+            }
           }
           else
           {
-            Navigator.pushNamedAndRemoveUntil( context, '/home', (route) => false ); 
+            showAlertDialog( context, "You have not verified your email", user );
           }
         }
-        else
-        {
-          showAlertDialog( context, "You don't have the authority to login on this platform" );
-          signoutUser();
-        }
-      }
-    } 
-    on FirebaseAuthException catch ( error )
-    {
-
-      if ( error.code == 'user-not-found' )
-      {
-        showAlertDialog( context, "No user with that email exists" );
       } 
-      else if( error.code == 'wrong-password' ) 
+      on FirebaseAuthException catch ( error )
       {
-        showAlertDialog( context, "Incorrect password for the user with that email" );
+        String errorMessage = "";
+        switch( error.code )
+        {
+          case 'user-not-found':
+            errorMessage = "No user with that email exists";
+            break;
+          case 'wrong-password':
+            errorMessage = "Incorrect password for the user with that email";
+            break;
+          case 'invalid-email':
+            errorMessage = "Invalid email";
+            break;
+          case 'user-disabled':
+            errorMessage = "User disabled";
+            break;
+          default:
+            errorMessage = "Something went wrong. Check that password is correct.";
+            break;
+        }
+
+        //Display pop-up with corresponding error message
+        showAlertDialog( context, errorMessage, null );
+      }
+    }
+    else
+    {
+      showAlertDialog( context, "One of the mandatory fields is empty.", null );
+    }
+  }
+
+  Future< void > sendEmailVerif( User? user ) async
+  {
+    if( user != null )
+    {
+      if( !user.emailVerified )
+      {
+        await user.sendEmailVerification();
       }
     }
   }
@@ -168,6 +272,22 @@ class Login extends StatelessWidget
                             },
                             child: Text('Login'),
                     )
+                ),
+                new Container(
+                    height: windowSize.maxHeight / 10,
+                    width: windowSize.maxWidth / 5,
+                    padding: const EdgeInsets.symmetric( vertical: 20 ),
+                    margin: EdgeInsets.only( top: 350, right: windowSize.maxWidth / 2.5, left: windowSize.maxWidth / 2.5 ),
+                    child:
+                      RichText(
+                        text: TextSpan(
+                          style: TextStyle(color: Colors.blue),
+                          text: "Forgot Password",
+                          recognizer: TapGestureRecognizer()
+                          ..onTap = () {
+                            sendResetPasswordEmail( email, context );
+                          }),
+                        ),
                 ),
             ],
         ),
