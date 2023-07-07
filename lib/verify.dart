@@ -6,14 +6,14 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
 
-//Shows unverified resources for oppurtunity to be verified
+//Shows unverified resources for opportunity to be verified
 class Verify extends StatelessWidget {
 
   //Clarify routing for main application
   Verify( { super.key } );
   static const String route = '/verify';
 
-  //Get the query strem of resources who have not yet been verified
+  //Get the query stream of resources who have not yet been verified
   final Stream<QuerySnapshot> resources = FirebaseFirestore.instance.collection('resources').where('verified', isEqualTo: false ).snapshots();
   CollectionReference resourceCollection = FirebaseFirestore.instance.collection('resources');
 

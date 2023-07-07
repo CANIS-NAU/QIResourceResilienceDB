@@ -10,9 +10,13 @@ import 'dart:convert';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-class Register extends StatelessWidget
-{
-    Register( { super.key } );
+class Register extends StatefulWidget {
+    Register({ super.key });
+
+    @override
+    _RegisterState createState() => _RegisterState();
+}
+class _RegisterState extends State<Register> {
     static const String route = '/register';
 
     FirebaseAuth auth = FirebaseAuth.instance;
@@ -20,6 +24,8 @@ class Register extends StatelessWidget
     String email = "";
     String password = "";
     String role = "";
+
+    List<String> userRoles = ["admin", "manager"];
 
     showAlertDialog( BuildContext context, String statement ) 
     {
@@ -187,21 +193,51 @@ class Register extends StatelessWidget
                             ),
                     ),
                     new Container(
-                        height: windowSize.maxHeight / 2,
-                        width:  windowSize.maxWidth / 2,
-                        padding: const EdgeInsets.symmetric( vertical: 20),
-                        margin: EdgeInsets.only( top: 250, right: windowSize.maxWidth / 3, left: windowSize.maxWidth / 3 ),
-                        child:
-                            TextField(
-                                obscureText: true,
-                                decoration: InputDecoration(
-                                border: OutlineInputBorder(),
-                                labelText: 'Role' ),
-                                onChanged: ( text )
-                                {
-                                    role = text;
-                                },
-                            ),
+                  height: windowSize.maxHeight / 2,
+                  width: windowSize.maxWidth / 2,
+                  padding: const EdgeInsets.symmetric(vertical: 20),
+                  margin: EdgeInsets.only(
+                      top: 250,
+                      right: windowSize.maxWidth / 3,
+                      left: windowSize.maxWidth / 3),
+                  // creates a drop down with options for user roles
+                  child: Stack(
+                    children: [
+                      DropdownButtonFormField<String>(
+                        // value: role,
+                        onChanged: (value) {
+                          setState(() {
+                            role = value!;
+                            print(role);
+                          });
+                        },
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(),
+                          labelText: 'Role',
+                        ),
+                        items: [
+                          DropdownMenuItem<String>(
+                            value: 'admin',
+                            child: Text('admin'),
+                          ),
+                          DropdownMenuItem<String>(
+                            value: 'manager',
+                            child: Text('manager'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  )
+                  // TextField(
+                            //     obscureText: true,
+                            //     decoration: InputDecoration(
+                            //     border: OutlineInputBorder(),
+                            //     labelText: 'Role' ),
+                            //     onChanged: ( text )
+                            //     {
+                            //         role = text;
+                            //     },
+                            // ),
                     ),
                     new Container(
                         height: windowSize.maxHeight / 10,

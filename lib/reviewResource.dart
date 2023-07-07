@@ -8,6 +8,7 @@ choose to verify or deny a resource.
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:url_launcher/url_launcher_string.dart';
+import 'package:web_app/createResource.dart';
 import 'firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -30,15 +31,15 @@ class _ReviewResourceState extends State<ReviewResource> {
   // function to verify a resource
   Future<void> verifyResource(name) {
     return resourceCollection.doc(name.id).update({"verified": true})
-        .then((value) => print("Updated"))
-        .catchError((error) => print("Failed to update resource: $error"));
+        .then((value) => showAlertDialog(context, "Resource has been verified."))
+        .catchError((error) => showAlertDialog(context, "Failed to verify resource: $error"));
   }
 
   // function to deny/delete a resource
   Future<void> deleteResource(name) {
     return resourceCollection.doc(name.id).delete()
-        .then((value) => print("Resource Delete"))
-        .catchError((error) => print("Failed to delete resource: $error"));
+        .then((value) => showAlertDialog(context, "Resource has been denied."))
+        .catchError((error) => showAlertDialog(context, "Failed to delete resource: $error"));
   }
 
   // function to add rubric info to a resource
