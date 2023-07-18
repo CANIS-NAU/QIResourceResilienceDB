@@ -208,7 +208,6 @@ class _RegisterState extends State<Register> {
                         onChanged: (value) {
                           setState(() {
                             role = value!;
-                            print(role);
                           });
                         },
                         decoration: InputDecoration(
@@ -228,16 +227,6 @@ class _RegisterState extends State<Register> {
                       ),
                     ],
                   )
-                  // TextField(
-                            //     obscureText: true,
-                            //     decoration: InputDecoration(
-                            //     border: OutlineInputBorder(),
-                            //     labelText: 'Role' ),
-                            //     onChanged: ( text )
-                            //     {
-                            //         role = text;
-                            //     },
-                            // ),
                     ),
                     new Container(
                         height: windowSize.maxHeight / 10,

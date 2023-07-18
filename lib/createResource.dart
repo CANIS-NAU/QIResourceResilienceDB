@@ -80,7 +80,7 @@ const List<String> resourceTypeOptions = [
 
 // list of privacy options
 const List<String> resourcePrivacy = <String>[
-  'HIPAA \nCompliant',
+  'HIPAA Compliant',
   'Anonymous',
   'Mandatory Reporting',
   'None Stated',
@@ -775,9 +775,7 @@ class createResourceState extends State<CreateResource> {
         child: ListView(
           padding: EdgeInsets.only(right: 30.0),
           shrinkWrap: true,
-          children: [
-            Column(
-              children: List<CheckboxListTile>.generate(
+          children: List<Widget>.generate(
                   _selectedPrivacy.length,
                   (int index) => CheckboxListTile(
                         title: Text(resourcePrivacy[index],
@@ -799,8 +797,6 @@ class createResourceState extends State<CreateResource> {
                         dense: true,
                       )),
             ),
-          ],
-        ),
       ),
     );
   }

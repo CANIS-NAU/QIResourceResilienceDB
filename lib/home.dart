@@ -119,7 +119,9 @@ class _MyHomePageState extends State<MyHomePage> {
   //TODO: Finish filter mech. Needs to be a compund filter
   Stream<QuerySnapshot> filter( List<dynamic> selectedFilter )
   {
-    String potentialLocationType = "", potentialResponsivenessType = "", potentialReportingType = "", potentialAgeType = "", potentialCostType ="";
+    String potentialLocationType = "", potentialResponsivenessType = "", potentialReportingType = " ",
+        potentialAgeType = "", potentialCostType ="";
+    List<String> potentialReportingTypes = [];
     String currentArrayItem = "";
 
     //Since list is dynamic type with id and name, we must map only to name
@@ -150,10 +152,10 @@ class _MyHomePageState extends State<MyHomePage> {
         potentialResponsivenessType = currentArrayItem;
       }
       else if( currentArrayItem == "HIPAA Compliant" || 
-               currentArrayItem == "Anonymous" || 
+               currentArrayItem == "Anonymous" ||
                currentArrayItem == "Mandatory Reporting" )
       {
-        potentialReportingType = currentArrayItem;
+        potentialReportingTypes.add(currentArrayItem);
       }
       else if( currentArrayItem == "Price" ||
           currentArrayItem == "Subscription" ||
@@ -176,9 +178,9 @@ class _MyHomePageState extends State<MyHomePage> {
     {
       query = query.where('culturalResponse', isEqualTo : potentialResponsivenessType );
     }
-    if( reportingType )
+    if( reportingType && potentialReportingTypes.isNotEmpty)
     {
-      query = query.where('privacy', isEqualTo: potentialReportingType );
+      query = query.where('privacy', whereIn: potentialReportingTypes);
     }
     if( ageFilter )
     {
