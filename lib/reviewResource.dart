@@ -359,14 +359,14 @@ class _ReviewResourceState extends State<ReviewResource> {
             },
             child: RichText(
                 text: TextSpan(
-                    text: "URL: ",
+                    text: "URL: Link to website ",
                     style: TextStyle(
                       color: Colors.black,
                       fontSize: 14,
                     ),
                     children: [
                       TextSpan(
-                          text: urlStr,
+                          text: 'here',
                           style: TextStyle(
                             color: Colors.blue,
                             fontSize: 14,

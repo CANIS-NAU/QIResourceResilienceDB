@@ -1027,8 +1027,35 @@ class createResourceState extends State<CreateResource> {
                         borderRadius: BorderRadius.circular(18.0),
                         side: BorderSide(color: Colors.blue)))),
             onPressed: () {
-              submitResource(
-                  resourceName, resourceLocation, resourceDescription, context);
+              // check if any of text boxes are empty based on the type of resource
+              if (resourceName == "" ||
+                  resourceDescription == "" ||
+                  resourceLocation == "" ||
+                  (isInPersonSelected &&
+                      (resourceAddress == "" ||
+                          resourceCity == "" ||
+                          resourceState == "" ||
+                          resourceZip == "")) ||
+                  (isInPersonSelected || isHotlineSelected) &&
+                      resourcePhoneNumber == "") {
+                showAlertDialog(
+                  context,
+                  "One or more of the mandatory fields are blank. Please fill out all of the fields before submitting.",
+                );
+              }
+              // check if any of the type, privacy, or cost options are not selected
+              else if (resourceTypeIndex == -1 || selectedPrivacyOptions.isEmpty || resourceCost == -1) {
+                showAlertDialog(
+                  context,
+                  "Please select a resource type, privacy option, and cost before submitting.",
+                );
+              }
+              // otherwise, all fields are filled out and submit the resource
+              else {
+                submitResource(
+                    resourceName, resourceLocation, resourceDescription,
+                    context);
+              }
             },
             child: Text('Submit Resource'),
           )),

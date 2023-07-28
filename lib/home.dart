@@ -152,7 +152,7 @@ class _MyHomePageState extends State<MyHomePage> {
         potentialResponsivenessType = currentArrayItem;
       }
       else if( currentArrayItem == "HIPAA Compliant" || 
-               currentArrayItem == "Anonymous" ||
+               currentArrayItem == "[Anonymous]" ||
                currentArrayItem == "Mandatory Reporting" )
       {
         potentialReportingTypes.add(currentArrayItem);
@@ -169,7 +169,7 @@ class _MyHomePageState extends State<MyHomePage> {
       }
     }
 
-    //Query based on selected filter catagories collected
+    //Query based on selected filter categories collected
     if( locationType )
     {
       query = query.where('resourceType', isEqualTo: potentialLocationType );
@@ -258,7 +258,7 @@ class _MyHomePageState extends State<MyHomePage> {
                             ]));
               }
             },
-            // display phone number
+            // display address link
             child: RichText(
                 text: TextSpan(
                     text: 'Address: ',
@@ -364,13 +364,13 @@ class _MyHomePageState extends State<MyHomePage> {
             // display url
             child: RichText(
                 text: TextSpan(
-                    text: 'URL: ',
+                    text: 'URL: Link to website ',
                     style: TextStyle(
                         color: Colors.black,
                         fontSize: 16),
                     children: [
                       TextSpan(
-                          text: urlStr,
+                          text: "here",
                           style:
                           TextStyle(
                             color: Colors.blue,
@@ -381,6 +381,103 @@ class _MyHomePageState extends State<MyHomePage> {
       ]
     );
   }
+
+  // function to build the filter widgets as a pop-up dialog
+  void showFilterDialog(BuildContext context, List<filterItem> filterItems) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        final screenSize = MediaQuery.of(context).size;
+        final dialogWidth = screenSize.width * 0.7;
+        final dialogHeight = screenSize.height * 0.4;
+
+        return AlertDialog(
+          content: Container(
+            width: dialogWidth,
+            height: dialogHeight,
+            child: SingleChildScrollView(
+              child: buildFilterWidgets(groupFilterItemsByCategory(filterItems)),
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  resources = filter(selectedFilter);
+                });
+                Navigator.pop(context);
+              },
+              child: Text('Apply'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // function to group filter items by category
+  Map<String, List<filterItem>> groupFilterItemsByCategory(List<filterItem> filterItems) {
+    Map<String, List<filterItem>> groupedFilterItems = {};
+
+    for (filterItem item in filterItems) {
+      if (!groupedFilterItems.containsKey(item.category)) {
+        groupedFilterItems[item.category] = [];
+      }
+      groupedFilterItems[item.category]?.add(item);
+    }
+
+    return groupedFilterItems;
+  }
+
+  // function to build the filter widgets
+  Widget buildFilterWidgets(Map<String, List<filterItem>> groupedFilterItems) {
+    List<Widget> filterWidgets = [];
+
+    groupedFilterItems.forEach((category, items) {
+      filterWidgets.add(
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(
+              category,
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 10),
+            Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 8.0,
+              runSpacing: 10.0,
+              children: items
+                  .map((item) => FilterChip(
+                label: Text(item.name),
+                selected: selectedFilter.contains(item),
+                onSelected: (bool selected) {
+                  setState(() {
+                    if (selected) {
+                      selectedFilter.add(item);
+                    } else {
+                      selectedFilter.remove(item);
+                    }
+                    resources = filter(selectedFilter);
+                  });
+                },
+              ))
+                  .toList(),
+            ),
+            SizedBox(height: 20.0),
+          ],
+        ),
+      );
+    });
+    return Column(children: filterWidgets);
+  }
+
 
   //Home screen UI 
   @override
@@ -457,29 +554,21 @@ class _MyHomePageState extends State<MyHomePage> {
                 }
                 ),
                     ),
+                    SizedBox(
+                      height: 10,
+                    ),
                     // filter items
                     SizedBox(
                       width: 90,
-                      child:
-                      MultiSelectDialogField(
-                        title: Text("Filter"),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.all(Radius.circular(18.0)),
-                        ),
-                        chipDisplay: MultiSelectChipDisplay.none(),
-                        items: filterItems
-                            .map((e) => MultiSelectItem(e, e.name))
-                            .toList(),
-                        listType: MultiSelectListType.CHIP,
-                        onConfirm: (values) {
-                          setState(() {
-                            selectedFilter = values;
-                            resources = filter( selectedFilter );
-                          });
+                      child: ElevatedButton(
+                        onPressed: () {
+                          // show the filter pop-up
+                          showFilterDialog(context, filterItems);
                         },
-
+                        child: Text('Filter'),
                       ),
                     ),
+                    SizedBox(height: 10),
                     MultiSelectChipDisplay(
                       items: selectedFilter.map( (e) => MultiSelectItem( e, e.name ) ).toList(),
                       onTap: (value) {
@@ -559,7 +648,8 @@ class _MyHomePageState extends State<MyHomePage> {
                                 String resourceInfo =
                                     'Description: ${data.docs[index]['description']}\n\n'
                                     'Type: ${data.docs[index]['resourceType']}\n\n'
-                                    'Privacy: ${data.docs[index]['privacy']}\n\n'
+                                    // display the privacy without brackets
+                                    'Privacy: ${data.docs[index]['privacy']is List ? data.docs[index]['privacy'].join(', ') : data.docs[index]['privacy']}\n\n'
                                     'Cultural Responsiveness: ${data.docs[index]['culturalResponsivness']} \n';
                                 //'Cost: ${data.docs[index]['cost']}\n';
 

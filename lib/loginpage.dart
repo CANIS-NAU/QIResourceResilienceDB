@@ -85,7 +85,7 @@ class Login extends StatelessWidget
       {
         await auth.sendPasswordResetEmail( email: email );
 
-        showAlertDialog( context, "Sent password request to the email: ${ email }. If you cannot find it, please check the spam folder or wait a few minutes.", null );
+        showAlertDialog( context, "If that email address is in our database, we will send you an email to reset your password.", null );
       }
       on FirebaseAuthException catch ( error )
       {
@@ -93,13 +93,13 @@ class Login extends StatelessWidget
         switch( error.code )
         {
           case "auth/invalid-email":
-            errorMessage = "The email you provided is not valid";
+            errorMessage = "If that email address is in our database, we will send you an email to reset your password.";
             break;
           case "auth/user-not-found":
-            errorMessage = "There is no user with the email provided";
+            errorMessage = "If that email address is in our database, we will send you an email to reset your password.";
             break;
           default:
-            errorMessage = "Something went wrong";
+            errorMessage = "If that email address is in our database, we will send you an email to reset your password.";
             break;
         }
         //Display pop-up with corresponding error
@@ -109,7 +109,7 @@ class Login extends StatelessWidget
     else
     {
       //Email box left empty
-      showAlertDialog( context, "Please enter your valid email address in the email box.", null );
+      showAlertDialog( context, "If that email address is in our database, we will send you an email to reset your password.", null );
     }
   }
 
@@ -168,19 +168,19 @@ class Login extends StatelessWidget
         switch( error.code )
         {
           case 'user-not-found':
-            errorMessage = "No user with that email exists";
+            errorMessage = "Invalid Username or Password! Please check them and try again.";
             break;
           case 'wrong-password':
-            errorMessage = "Incorrect password for the user with that email";
+            errorMessage = "Invalid Username or Password! Please check them and try again.";
             break;
           case 'invalid-email':
-            errorMessage = "Invalid email";
+            errorMessage = "Invalid Username or Password! Please check them and try again.";
             break;
           case 'user-disabled':
-            errorMessage = "User disabled";
+            errorMessage = "Invalid Username or Password! Please check them and try again.";
             break;
           default:
-            errorMessage = "Something went wrong. Check that password is correct.";
+            errorMessage = "Something went wrong. Please try again.";
             break;
         }
 

@@ -67,6 +67,7 @@ class Verify extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isSmallScreen = MediaQuery.of(context).size.width < 800;
+    final User? currentUser = FirebaseAuth.instance.currentUser;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Verify Resource'),
@@ -76,7 +77,6 @@ class Verify extends StatelessWidget {
               child: SingleChildScrollView(
                 child: new Column(
                   children: [
-                    //Gather the data stream information
                     new Container(
                        padding: const EdgeInsets.symmetric( vertical: 10),
                        child: StreamBuilder<QuerySnapshot>(
@@ -145,26 +145,55 @@ class Verify extends StatelessWidget {
                                             trailing: Row(
                                               mainAxisSize: MainAxisSize.min,
                                               children: [
-                                                TextButton(
+                                                // if a resource was created by the current user, show created by you
+                                                currentUser != null && currentUser.email == data.docs[index]['createdBy']
+                                                    ? Text(
+                                                  'Created by you',
+                                                  style: TextStyle(
+                                                    color: Colors.green,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                )
+                                                    : SizedBox(),
+                                                SizedBox(width: 10),
+                                                // if the resource was created by the current user, disable the review button
+                                                currentUser != null && currentUser.email == data.docs[index]['createdBy']
+                                                    ? TextButton(
                                                   style: ButtonStyle(
-                                                    shape: MaterialStateProperty.all<
-                                                            RoundedRectangleBorder>(
-                                                        RoundedRectangleBorder(
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(18.0),
-                                                            side: BorderSide(
-                                                                color:
-                                                                    Colors.blue))),
-                                                    foregroundColor:
-                                                        MaterialStateProperty.all<
-                                                            Color>(Colors.black),
+                                                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                                                      RoundedRectangleBorder(
+                                                        borderRadius: BorderRadius.circular(18.0),
+                                                        side: BorderSide(color: Colors.grey), // Make the button grey
+                                                      ),
+                                                    ),
+                                                    foregroundColor: MaterialStateProperty.all<Color>(Colors.black),
+                                                  ),
+                                                  onPressed: null, // set onPressed to null to make the button unpressable
+                                                  child: Text(
+                                                    'Review',
+                                                    style: TextStyle(
+                                                      color: Colors.grey,
+                                                      fontWeight: FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                )
+                                                // otherwise, show the review button
+                                                    : TextButton(
+                                                  style: ButtonStyle(
+                                                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                                                      RoundedRectangleBorder(
+                                                        borderRadius: BorderRadius.circular(18.0),
+                                                        side: BorderSide(color: Colors.blue),
+                                                      ),
+                                                    ),
+                                                    foregroundColor: MaterialStateProperty.all<Color>(Colors.black),
                                                   ),
                                                   onPressed: () {
-                                                    reviewResource( 
-                                                      data.docs[ index ],
-                                                      data.docs[ index ]['createdBy'],
-                                                      context );
+                                                    reviewResource(
+                                                      data.docs[index],
+                                                      data.docs[index]['createdBy'],
+                                                      context,
+                                                    );
                                                   },
                                                   child: Text(
                                                     'Review',
