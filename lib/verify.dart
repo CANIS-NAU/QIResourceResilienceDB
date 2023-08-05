@@ -63,6 +63,30 @@ class Verify extends StatelessWidget {
     }
   }
 
+  Future<void> deleteResource( dynamic name, String createdBy, BuildContext context )
+  {
+    User? user = FirebaseAuth.instance.currentUser;
+    if( user != null )
+    {
+        if( user.email == createdBy )
+        {  
+            return resourceCollection.doc( name.id ).delete()
+            .then( ( value ) => showAlertDialog( context, "Successfully deleted your resource" ) )
+            .catchError( (error) => showAlertDialog( context, "Unable to delete resource" ) );
+        }
+        else
+        {
+            showAlertDialog( context, "Cannot delete" );
+        }
+    }
+    else
+    {
+        showAlertDialog( context, "Something went wrong" );
+    }
+
+    return Future.value();
+  }
+
   //Verification UI  
   @override
   Widget build(BuildContext context) {
@@ -176,7 +200,7 @@ class Verify extends StatelessWidget {
                                                       fontWeight: FontWeight.bold,
                                                     ),
                                                   ),
-                                                )
+                                                )                                              
                                                 // otherwise, show the review button
                                                     : TextButton(
                                                   style: ButtonStyle(
@@ -220,10 +244,10 @@ class Verify extends StatelessWidget {
                                                             Color>(Colors.black),
                                                   ),
                                                   onPressed: () {
-                                                    reviewResource( 
-                                                      data.docs[ index ],
-                                                      data.docs[ index ]['createdBy'],
-                                                      context );
+                                                    deleteResource( 
+                                                     data.docs[ index ],
+                                                     data.docs[ index ]['createdBy'], 
+                                                     context );
                                                   },
                                                   child: Icon(
                                                     Icons.delete_outlined,
