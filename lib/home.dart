@@ -107,7 +107,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   //Create a list that is casted dynamic, to hold filter items
-  List<dynamic> selectedFilter = [];
+  List<filterItem> selectedFilter = [];
 
   //Search bar query string
   String searchQuery = "";
@@ -151,8 +151,8 @@ class _MyHomePageState extends State<MyHomePage> {
       {
         potentialResponsivenessType = currentArrayItem;
       }
-      else if( currentArrayItem == "HIPAA Compliant" || 
-               currentArrayItem == "[Anonymous]" ||
+      else if( currentArrayItem == "HIPAA Compliant" ||
+          currentArrayItem == "Anonymous" ||
                currentArrayItem == "Mandatory Reporting" )
       {
         potentialReportingTypes.add(currentArrayItem);
@@ -180,7 +180,7 @@ class _MyHomePageState extends State<MyHomePage> {
     }
     if( reportingType && potentialReportingTypes.isNotEmpty)
     {
-      query = query.where('privacy', whereIn: potentialReportingTypes);
+      query = query.where('privacy', isEqualTo: potentialReportingTypes);
     }
     if( ageFilter )
     {
@@ -227,8 +227,20 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   //Search query by keyword. Get resource with matching name
+  // TODO: need a name_lowercase
   Stream<QuerySnapshot> searchResource( searchQuery ){
+    String lowercaseSearchQuery = searchQuery.toLowerCase();
+
+    // if the search bar is empty
+    if(searchQuery == "")
+      {
+        return FirebaseFirestore.instance.collection('resources')
+            .where('verified', isEqualTo: true)
+            .snapshots();
+      }
+
     return FirebaseFirestore.instance.collection('resources').where('name', isEqualTo: "${ searchQuery }" ).where('verified', isEqualTo: true).snapshots();
+    //return FirebaseFirestore.instance.collection('resources').where('name', isGreaterThanOrEqualTo: "${ searchQuery }" ).where('verified', isEqualTo: true).snapshots();
   }
 
   int _selectedIndex = 0;
@@ -396,21 +408,13 @@ class _MyHomePageState extends State<MyHomePage> {
             width: dialogWidth,
             height: dialogHeight,
             child: SingleChildScrollView(
-              child: buildFilterWidgets(groupFilterItemsByCategory(filterItems)),
+              // build the filters and display them in the correct category
+              child: buildFilterWidgets(groupFilterItemsByCategory(filterItems), selectedFilter),
             ),
           ),
           actions: <Widget>[
             TextButton(
               onPressed: () {
-                Navigator.pop(context);
-              },
-              child: Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  resources = filter(selectedFilter);
-                });
                 Navigator.pop(context);
               },
               child: Text('Apply'),
@@ -436,9 +440,8 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   // function to build the filter widgets
-  Widget buildFilterWidgets(Map<String, List<filterItem>> groupedFilterItems) {
+  Widget buildFilterWidgets(Map<String, List<filterItem>> groupedFilterItems, List<filterItem> selectedFilter) {
     List<Widget> filterWidgets = [];
-
     groupedFilterItems.forEach((category, items) {
       filterWidgets.add(
         Column(
@@ -453,22 +456,32 @@ class _MyHomePageState extends State<MyHomePage> {
               crossAxisAlignment: WrapCrossAlignment.center,
               spacing: 8.0,
               runSpacing: 10.0,
-              children: items
-                  .map((item) => FilterChip(
-                label: Text(item.name),
-                selected: selectedFilter.contains(item),
-                onSelected: (bool selected) {
-                  setState(() {
-                    if (selected) {
-                      selectedFilter.add(item);
-                    } else {
-                      selectedFilter.remove(item);
-                    }
-                    resources = filter(selectedFilter);
-                  });
-                },
-              ))
-                  .toList(),
+              children: items.map((item) {
+                // display a custom filter chip
+                return CustomFilterChip(
+                  label: item.name,
+                  selected: selectedFilter.contains(item),
+                  onSelected: (bool selected) {
+                    setState(() {
+                      if (selected) {
+                        // check if the filter is already being applied
+                        if (selectedFilter.contains(item)) {
+                          selectedFilter.remove(item);
+                        }
+                        // otherwise, apply the filter
+                        else {
+                          selectedFilter.add(item);
+                        }
+                      }
+                      else {
+                        selectedFilter.remove(item);
+                      }
+                      resources = filter(selectedFilter);
+                    });
+                  },
+
+                );
+              }).toList(),
             ),
             SizedBox(height: 20.0),
           ],
@@ -486,6 +499,7 @@ class _MyHomePageState extends State<MyHomePage> {
     final screenSize = MediaQuery.of(context).size;
     final bool isLargeScreen = width > 800;
     final bool isSmallScreen = screenSize.width < 800;
+    String searchText = "";
 
     setState(() {
       _menuItems = menuItems();
@@ -519,7 +533,7 @@ class _MyHomePageState extends State<MyHomePage> {
         actions: const [
           Padding(
             padding: EdgeInsets.only(right: 16.0),
-            child: CircleAvatar(child: _ProfileIcon()),
+            child: CircleAvatar(child: ProfileIcon()),
           )
         ],
       ),
@@ -530,58 +544,88 @@ class _MyHomePageState extends State<MyHomePage> {
             children:[
               // search bar
               new Container(
-                padding: EdgeInsets.symmetric( vertical: windowSize.maxHeight / 100 ),
-                margin: EdgeInsets.only( right: windowSize.maxWidth / 6, left: windowSize.maxWidth / 6 ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    //SizedBox(height: 20.0,),
-                    Container(
-                      child: TextField(
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: Color(0xFFEEEEEE),
-                  border: OutlineInputBorder(),
-                  labelText: "Enter a keyword for the resource",
-                  suffixIcon: Icon(Icons.search),
-                ),
-                obscureText: false,
-                onSubmitted: (text) {
-                  setState(() {
-                    resources = searchResource(text);
-                  });
-                }
-                ),
+              padding:
+                  EdgeInsets.symmetric(vertical: windowSize.maxHeight / 100),
+              margin: EdgeInsets.only(
+                  right: windowSize.maxWidth / 6,
+                  left: windowSize.maxWidth / 6),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  //SizedBox(height: 20.0,),
+                  Container(
+                    child: TextField(
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: Color(0xFFEEEEEE),
+                          border: OutlineInputBorder(),
+                          labelText: "Enter a keyword for the resource",
+                          suffixIcon: Icon(Icons.search),
+                        ),
+                        obscureText: false,
+                        onChanged: (text) {
+                          setState(() {
+                            searchText = text;
+                            resources = searchResource(searchText);
+                          });
+                        }),
+                  ),
+                  SizedBox(
+                    height: 10,
+                  ),
+                  // filter items
+                  Container(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        SizedBox(
+                          width: 90,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              // show the filter pop-up
+                              showFilterDialog(context, filterItems);
+                            },
+                            child: Text('Filter'),
+                          ),
+                        ),
+                        SizedBox(width: 10),
+                        // reset filters
+                        // TODO: previous search text is still present in search bar after reset
+                        SizedBox(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              setState(() {
+                                searchText = "";
+                                selectedFilter.clear();
+                                resources = FirebaseFirestore.instance
+                                    .collection('resources')
+                                    .where('verified', isEqualTo: true)
+                                    .snapshots();
+                              });
+                            },
+                            child: Text("Reset Filters"),
+                          ),
+                        ),
+                      ],
                     ),
-                    SizedBox(
-                      height: 10,
-                    ),
-                    // filter items
-                    SizedBox(
-                      width: 90,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          // show the filter pop-up
-                          showFilterDialog(context, filterItems);
-                        },
-                        child: Text('Filter'),
-                      ),
-                    ),
-                    SizedBox(height: 10),
-                    MultiSelectChipDisplay(
-                      items: selectedFilter.map( (e) => MultiSelectItem( e, e.name ) ).toList(),
-                      onTap: (value) {
-                        setState(() {
-                          selectedFilter.remove( value );
-                          resources = filter( selectedFilter );
-                        });
-                      },
-                    ),
-                  ],
-                ),
+                  ),
+                  SizedBox(height: 10),
+                  MultiSelectChipDisplay(
+                    items: selectedFilter
+                        .map((e) => MultiSelectItem(e, e.name))
+                        .toList(),
+                    onTap: (value) {
+                      setState(() {
+                        selectedFilter.remove(value);
+                        resources = filter(selectedFilter);
+                      });
+                    },
+                  ),
+                ],
               ),
-              new Container(
+            ),
+            new Container(
                   margin: EdgeInsets.only( right: windowSize.maxWidth /6, left: windowSize.maxWidth / 6 ),
                   padding: const EdgeInsets.symmetric( vertical: 20),
                   child: StreamBuilder<QuerySnapshot>(
@@ -849,9 +893,34 @@ void signoutUser() async
   await FirebaseAuth.instance.signOut();
 }
 
+class _ClickablePopupMenuItem extends StatefulWidget{
+  final Widget child;
+  final VoidCallback onTap;
+
+  const _ClickablePopupMenuItem({required this.child, required this.onTap});
+
+  @override
+    Widget build(BuildContext context) {
+      return InkWell(
+        onTap: onTap,
+        child: Container(
+          alignment: Alignment.centerLeft,
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: child,
+        ),
+      );
+    }
+
+  @override
+  State<StatefulWidget> createState() {
+    // TODO: implement createState
+    throw UnimplementedError();
+  }
+}
+
 // adds the menu items for the profile drop down
-class _ProfileIcon extends StatelessWidget {
-  const _ProfileIcon({Key? key}) : super(key: key);
+class ProfileIcon extends StatelessWidget {
+  const ProfileIcon({Key? key}) : super(key: key);
   
   @override
   Widget build(BuildContext context) {
@@ -871,48 +940,41 @@ class _ProfileIcon extends StatelessWidget {
               return PopupMenuButton<Menu>(
                   icon: const Icon(Icons.person),
                   offset: const Offset(0, 40),
-                  onSelected: (Menu item) {},
+                  onSelected: (Menu item) {
+                    if(item == Menu.itemOne)
+                    {
+                      Navigator.pushNamed(context, '/account');
+                    }
+                    if (item == Menu.itemTwo)
+                      {
+                        Navigator.pushNamed( context, '/inbox' );
+                      }
+                    if(item == Menu.itemThree)
+                      {
+                        Navigator.pushNamed( context, '/register' );
+                      }
+                    if(item == Menu.itemFour)
+                      {
+                        signoutUser();
+                        Navigator.pushNamedAndRemoveUntil( context, '/home', (route) => false );
+                      }
+                  },
                   itemBuilder: (BuildContext context) => <PopupMenuEntry<Menu>>[
                    PopupMenuItem<Menu>(
-                      value: Menu.itemTwo,
-                      child: 
-                        InkWell(
-                          child: Text("Account"),
-                          onTap: () {
-                            Navigator.pushNamed( context, '/account' );
-                          },
-                        ),
+                      value: Menu.itemOne,
+                      child: Text("Account"),
                     ),
                     PopupMenuItem<Menu>(
-                      value: Menu.itemOne,
-                      child:  
-                        InkWell(
-                          child: Text("Inbox"),
-                          onTap: () {
-                            Navigator.pushNamed( context, '/inbox' );
-                          },
-                        ),
+                      value: Menu.itemTwo,
+                      child: Text("Inbox"),
                     ),
                     PopupMenuItem<Menu>(
                       value: Menu.itemThree,
-                      child: 
-                        InkWell(
-                          child: Text("Register User"),
-                          onTap: () {
-                            Navigator.pushNamed( context, '/register' );
-                          },
-                        )
+                      child: Text("Register User"),
                     ),
                     PopupMenuItem<Menu>(
                       value: Menu.itemFour,
-                      child: 
-                        InkWell(
-                          child: Text("Sign Out"),
-                          onTap: () {
-                            signoutUser();
-                            Navigator.pushNamedAndRemoveUntil( context, '/home', (route) => false );
-                          },
-                        )
+                      child: Text("Sign Out"),
                     ),
                   ]);
             }
@@ -921,42 +983,41 @@ class _ProfileIcon extends StatelessWidget {
               return PopupMenuButton<Menu>(
                   icon: const Icon(Icons.person),
                   offset: const Offset(0, 40),
-                  onSelected: (Menu item) {},
+                  onSelected: (Menu item) {
+                    if(item == Menu.itemOne)
+                      {
+                        Navigator.pushNamed(context, '/account');
+                      }
+                    if(item == Menu.itemTwo)
+                      {
+                        Navigator.pushNamed( context, '/inbox' );
+                      }
+                    if(item == Menu.itemThree)
+                      {
+                        // do nothing since we don't have a settings page yet
+                      }
+                    if(item == Menu.itemFour)
+                      {
+                        signoutUser();
+                        Navigator.pushNamedAndRemoveUntil( context, '/home', (route) => false );
+                      }
+                  },
                   itemBuilder: (BuildContext context) => <PopupMenuEntry<Menu>>[
                     PopupMenuItem<Menu>(
                       value: Menu.itemOne,
-                      child:  
-                        InkWell(
-                          child: Text("Account"),
-                          onTap: () {
-                            Navigator.pushNamed( context, '/account' );
-                          },
-                        ),
+                      child: Text("Account"),
                     ),
                     PopupMenuItem<Menu>(
-                      value: Menu.itemOne,
-                      child:  
-                        InkWell(
-                          child: Text("Inbox"),
-                          onTap: () {
-                            Navigator.pushNamed( context, '/inbox' );
-                          },
-                        ),
-                    ),
-                    const PopupMenuItem<Menu>(
                       value: Menu.itemTwo,
+                      child: Text("Inbox"),
+                    ),
+                    PopupMenuItem<Menu>(
+                      value: Menu.itemThree,
                       child: Text('Settings'),
                     ),
                     PopupMenuItem<Menu>(
                       value: Menu.itemFour,
-                      child: 
-                        InkWell(
-                          child: Text("Sign Out"),
-                          onTap: () {
-                            signoutUser();
-                            Navigator.pushNamedAndRemoveUntil( context, '/home', (route) => false );
-                          },
-                        )
+                      child: Text("Sign Out"),
                     ),
                   ]
                );
@@ -968,20 +1029,56 @@ class _ProfileIcon extends StatelessWidget {
         return PopupMenuButton<Menu>(
             icon: const Icon(Icons.person),
             offset: const Offset(0, 40),
-            onSelected: (Menu item) {},
+            onSelected: (Menu item) { Navigator.pushNamed( context, '/login' );},
             itemBuilder: (BuildContext context) => <PopupMenuEntry<Menu>>[
               PopupMenuItem<Menu>(
                 value: Menu.itemOne,
-                child: 
-                  InkWell(
-                    child: Text("Login"),
-                    onTap: () {
-                      Navigator.pushNamed( context, '/login' );
-                    },
-                  )
+                child: Text("Login"),
               ),
             ]);
       },
+    );
+  }
+}
+
+class CustomFilterChip extends StatefulWidget {
+  final String label;
+  final bool selected;
+  final Function(bool) onSelected;
+
+  CustomFilterChip({
+    required this.label,
+    required this.selected,
+    required this.onSelected,
+  });
+
+  @override
+  _CustomFilterChipState createState() => _CustomFilterChipState();
+}
+
+class _CustomFilterChipState extends State<CustomFilterChip> {
+  bool _isSelected = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _isSelected = widget.selected;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FilterChip(
+      label: Text(widget.label),
+      selected: _isSelected,
+      onSelected: (bool selected) {
+        setState(() {
+          _isSelected = selected;
+        });
+        widget.onSelected(selected);
+      },
+      // if the filter is selected, change to blue
+      backgroundColor: _isSelected ? Colors.blue : Colors.grey,
+      selectedColor: Colors.blue,
     );
   }
 }
