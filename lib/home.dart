@@ -7,6 +7,8 @@ verifying a resource, and a dashboard.
 
 //Package imports
 
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -15,6 +17,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:url_launcher/url_launcher_string.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
+import 'dart:html' as html;
+
 
 //Declare class that has state
 class MyHomePage extends StatefulWidget {
@@ -245,6 +253,21 @@ class _MyHomePageState extends State<MyHomePage> {
 
   int _selectedIndex = 0;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  // Future<void> generateResourcePdf(String resourceInfo) async {
+  //   final pdf = pw.Document();
+  //
+  //   pdf.addPage(pw.Page(
+  //     pageFormat: PdfPageFormat.a4,
+  //     build: (pw.Context context) {
+  //       return pw.Center(
+  //         child: pw.Text(resourceInfo, style: GoogleFonts.notoSans(fontSize: 20) as pw.TextStyle),
+  //       );
+  //     }
+  //   ));
+  //   final pdfData = Uint8List.fromList(await pdf.save());
+  //
+  // }
 
   Widget buildAddressLink(fullAddress, resourceType) {
     if(resourceType == "In Person") {
@@ -500,10 +523,8 @@ class _MyHomePageState extends State<MyHomePage> {
     final bool isLargeScreen = width > 800;
     final bool isSmallScreen = screenSize.width < 800;
     String searchText = "";
+    _menuItems = menuItems(isSmallScreen);
 
-    setState(() {
-      _menuItems = menuItems();
-    });
     return Scaffold(
       key: _scaffoldKey,
       appBar: AppBar(
@@ -771,7 +792,14 @@ class _MyHomePageState extends State<MyHomePage> {
                                                           // or a hotline
                                                           buildPhoneLink (phoneUrl, phoneNumStr, data.docs[index]['resourceType']),
                                                           // display url active link for all resource types
-                                                          buildUrlLink(url, urlStr)
+                                                          buildUrlLink(url, urlStr),
+                                                          SizedBox(height:20),
+                                                          // ElevatedButton(
+                                                          //   onPressed: () async {
+                                                          //     await generateResourcePdf(resourceInfo);
+                                                          //   },
+                                                          //   child: Text('Download PDF'),
+                                                          // )
                                                         ]),
                                                   ),
                                                 ),
@@ -815,6 +843,9 @@ class _MyHomePageState extends State<MyHomePage> {
         onTap: () {
           _scaffoldKey.currentState?.openEndDrawer();
           switch(item){
+            case "Login":
+              Navigator.pushNamed(context, '/login');
+              break;
             case "Submit Resource":
               Navigator.pushNamed(context, '/createresource');
               break;
@@ -841,6 +872,9 @@ class _MyHomePageState extends State<MyHomePage> {
           (item) => InkWell(
         onTap: () {
           switch( item ){
+            case "Login":
+              Navigator.pushNamed(context, '/login');
+              break;
             case "Submit Resource":
               Navigator.pushNamed( context, '/createresource' );
               break;
@@ -868,7 +902,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
 // list of navigation buttons
 
-List<String> menuItems()
+List<String> menuItems(bool isSmallScreen)
 {
   List<String> _menuItems = <String>[];
   User? user = FirebaseAuth.instance.currentUser;
@@ -881,10 +915,17 @@ List<String> menuItems()
       'Dashboard',
     ];
   }
+    if (user == null && isSmallScreen)
+    {
+      _menuItems = <String>[
+      'Login'
+      ];
+  }
+
   return _menuItems;
 }
 
-List<String> _menuItems = menuItems();
+List<String> _menuItems = [];
 
 enum Menu { itemOne, itemTwo, itemThree, itemFour }
 

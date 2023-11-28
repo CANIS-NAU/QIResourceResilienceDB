@@ -104,95 +104,89 @@ class Account extends StatelessWidget
     }
   }
 
-  Widget build( BuildContext context )
-  {
+  Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-            title: const Text('Account'),
-        ),
-        body: LayoutBuilder( builder: ( context, windowSize ) {
-            return Container(
-            child: new Stack(
-                children : [
-                    new Container(
-                        height: windowSize.maxHeight / 2,
-                        width:  windowSize.maxWidth / 2,
-                        padding: const EdgeInsets.symmetric( vertical: 20),
-                        margin: EdgeInsets.only( top: 50, right: windowSize.maxWidth / 3, left: windowSize.maxWidth / 3 ),
-                        child:
-                            TextField(
-                                obscureText: true,
-                                decoration: InputDecoration(
+      appBar: AppBar(
+        title: const Text('Account'),
+      ),
+      body: LayoutBuilder(
+        builder: (context, windowSize) {
+          final maxWidth = 600.0;
+          final inputWidth =
+              windowSize.maxWidth < maxWidth ? windowSize.maxWidth : maxWidth;
+          return Center(
+            child: Container(
+              child: new Stack(
+                children: [
+                  Container(
+                    width: inputWidth,
+                    height: windowSize.maxHeight,
+                    padding: const EdgeInsets.all(16),
+                    child: SingleChildScrollView(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          SizedBox(height: 40),
+                          TextField(
+                            obscureText: true,
+                            decoration: InputDecoration(
                                 border: OutlineInputBorder(),
-                                labelText: 'Current Password' ),
-                                onChanged: ( text )
-                                {
-                                  pass = text;
-                                },
-                            ),
-                    ),
-                    new Container(
-                        height: windowSize.maxHeight / 2,
-                        width:  windowSize.maxWidth / 2,
-                        padding: const EdgeInsets.symmetric( vertical: 20),
-                        margin: EdgeInsets.only( top: 150, right: windowSize.maxWidth / 3, left: windowSize.maxWidth / 3 ),
-                        child:
-                            TextField(
-                                obscureText: true,
-                                decoration: InputDecoration(
+                                labelText: 'Current Password'),
+                            onChanged: (text) {
+                              pass = text;
+                            },
+                          ),
+                          SizedBox(height: 20),
+                          TextField(
+                            obscureText: true,
+                            decoration: InputDecoration(
                                 border: OutlineInputBorder(),
-                                labelText: 'New Password' ),
-                                onChanged: ( text )
-                                {
-                                  newPass = text;
-                                },
-                            ),
-                    ),
-                    new Container(
-                        height: windowSize.maxHeight / 2,
-                        width:  windowSize.maxWidth / 2,
-                        padding: const EdgeInsets.symmetric( vertical: 20),
-                        margin: EdgeInsets.only( top: 250, right: windowSize.maxWidth / 3, left: windowSize.maxWidth / 3 ),
-                        child:
-                            TextField(
-                                obscureText: true,
-                                decoration: InputDecoration(
+                                labelText: 'New Password'),
+                            onChanged: (text) {
+                              newPass = text;
+                            },
+                          ),
+                          SizedBox(height: 20),
+                          TextField(
+                            obscureText: true,
+                            decoration: InputDecoration(
                                 border: OutlineInputBorder(),
-                                labelText: 'Re-enter New Password' ),
-                                onChanged: ( text )
-                                {
-                                  reenter = text;
-                                },
-                            ),
+                                labelText: 'Re-enter New Password'),
+                            onChanged: (text) {
+                              reenter = text;
+                            },
+                          ),
+                          SizedBox(height: 30),
+                          TextButton(
+                            style: ButtonStyle(
+                                foregroundColor:
+                                    MaterialStateProperty.all<Color>(
+                                        Colors.white),
+                                backgroundColor:
+                                    MaterialStateProperty.all<Color>(
+                                        Colors.blue),
+                                shape: MaterialStateProperty.all<
+                                        RoundedRectangleBorder>(
+                                    RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(18.0),
+                                        side: BorderSide(color: Colors.blue)))),
+                            onPressed: () {
+                              changePassword(context, pass, newPass, reenter);
+                            },
+                            child: Text('Change Password'),
+                          ),
+                        ],
+                      ),
                     ),
-                    new Container(
-                        height: windowSize.maxHeight / 10,
-                        width: windowSize.maxWidth / 5,
-                        padding: const EdgeInsets.symmetric( vertical: 20 ),
-                        margin: EdgeInsets.only( top: 350, right: windowSize.maxWidth / 2.5, left: windowSize.maxWidth / 2.5 ),
-                        child:
-                            TextButton(
-                                style: ButtonStyle(
-                                    foregroundColor: MaterialStateProperty.all<Color>( Colors.white ),
-                                    backgroundColor: MaterialStateProperty.all<Color>( Colors.blue ),
-                                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                                        RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular( 18.0 ),
-                                        side: BorderSide( color: Colors.blue )
-                                    )
-                                )
-                                ), 
-                                onPressed: () { 
-                                  changePassword( context, pass, newPass, reenter );
-                                },
-                                child: Text('Change Password'),
-                        )
-                    ),
+                  ),
                 ],
+              ),
             ),
-        );
-        }
-        ),
-     );
-    }
-}  
+          );
+        },
+      ),
+    );
+  }
+}
