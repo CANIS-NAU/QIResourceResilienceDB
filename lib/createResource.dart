@@ -8,11 +8,10 @@ cost, cultural responsiveness, and age range.
 
 //Import packages
 import 'package:flutter/material.dart';
-import 'firebase_options.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:multi_select_flutter/multi_select_flutter.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'events/schedule.dart';
+import 'events/schedule_form.dart';
 
 final now = DateTime.now();
 final date = "${now.month}/${now.day}/${now.year}";
@@ -73,7 +72,8 @@ const List<String> resourceTypeOptions = [
   'In Person',
   'Hotline',
   'Online',
-  'App'
+  'App',
+  'Event',
 ];
 
 // list of privacy options
@@ -109,8 +109,9 @@ class createResourceState extends State<CreateResource> {
   String resourceDescription = "";
   String resourceLocationBoxText = "Link to the resource";
   double _currentSliderValue = 0;
-  int resourceCost = -1;
-  int resourceTypeIndex = -1;
+  String resourceCost = "";
+  String resourceType = "";
+  Schedule? resourceSchedule = null;
 
   //Specifies first value in dropdown to first in the list
   String _currentDropDownValue = ageItems.first;
@@ -129,6 +130,7 @@ class createResourceState extends State<CreateResource> {
   // boolean to track hotline and in person selection
   bool isHotlineSelected = false;
   bool isInPersonSelected = false;
+  bool isEventSelected = false;
 
   bool vertical = false;
   bool verified = false;
@@ -142,39 +144,13 @@ class createResourceState extends State<CreateResource> {
       CollectionReference resourceCollection =
           FirebaseFirestore.instance.collection('resources');
 
-      String resourceType = "", culturalResponse = "";
-      String costType = "";
-
-      String? userEmail = user.email;
-
+      String culturalResponse = "";
       if (_currentSliderValue >= 0 && _currentSliderValue <= 1) {
         culturalResponse = "Low Cultural Responsivness";
       } else if (_currentSliderValue >= 2 && _currentSliderValue <= 3) {
         culturalResponse = "Medium Cultural Responsivness";
       } else {
         culturalResponse = "High Cultural Responsivness";
-      }
-
-      //Check for resource type, required to convert to string(useful for db store)
-      if (resourceTypeIndex == 0) {
-        resourceType = "In Person";
-      } else if (resourceTypeIndex == 1) {
-        resourceType = "Hotline";
-      } else if (resourceTypeIndex == 2) {
-        resourceType = "Online";
-      } else {
-        resourceType = "App";
-      }
-
-      // check for cost options
-      if (resourceCost == 0) {
-        costType = "Free";
-      } else if (resourceCost == 1) {
-        costType = "Covered by Insurance";
-      } else if (resourceCost == 2) {
-        costType = "Subscription";
-      } else {
-        costType = "Fees associated";
       }
 
       //TODO: Need better error handling here
@@ -198,13 +174,17 @@ class createResourceState extends State<CreateResource> {
             'culturalResponsivness': _currentSliderValue,
             'tagline': selectedTags,
             'dateAdded': date,
-            'createdBy': userEmail,
-            'cost': costType
+            'createdBy': user.email,
+            'cost': resourceCost,
+            if (resourceSchedule != null)
+              'schedule': resourceSchedule!.toJson(),
           })
           .then((value) =>
               showAlertDialog(context, "Submitted resource for review"))
-          .catchError((error) =>
-              showAlertDialog(context, "Unable to submit. Please try again"));
+          .catchError((error) {
+            debugPrint(error.toString());
+            showAlertDialog(context, "Unable to submit. Please try again");
+          });
     } else {
       showAlertDialog(context, "You need to login to submit a resource");
     }
@@ -212,10 +192,7 @@ class createResourceState extends State<CreateResource> {
 
   // widget to build a text field based on name and if visible
   Widget buildTextFieldContainer(
-    String label,
-    bool isVisible,
-    Function(String) onChangedCallback)
-  {
+      String label, bool isVisible, Function(String) onChangedCallback) {
     return Container(
       margin: EdgeInsets.symmetric(vertical: isVisible ? 8.0 : 0.0),
       child: Visibility(
@@ -375,6 +352,19 @@ class createResourceState extends State<CreateResource> {
                           ],
                         ),
                       ),
+                      Visibility(
+                        visible: isEventSelected,
+                        child: Column(children: [
+                          buildTitles("Event Schedule"),
+                          ScheduleFormFields(
+                            onChanged: (schedule) {
+                              setState(() {
+                                resourceSchedule = schedule;
+                              });
+                            },
+                          ),
+                        ]),
+                      ),
                       buildTitles("Resource Type"),
                       Container(
                         child: ListView(
@@ -383,22 +373,19 @@ class createResourceState extends State<CreateResource> {
                           children: [
                             Column(
                               children: resourceTypeOptions.map((option) {
-                                int index =
-                                    resourceTypeOptions.indexOf(option);
                                 return ListTile(
                                   dense: true,
                                   leading: Radio(
-                                    value: index,
-                                    groupValue: resourceTypeIndex,
+                                    value: option,
+                                    groupValue: resourceType,
                                     onChanged: (value) {
                                       setState(() {
-                                        resourceTypeIndex = value!;
+                                        resourceType = value!;
                                         isHotlineSelected =
-                                            (resourceTypeOptions[value] ==
-                                                "Hotline");
+                                            (value == "Hotline");
                                         isInPersonSelected =
-                                            (resourceTypeOptions[value] ==
-                                                "In Person");
+                                            (value == "In Person");
+                                        isEventSelected = (value == "Event");
                                       });
                                     },
                                   ),
@@ -453,12 +440,10 @@ class createResourceState extends State<CreateResource> {
                                 children: [
                                   Column(
                                     children: resourceCostOptions.map((option) {
-                                      int index =
-                                          resourceCostOptions.indexOf(option);
                                       return ListTile(
                                         dense: true,
                                         leading: Radio(
-                                          value: index,
+                                          value: option,
                                           groupValue: resourceCost,
                                           onChanged: (value) {
                                             setState(() {
@@ -543,54 +528,61 @@ class createResourceState extends State<CreateResource> {
                       ),
                       Center(
                         child: new Container(
-                            padding: EdgeInsets.symmetric(vertical:  20.0),
+                            padding: EdgeInsets.symmetric(vertical: 20.0),
                             child: TextButton(
-                          style: ButtonStyle(
-                              minimumSize: MaterialStateProperty.all<Size>(
-                                  Size(150, 45)),
-                              foregroundColor: MaterialStateProperty.all<Color>(
-                                  Colors.white),
-                              backgroundColor:
-                                  MaterialStateProperty.all<Color>(Colors.blue),
-                              shape: MaterialStateProperty.all<
-                                      RoundedRectangleBorder>(
-                                  RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(18.0),
-                                      side: BorderSide(color: Colors.blue)))),
-                          onPressed: () {
-                            // check if any of text boxes are empty based on the type of resource
-                            if (resourceName == "" ||
-                                resourceDescription == "" ||
-                                resourceLocation == "" ||
-                                (isInPersonSelected &&
-                                    (resourceAddress == "" ||
-                                        resourceCity == "" ||
-                                        resourceState == "" ||
-                                        resourceZip == "")) ||
-                                (isInPersonSelected || isHotlineSelected) &&
-                                    resourcePhoneNumber == "") {
-                              showAlertDialog(
-                                context,
-                                "One or more of the mandatory fields are blank. Please fill out all of the fields before submitting.",
-                              );
-                            }
-                            // check if any of the type, privacy, or cost options are not selected
-                            else if (resourceTypeIndex == -1 ||
-                                selectedPrivacyOptions.isEmpty ||
-                                resourceCost == -1) {
-                              showAlertDialog(
-                                context,
-                                "Please select a resource type, privacy option, and cost before submitting.",
-                              );
-                            }
-                            // otherwise, all fields are filled out and submit the resource
-                            else {
-                              submitResource(resourceName, resourceLocation,
-                                  resourceDescription, context);
-                            }
-                          },
-                          child: Text('Submit Resource'),
-                        )),
+                              style: ButtonStyle(
+                                  minimumSize: MaterialStateProperty.all<Size>(
+                                      Size(150, 45)),
+                                  foregroundColor:
+                                      MaterialStateProperty.all<Color>(
+                                          Colors.white),
+                                  backgroundColor:
+                                      MaterialStateProperty.all<Color>(
+                                          Colors.blue),
+                                  shape: MaterialStateProperty.all<
+                                          RoundedRectangleBorder>(
+                                      RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(18.0),
+                                          side:
+                                              BorderSide(color: Colors.blue)))),
+                              onPressed: () {
+                                // check if any of text boxes are empty based on the type of resource
+                                if (resourceName == "" ||
+                                    resourceDescription == "" ||
+                                    resourceLocation == "" ||
+                                    (isInPersonSelected &&
+                                        (resourceAddress == "" ||
+                                            resourceCity == "" ||
+                                            resourceState == "" ||
+                                            resourceZip == "")) ||
+                                    ((isInPersonSelected ||
+                                            isHotlineSelected) &&
+                                        resourcePhoneNumber == "") ||
+                                    (isEventSelected &&
+                                        (resourceSchedule == null))) {
+                                  showAlertDialog(
+                                    context,
+                                    "One or more of the mandatory fields are blank. Please fill out all of the fields before submitting.",
+                                  );
+                                }
+                                // check if any of the type, privacy, or cost options are not selected
+                                else if (resourceType == "" ||
+                                    selectedPrivacyOptions.isEmpty ||
+                                    resourceCost == "") {
+                                  showAlertDialog(
+                                    context,
+                                    "Please select a resource type, privacy option, and cost before submitting.",
+                                  );
+                                }
+                                // otherwise, all fields are filled out and submit the resource
+                                else {
+                                  submitResource(resourceName, resourceLocation,
+                                      resourceDescription, context);
+                                }
+                              },
+                              child: Text('Submit Resource'),
+                            )),
                       )
                     ],
                   ))));

@@ -12,9 +12,9 @@ class PdfDownload {
       String resourceType,
       List<dynamic> privacy,
       int culturalResponsiveness,
-      String fullAddress,
-      String phoneNumber,
-      Uri urlStr,
+      String? fullAddress,
+      String? phoneNumber,
+      Uri? urlStr,
 
       ) async {
     try {
@@ -40,16 +40,16 @@ class PdfDownload {
       addRow(grid, 'Type', resourceType);
       addRow(grid, 'Privacy', privacy.map((e) => e.toString()).join(', '));
       addRow(grid, 'Cultural Responsiveness', culturalResponsiveness);
-      if(resourceType == "In Person")
-        {
-          addRow(grid, 'Address', fullAddress);
-        }
-      if(resourceType == "Hotline" || resourceType == "In Person")
-        {
-          addRow(grid, 'Phone Number', phoneNumber);
-        }
-
-      addRow(grid, 'URL', urlStr);
+      
+      if (fullAddress != null) {
+        addRow(grid, 'Address', fullAddress);
+      }
+      if (phoneNumber != null) {
+        addRow(grid, 'Phone Number', phoneNumber);
+      }
+      if (urlStr != null) {
+        addRow(grid, 'URL', urlStr);
+      }
 
       // set grid padding
       grid.style.cellPadding = PdfPaddings(left: 5, top: 5);

@@ -5,6 +5,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:timezone/browser.dart' as tz;
 
 //Screen or class imports
 import './home.dart';
@@ -18,24 +19,24 @@ import './reviewResource.dart';
 import './inbox.dart';
 
 //Main fubction
-void main() async  {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-     options: DefaultFirebaseOptions.currentPlatform
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  await dotenv.load(
-    fileName: './hide.env'
-  );
-  runApp( const MyApp() );
+  await dotenv.load(fileName: './hide.env');
+
+  // TimeZone database initialization for browsers.
+  await tz.initializeTimeZone();
+
+  runApp(const MyApp());
 }
 
 //Serves as the root of application 
 class MyApp extends StatelessWidget {
-  const MyApp( {super.key} );
+  const MyApp({super.key});
   
   @override
-  Widget build( BuildContext context ) {
+  Widget build(BuildContext context) {
     return MaterialApp(
       title: "Resource Web Page",
 

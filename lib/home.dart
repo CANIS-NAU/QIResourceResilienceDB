@@ -5,23 +5,14 @@ Once a user is logged in, the homepage displays options for submitting a resourc
 verifying a resource, and a dashboard.
  */
 
-//Package imports
-
-import 'dart:typed_data';
-
-import 'package:flutter/material.dart';
-import 'firebase_options.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:url_launcher/url_launcher_string.dart';
-import 'pdfDownload.dart';
-import "createResource.dart";
+import 'view_resource/resource_summary.dart';
+import 'view_resource/filter.dart';
 
-
-//Declare class that has state
+/// The home page main widget
 class MyHomePage extends StatefulWidget {
   const MyHomePage( { super.key } );
 
@@ -29,508 +20,34 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-//Filter class for each filter item
-class filterItem {
-  final int id;
-  final String name;
-  final String category;
-
-  //Class constructor
-  filterItem({
-    required this.id,
-    required this.name,
-    required this.category
-  });
-}
-
-//Home Page state
 class _MyHomePageState extends State<MyHomePage> {
-
-  //Set booleans for filtering types
-  bool ageFilter = false, responsivenessType = false, reportingType = false, locationType = false;
-
-  //Static list of filter categories with corresponding filter items
-  // more to be added. Added with constructor
-  static List<filterItem> filterItems = [
-    filterItem(id: 0, name: "Online", category: "Type"),
-    filterItem(id: 1, name: "In Person", category: "Type"),
-    filterItem(id: 2, name: "App", category: "Type"),
-    filterItem(id: 3, name: "Hotline", category: "Type"),
-
-    filterItem(id: 4, name: "Low Cultural Responsiveness", category: "Cultural Responsiveness"),
-    filterItem(id: 5, name: "Medium Cultural Responsiveness", category: "Cultural Responsiveness"),
-    filterItem(id: 6, name: "High Cultural Responsiveness", category: "Cultural Responsiveness"),
-
-    filterItem(id: 7, name: "HIPAA Compliant", category: "Privacy"),
-    filterItem(id: 8, name: "Anonymous", category: "Privacy"),
-    filterItem(id: 9, name: "Mandatory Reporting", category: "Privacy"),
-
-    filterItem(id: 10, name: "0-5", category: "Age Range"),
-    filterItem(id: 11, name: "6-10", category: "Age Range"),
-    filterItem(id: 12, name: "11-15", category: "Age Range"),
-    filterItem(id: 13, name: "16-20", category: "Age Range"),
-    filterItem(id: 14, name: "21-25", category: "Age Range"),
-    filterItem(id: 15, name: "26-35", category: "Age Range"),
-    filterItem(id: 16, name: "36-55", category: "Age Range"),
-    filterItem(id: 17, name: "56-75", category: "Age Range"),
-    filterItem(id: 18, name: "76+", category: "Age Range"),
-    filterItem(id: 19, name: "All ages", category: "Age Range"),
-  ];
-
-  // for possibly grouping filter items by category
-  List<MapEntry<String, List<filterItem>>> groupedFilterItems() {
-    return [
-      MapEntry("Type", [
-        filterItems[0],
-        filterItems[1],
-        filterItems[2],
-        filterItems[3]
-      ]),
-      MapEntry("Cultural Responsiveness", [
-        filterItems[4],
-        filterItems[5],
-        filterItems[6],
-      ]),
-      MapEntry("Privacy", [
-        filterItems[7],
-        filterItems[8],
-        filterItems[9],
-      ]),
-      MapEntry("Age Range",[
-        filterItems[10],
-        filterItems[11],
-        filterItems[12],
-        filterItems[13],
-        filterItems[14],
-        filterItems[15],
-        filterItems[16],
-        filterItems[17],
-        filterItems[18],
-        filterItems[19],
-      ]),
-    ];
-  }
-
-  //Create a list that is casted dynamic, to hold filter items
-  List<filterItem> selectedFilter = [];
-
-  //Search bar query string
-  String searchQuery = "";
-
-  //Get resources only if verified
-  Stream<QuerySnapshot> resources = FirebaseFirestore.instance.collection('resources').where( 'verified', isEqualTo: true ).snapshots();
-  CollectionReference resourceCollection = FirebaseFirestore.instance.collection('resources');
-
-  //TODO: Finish filter mech. Needs to be a compund filter
-  Stream<QuerySnapshot> filter( List<dynamic> selectedFilter )
-  {
-    String potentialLocationType = "", potentialResponsivenessType = "", potentialReportingType = " ",
-        potentialAgeType = "", potentialCostType ="";
-    List<String> potentialReportingTypes = [];
-    String currentArrayItem = "";
-
-    //Since list is dynamic type with id and name, we must map only to name
-    List<String> selectedFilterNames = selectedFilter.map( (item) => item.name.toString() ).toList();
-
-    //Get all queries that are verified
-    Query query = FirebaseFirestore.instance.collection('resources').where('verified', isEqualTo: true);
-
-    //Check what filter catagories have been selected
-    setTypeFilter( selectedFilter );
-
-    //Loop through selected filter options
-    for( int filterIterator = 0; filterIterator < selectedFilterNames.length; filterIterator++ ) 
-    {
-      //Get current item
-      currentArrayItem = selectedFilterNames[ filterIterator ];
-
-      //Check items in catagories and set the potential filter query
-      if( currentArrayItem == "Online" || currentArrayItem == "In Person" ||
-          currentArrayItem == "App" || currentArrayItem == "Hotline" )
-      {
-        potentialLocationType = currentArrayItem;
-      }
-      else if( currentArrayItem == "Low Cultural Responsivness" || 
-               currentArrayItem == "Medium Cultural Responsivness" || 
-               currentArrayItem == "High Cultural Responsivness" )
-      {
-        potentialResponsivenessType = currentArrayItem;
-      }
-      else if( currentArrayItem == "HIPAA Compliant" ||
-          currentArrayItem == "Anonymous" ||
-               currentArrayItem == "Mandatory Reporting" )
-      {
-        potentialReportingTypes.add(currentArrayItem);
-      }
-      else if( currentArrayItem == "Price" ||
-          currentArrayItem == "Subscription" ||
-          currentArrayItem == "Insurance" )
-      {
-        potentialCostType = currentArrayItem;
-      }
-      else
-      {
-        potentialAgeType = currentArrayItem;
-      }
-    }
-
-    //Query based on selected filter categories collected
-    if( locationType )
-    {
-      query = query.where('resourceType', isEqualTo: potentialLocationType );
-    }
-    if( responsivenessType )
-    {
-      query = query.where('culturalResponse', isEqualTo : potentialResponsivenessType );
-    }
-    if( reportingType && potentialReportingTypes.isNotEmpty)
-    {
-      query = query.where('privacy', isEqualTo: potentialReportingTypes);
-    }
-    if( ageFilter )
-    {
-      query = query.where('agerange', isEqualTo: potentialAgeType );
-    }
-
-    Stream<QuerySnapshot> filtered = query.snapshots();
-
-    //set filter booleans back to false for filter removable
-    locationType = false;
-    responsivenessType = false;
-    reportingType = false;
-    ageFilter = false;
-
-    return filtered;
-  }
-
-  //Set what was selected for filtering 
-  void setTypeFilter( List<dynamic> selectedFilter )
-  {
-    int selectedFilterId = 0;
-    for( int dynamicListIndex = 0; dynamicListIndex < selectedFilter.length; dynamicListIndex++ ) 
-    {
-      selectedFilterId = selectedFilter[ dynamicListIndex ].id;
-
-      if( selectedFilterId >= 1 && selectedFilterId <= 3 ) 
-      {
-        locationType = true;
-      }
-      else if( selectedFilterId >= 4 && selectedFilterId <= 6 ) 
-      {
-        responsivenessType = true;
-      }
-      else if( selectedFilterId >= 7 && selectedFilterId <= 9 ) 
-      {
-        reportingType = true;
-      }
-      // Note:
-      else if( selectedFilterId >= 10 && selectedFilterId <= 19 )
-      {
-        ageFilter = true;
-      }
-    }
-  }
-
-  //Search query by keyword. Get resource with matching name
-  // TODO: need a name_lowercase
-  Stream<QuerySnapshot> searchResource( searchQuery ){
-    String lowercaseSearchQuery = searchQuery.toLowerCase();
-
-    // if the search bar is empty
-    if(searchQuery == "")
-      {
-        return FirebaseFirestore.instance.collection('resources')
-            .where('verified', isEqualTo: true)
-            .snapshots();
-      }
-
-    return FirebaseFirestore.instance.collection('resources').where('name', isEqualTo: "${ searchQuery }" ).where('verified', isEqualTo: true).snapshots();
-    //return FirebaseFirestore.instance.collection('resources').where('name', isGreaterThanOrEqualTo: "${ searchQuery }" ).where('verified', isEqualTo: true).snapshots();
-  }
-
-
-  Future<bool> setVisabilityStatus( String query, bool isVisable ) async {
-      CollectionReference resourcesCollection = 
-                             FirebaseFirestore.instance.collection('resources');
-
-      QuerySnapshot querySnapshot = 
-                await resourcesCollection.where('name', isEqualTo: query).get();
-
-      if (querySnapshot.docs.isNotEmpty) {
-        DocumentReference documentReference = 
-                                             querySnapshot.docs.first.reference;
-
-        await documentReference.update({
-          'isVisable': isVisable
-        });
-
-        return true;
-      }
-      
-      return false;
-  }
-
-  int _selectedIndex = 0;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  
+  /// The currently displayed resource query.
+  Stream<QuerySnapshot> resources = FirebaseFirestore.instance
+    .collection('resources')
+    .where('verified', isEqualTo: true)
+    .snapshots();
 
-  Widget buildAddressLink(fullAddress, resourceType) {
-    if(resourceType == "In Person") {
-      return Column(children: [
-        GestureDetector(
-            onTap: () async {
-              String formattedAddress = fullAddress.replaceAll(" ", "+");
-              String mapUrl = 'https://maps.google.com/?q=$formattedAddress';
-              if (await canLaunchUrlString(mapUrl)) {
-                await launchUrlString(mapUrl);
-              } else {
-                showDialog(
-                    context: context,
-                    builder: (context) =>
-                        AlertDialog(
-                            title: Text("Error"),
-                            content: Text("Failed to launch address"),
-                            actions: [
-                              TextButton(
-                                child: Text("OK"),
-                                onPressed: () => Navigator.pop(context),
-                              )
-                            ]));
-              }
-            },
-            // display address link
-            child: RichText(
-                text: TextSpan(
-                    text: 'Address: ',
-                    style: TextStyle(color: Colors.black, fontSize: 16),
-                    children: [
-                      TextSpan(
-                          text: '$fullAddress\n',
-                          style: TextStyle(
-                            color: Colors.blue,
-                            fontSize: 16,
-                            decoration: TextDecoration.underline,
-                          ))
-                    ]))),
-      ]);
-    }
-    else{
-      // returns an empty widget if resource is not in person
-      // (doesn't have an address)
-      return SizedBox.shrink();
-    }
+  final searchFieldController = TextEditingController();
+  ResourceFilter filter = ResourceFilter.empty();
+
+  void onFilterChange() {
+    // TODO: only change the query if filter *actually* changed.
+    searchFieldController.text = filter.textual ?? "";
+    resources = buildQuery(filter);
   }
-
-  Widget buildPhoneLink (phoneUrl, phoneNumStr, resourceType) {
-    if(resourceType == "Hotline" || resourceType == "In Person")
-      {
-        return Column (
-          children: [
-            GestureDetector(
-                onTap: () async {
-                  if(await canLaunchUrlString(phoneUrl)) {
-                    await launchUrlString(phoneUrl);
-                  }
-                  else{
-                    showDialog(
-                        context:
-                        context,
-                        builder: (context) =>
-                            AlertDialog(
-                                title: Text("Error"),
-                                content: Text("Failed to call phone number"),
-                                actions: [
-                                  TextButton(
-                                    child: Text("OK"),
-                                    onPressed: () => Navigator.pop(context),
-                                  )
-                                ]));
-                  }
-                },
-                // display phone number
-                child: RichText(
-                    text: TextSpan(
-                        text: 'Phone Number: ',
-                        style: TextStyle(
-                            color: Colors.black,
-                            fontSize: 16),
-                        children: [
-                          TextSpan(
-                              text: '$phoneNumStr\n',
-                              style:
-                              TextStyle(
-                                color: Colors.blue,
-                                fontSize: 16,
-                                decoration: TextDecoration.underline,
-                              ))
-                        ]))
-            ),
-          ],
-        );
-      }
-    else{
-      // returns an empty widget if resource is not in person or hotline
-      // (doesn't have a phone number)
-      return SizedBox.shrink();
-    }
-  }
-
-  Widget buildUrlLink (url, urlStr) {
-    return Column(
-      children: [
-        GestureDetector(
-            onTap: () async {
-              // if possible, launch url
-              if (await canLaunchUrl(url)) {
-                await launchUrl(url);
-              }
-              // otherwise display error
-              else {
-                showDialog(
-                    context:
-                    context,
-                    builder: (context) =>
-                        AlertDialog(
-                            title: Text("Error"),
-                            content: Text("Failed to launch URL"),
-                            actions: [
-                              TextButton(
-                                child: Text("OK"),
-                                onPressed: () => Navigator.pop(context),
-                              )
-                            ]));
-              }
-            },
-            // display url
-            child: RichText(
-                text: TextSpan(
-                    text: 'URL: Link to website ',
-                    style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 16),
-                    children: [
-                      TextSpan(
-                          text: "here",
-                          style:
-                          TextStyle(
-                            color: Colors.blue,
-                            fontSize: 16,
-                            decoration: TextDecoration.underline,
-                          ))
-                    ])))
-      ]
-    );
-  }
-
-  // function to build the filter widgets as a pop-up dialog
-  void showFilterDialog(BuildContext context, List<filterItem> filterItems) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        final screenSize = MediaQuery.of(context).size;
-        final dialogWidth = screenSize.width * 0.7;
-        final dialogHeight = screenSize.height * 0.4;
-
-        return AlertDialog(
-          content: Container(
-            width: dialogWidth,
-            height: dialogHeight,
-            child: SingleChildScrollView(
-              // build the filters and display them in the correct category
-              child: buildFilterWidgets(
-                       groupFilterItemsByCategory(filterItems), selectedFilter),
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: Text('Apply'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  // function to group filter items by category
-  Map<String, List<filterItem>> groupFilterItemsByCategory(List<filterItem>
-                                                                  filterItems) {
-    Map<String, List<filterItem>> groupedFilterItems = {};
-
-    for (filterItem item in filterItems) {
-      if (!groupedFilterItems.containsKey(item.category)) {
-        groupedFilterItems[item.category] = [];
-      }
-      groupedFilterItems[item.category]?.add(item);
-    }
-
-    return groupedFilterItems;
-  }
-
-  // function to build the filter widgets
-  Widget buildFilterWidgets(Map<String, List<filterItem>> groupedFilterItems,
-                                              List<filterItem> selectedFilter) {
-    List<Widget> filterWidgets = [];
-    groupedFilterItems.forEach((category, items) {
-      filterWidgets.add(
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Text(
-              category,
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 10),
-            Wrap(
-              crossAxisAlignment: WrapCrossAlignment.center,
-              spacing: 8.0,
-              runSpacing: 10.0,
-              children: items.map((item) {
-                // display a custom filter chip
-                return CustomFilterChip(
-                  label: item.name,
-                  selected: selectedFilter.contains(item),
-                  onSelected: (bool selected) {
-                    setState(() {
-                      if (selected) {
-                        // check if the filter is already being applied
-                        if (selectedFilter.contains(item)) {
-                          selectedFilter.remove(item);
-                        }
-                        // otherwise, apply the filter
-                        else {
-                          selectedFilter.add(item);
-                        }
-                      }
-                      else {
-                        selectedFilter.remove(item);
-                      }
-                      resources = filter(selectedFilter);
-                    });
-                  },
-
-                );
-              }).toList(),
-            ),
-            SizedBox(height: 20.0),
-          ],
-        ),
-      );
-    });
-    return Column(children: filterWidgets);
-  }
-
 
   //Home screen UI 
   @override
   Widget build( BuildContext context ) {
-    final width = MediaQuery.of(context).size.width;
     final screenSize = MediaQuery.of(context).size;
-    final bool isLargeScreen = width > 800;
-    final bool isSmallScreen = screenSize.width < 800;
-    String searchText = "";
+    final bool isLargeScreen = screenSize.width > 800;
+    final bool isSmallScreen = !isLargeScreen;
     _menuItems = menuItems(isSmallScreen);
+
+    bool Function(QueryDocumentSnapshot) filterFunction =
+        clientSideFilter(filter);
 
     return Scaffold(
       key: _scaffoldKey,
@@ -592,10 +109,12 @@ class _MyHomePageState extends State<MyHomePage> {
                           suffixIcon: Icon(Icons.search),
                         ),
                         obscureText: false,
-                        onChanged: (text) {
+                        controller: searchFieldController,
+                        onSubmitted: (text) {
                           setState(() {
-                            searchText = text;
-                            resources = searchResource(searchText);
+                            final t = text.isNotEmpty ? text : null;
+                            filter.setTextSearch(t);
+                            onFilterChange();
                           });
                         }),
                   ),
@@ -610,26 +129,29 @@ class _MyHomePageState extends State<MyHomePage> {
                         SizedBox(
                           width: 90,
                           child: ElevatedButton(
+                            child: Text('Filter'),
                             onPressed: () {
                               // show the filter pop-up
-                              showFilterDialog(context, filterItems);
+                              showDialog(
+                                context: context, 
+                                builder: (context) => CategoryFilterDialog(
+                                  filter: filter,
+                                  onChanged: (updatedFilter) => setState(() {
+                                    filter = updatedFilter;
+                                    onFilterChange();
+                                  }),
+                                ),
+                              );
                             },
-                            child: Text('Filter'),
                           ),
                         ),
                         SizedBox(width: 10),
-                        // reset filters
-                        // TODO: previous search text is still present in search bar after reset
                         SizedBox(
                           child: ElevatedButton(
                             onPressed: () {
                               setState(() {
-                                searchText = "";
-                                selectedFilter.clear();
-                                resources = FirebaseFirestore.instance
-                                    .collection('resources')
-                                    .where('verified', isEqualTo: true)
-                                    .snapshots();
+                                filter.clear();
+                                onFilterChange();
                               });
                             },
                             child: Text("Reset Filters"),
@@ -640,13 +162,14 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                   SizedBox(height: 10),
                   MultiSelectChipDisplay(
-                    items: selectedFilter
-                        .map((e) => MultiSelectItem(e, e.name))
+                    items: filter
+                        .categorical
+                        .map((e) => MultiSelectItem(e, e.value))
                         .toList(),
                     onTap: (value) {
                       setState(() {
-                        selectedFilter.remove(value);
-                        resources = filter(selectedFilter);
+                        filter.removeFilter(value);
+                        onFilterChange();
                       });
                     },
                   ),
@@ -673,199 +196,30 @@ class _MyHomePageState extends State<MyHomePage> {
                       {
                         return Text("Loading Resources");
                       }
-                      //Get the snapshot data
+
+                      //Get the snapshot data and filter
                       final data = snapshot.requireData;
+                      final docs = data.docs.where(filterFunction).toList();
 
                       //Return a list of the data (resources)
-                      if(data.size != 0)
-                        {
-                      return Container(
+                      if (data.size == 0) {
+                        return Text('No resources');
+                      } else {
+                        return Container(
                           height: 500,
                           child: ListView.builder(
-                              scrollDirection: Axis.vertical,
-                              shrinkWrap: true,
-                              itemCount: data.size,
-                              itemBuilder: (context, index) {
-
-                                // get resource information for pop-up
-
-                                // get url data for resource
-                                String urlStr = data.docs[index]['location'];
-                                final Uri url = Uri.parse(urlStr);
-
-                                // get phone number data for resource
-                                String phoneUrl = "";
-                                String phoneNumStr = "";
-                                if (data.docs[index]['resourceType'] == "Hotline" ||
-                                    data.docs[index]['resourceType'] == "In Person") {
-                                  phoneNumStr = data.docs[index]['phoneNumber'];
-                                  phoneUrl = "tel:$phoneNumStr";
-                                }
-
-                                if(data.docs[index]['isVisable'] == null){
-                                  setVisabilityStatus(data.docs[index]['name'],
-                                  true);
-                                }
-
-                                // get full address data for resource
-                                String fullAddress = "";
-                                if (data.docs[index]['resourceType'] == 'In Person') {
-                                  fullAddress = data.docs[index]['address'] +
-                                      ' ' +
-                                      data.docs[index]['building']! +
-                                      ' ' +
-                                      data.docs[index]['city'] +
-                                      ' ' +
-                                      data.docs[index]['state'] +
-                                      ' ' +
-                                      data.docs[index]['zipcode'];
-                                }
-
-                                // get the rest of the resource information that
-                                // are not active links
-                                String resourceInfo =
-                                    'Description: ${data.docs[index]['description']}\n\n'
-                                    'Type: ${data.docs[index]['resourceType']}\n\n'
-                                    // display the privacy without brackets
-                                    'Privacy: ${data.docs[index]['privacy'] is List
-                                    ? (data.docs[index]['privacy'] as List).map((e) => e.toString()).join(', ')
-                                    : data.docs[index]['privacy']}\n\n'
-                                    'Cultural Responsiveness: ${data.docs[index]['culturalResponsivness']} \n';
-                                //'Cost: ${data.docs[index]['cost']}\n';
-
-                                // get pdf download to use
-                                PdfDownload pdfDownload = PdfDownload();
-                                User? user = FirebaseAuth.instance.currentUser;
-                                if( data.docs[index]['isVisable'] || 
-                                                                  user != null )
-                                {
-                                  return Container(
-                                    height: 100,
-                                    child: Card(
-                                      color: Colors.white,
-                                      elevation: 4,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.all(Radius.circular(0)),
-                                      ),
-                                      // the format for each resource box
-                                      child: ListTile(
-                                        contentPadding: EdgeInsets.symmetric(
-                                            vertical: 10.0, horizontal: 30.0),
-                                        dense: false,
-                                        title: SizedBox(
-                                            width: index == 0 ? 95 : 80,
-                                            child: Text(
-                                              '${data.docs[index]['name']}',
-                                              textAlign: TextAlign.left,
-                                              overflow: TextOverflow.visible,
-                                              softWrap: true,
-                                              maxLines: isSmallScreen ? 2 : null,
-                                              style: TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize:
-                                                      isSmallScreen ? 18 : 25),
-                                            )),
-                                        leading: managerButton(
-                                                  context,
-                                                  user,
-                                                  '${data.docs[index]['name']}',
-                                                  data.docs[index]['isVisable']
-                                                                              ),
-                                        subtitle: SizedBox(
-                                            width: 80,
-                                            child: Text(
-                                                '${data.docs[index]['description']}',
-                                                overflow: TextOverflow.ellipsis,
-                                                maxLines: 2,
-                                                // softWrap: true,
-                                                style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: isSmallScreen
-                                                        ? 12
-                                                        : 14))),
-                                        trailing: GestureDetector(
-                                          child: Icon(
-                                            Icons.arrow_forward_rounded,
-                                            color: Colors.black,
-                                          ),
-                                          // pop up for a resource with information
-                                          onTap: () {
-                                            showDialog(
-                                              context: context,
-                                              builder: (context) => AlertDialog(
-                                                  title: Text(
-                                                      '${data.docs[index]['name']}',
-                                                      style: TextStyle(
-                                                          fontSize: 25.0,
-                                                          fontWeight: FontWeight.bold)),
-                                                  content: Container(
-                                                    child: SizedBox(
-                                                      // display resource information in pop-up
-                                                      child: Column(
-                                                          crossAxisAlignment:
-                                                              CrossAxisAlignment
-                                                                  .start,
-                                                          children: [
-                                                            Text(resourceInfo,
-                                                                overflow: TextOverflow.visible,
-                                                                softWrap: true,
-                                                                style: TextStyle(
-                                                                    fontSize:
-                                                                        16.0)),
-                                                            // display address active link if resource is in person
-                                                            buildAddressLink(fullAddress, data.docs[index]['resourceType']),
-                                                            // display phone number active link if the resource is in person
-                                                            // or a hotline
-                                                            buildPhoneLink (phoneUrl, phoneNumStr, data.docs[index]['resourceType']),
-                                                            // display url active link for all resource types
-                                                            buildUrlLink(url, urlStr),
-                                                            SizedBox(height:20),
-                                                            ElevatedButton(
-                                                              onPressed: () {
-                                                                // download pdf
-                                                                pdfDownload.printResourceInfo(
-                                                                  data.docs[index]['name'],
-                                                                  data.docs[index]['description'],
-                                                                  data.docs[index]['resourceType'],
-                                                                  data.docs[index]['privacy'],
-                                                                  data.docs[index]['culturalResponsivness'],
-                                                                  fullAddress,
-                                                                  phoneNumStr,
-                                                                  url,
-                                                                );
-                                                              },
-                                                              child: Text('Download PDF'),
-                                                            ),
-                                                          ]),
-                                                    ),
-                                                  ),
-                                                  actions: [
-                                                    TextButton(
-                                                      child: Text('OK'),
-                                                      onPressed: () =>
-                                                          Navigator.pop(context),
-                                                    )
-                                                  ]),
-                                            );
-                                          },
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                }
-                                else
-                                {
-                                  return SizedBox.shrink();
-                                }
-                              }
-                            )
-                          );
-                        }
-                      else
-                        {
-                          return Text('No resources');
-                        }
+                            scrollDirection: Axis.vertical,
+                            shrinkWrap: true,
+                            itemCount: docs.length,
+                            itemBuilder: (context, index) {
+                              return ResourceSummary(
+                                resource: docs[index],
+                                isSmallScreen: isSmallScreen,
+                              );
+                            }
+                          )
+                        );
+                      }
                     }
                   ),
               ),
@@ -875,49 +229,6 @@ class _MyHomePageState extends State<MyHomePage> {
       }
       ),
     );
-  }
-
-  Widget managerButton( context, User? user, String name, bool vis )
-  {
-    if( user != null )
-    {
-      String visStatus = !vis == true ? "Un-archive" : "Archive";
-      return TextButton(
-        style: ButtonStyle(
-            foregroundColor:
-                MaterialStateProperty.all<Color>(
-                    Colors.white),
-            backgroundColor:
-                MaterialStateProperty.all<Color>(
-                    Colors.blue),
-            shape: MaterialStateProperty.all<
-                    RoundedRectangleBorder>(
-                RoundedRectangleBorder(
-                    borderRadius:
-                        BorderRadius.circular(18.0),
-                    side: BorderSide(color: Colors.blue)))),
-        onPressed: () {
-          String stringStatus = "";
-          setVisabilityStatus( name, !vis ).then(( bool status ) {
-            if(status)
-            {
-              stringStatus = 
-                            "You have successfully ${visStatus} this resource.";
-            }
-            else
-            {
-              stringStatus = "There was a problem ${visStatus} the resource.";
-            }
-            showAlertDialog( context, stringStatus );
-          });
-        },
-        child: Text( visStatus ),
-      );
-    } 
-    else
-    {
-      return const SizedBox.shrink();
-    }
   }
 
   // creates menu items when screen size is small
@@ -1163,48 +474,6 @@ class ProfileIcon extends StatelessWidget {
               ),
             ]);
       },
-    );
-  }
-}
-
-class CustomFilterChip extends StatefulWidget {
-  final String label;
-  final bool selected;
-  final Function(bool) onSelected;
-
-  CustomFilterChip({
-    required this.label,
-    required this.selected,
-    required this.onSelected,
-  });
-
-  @override
-  _CustomFilterChipState createState() => _CustomFilterChipState();
-}
-
-class _CustomFilterChipState extends State<CustomFilterChip> {
-  bool _isSelected = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _isSelected = widget.selected;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return FilterChip(
-      label: Text(widget.label),
-      selected: _isSelected,
-      onSelected: (bool selected) {
-        setState(() {
-          _isSelected = selected;
-        });
-        widget.onSelected(selected);
-      },
-      // if the filter is selected, change to blue
-      backgroundColor: _isSelected ? Colors.blue : Colors.grey,
-      selectedColor: Colors.blue,
     );
   }
 }
