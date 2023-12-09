@@ -4,15 +4,14 @@ The rubric ratings, total score, and additional comments are saved and the revie
 choose to verify or deny a resource.
  */
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 //Package imports
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 import 'package:web_app/createResource.dart';
-import 'firebase_options.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:multi_select_flutter/multi_select_flutter.dart';
+import 'package:web_app/events/schedule.dart';
+import 'package:web_app/time.dart';
 
 class ReviewResource extends StatefulWidget {
   final QueryDocumentSnapshot resourceData;
@@ -399,6 +398,31 @@ class _ReviewResourceState extends State<ReviewResource> {
         'Cultural Responsiveness: ${widget
         .resourceData['culturalResponsivness']}\n';
 
+    if (widget.resourceData['resourceType'] == 'Event') {
+      final schedule = Schedule.fromJson(widget.resourceData['schedule']);
+      if (schedule is ScheduleOnce) {
+        // One-time events info...
+        resourceInfo += "\nOne time event:\n\n";
+        resourceInfo += "Date: ${longDateFormat.format(schedule.date)}";
+        if (schedule.time != null) {
+          resourceInfo += " ${schedule.time!.format(context)} (${schedule.timeZone})";
+        }
+        resourceInfo += "\n";
+      } else if (schedule is ScheduleRecurring) {
+        // Recurring events info...
+        resourceInfo += "\nRecurring event:\n\n";
+        resourceInfo += "Starts: ${longDateFormat.format(schedule.date)}";
+        if (schedule.time != null) {
+          resourceInfo += " ${schedule.time!.format(context)} (${schedule.timeZone})";
+        }
+        resourceInfo += "\n\nFrequency: ${schedule.frequency.name}\n";
+        if (schedule.until != null) {
+          resourceInfo += "\nUntil: ${longDateFormat.format(schedule.until!)}\n";
+        }
+      } else {
+        resourceInfo += "\n(UNHANDLED EVENT SCHEDULE)\n";
+      }
+    }
 
     // create a full address if it is an in person resource
     String fullAddress = "";
