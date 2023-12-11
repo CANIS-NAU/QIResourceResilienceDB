@@ -27,6 +27,12 @@ void main() async  {
   await dotenv.load(
     fileName: './hide.env'
   );
+
+  FirebaseFirestore.instance.settings = Settings(
+    persistenceEnabled: true,
+    cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
+  );
+
   runApp( const MyApp() );
 }
 
