@@ -18,6 +18,7 @@ import 'package:multi_select_flutter/multi_select_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 import 'pdfDownload.dart';
+import "createResource.dart";
 
 
 //Declare class that has state
@@ -247,6 +248,28 @@ class _MyHomePageState extends State<MyHomePage> {
     //return FirebaseFirestore.instance.collection('resources').where('name', isGreaterThanOrEqualTo: "${ searchQuery }" ).where('verified', isEqualTo: true).snapshots();
   }
 
+
+  Future<bool> setVisabilityStatus( String query, bool isVisable ) async {
+      CollectionReference resourcesCollection = 
+                             FirebaseFirestore.instance.collection('resources');
+
+      QuerySnapshot querySnapshot = 
+                await resourcesCollection.where('name', isEqualTo: query).get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        DocumentReference documentReference = 
+                                             querySnapshot.docs.first.reference;
+
+        await documentReference.update({
+          'isVisable': isVisable
+        });
+
+        return true;
+      }
+      
+      return false;
+  }
+
   int _selectedIndex = 0;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
@@ -413,7 +436,8 @@ class _MyHomePageState extends State<MyHomePage> {
             height: dialogHeight,
             child: SingleChildScrollView(
               // build the filters and display them in the correct category
-              child: buildFilterWidgets(groupFilterItemsByCategory(filterItems), selectedFilter),
+              child: buildFilterWidgets(
+                       groupFilterItemsByCategory(filterItems), selectedFilter),
             ),
           ),
           actions: <Widget>[
@@ -430,7 +454,8 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   // function to group filter items by category
-  Map<String, List<filterItem>> groupFilterItemsByCategory(List<filterItem> filterItems) {
+  Map<String, List<filterItem>> groupFilterItemsByCategory(List<filterItem>
+                                                                  filterItems) {
     Map<String, List<filterItem>> groupedFilterItems = {};
 
     for (filterItem item in filterItems) {
@@ -444,7 +469,8 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   // function to build the filter widgets
-  Widget buildFilterWidgets(Map<String, List<filterItem>> groupedFilterItems, List<filterItem> selectedFilter) {
+  Widget buildFilterWidgets(Map<String, List<filterItem>> groupedFilterItems,
+                                              List<filterItem> selectedFilter) {
     List<Widget> filterWidgets = [];
     groupedFilterItems.forEach((category, items) {
       filterWidgets.add(
@@ -628,7 +654,8 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             ),
             new Container(
-                  margin: EdgeInsets.only( right: windowSize.maxWidth /6, left: windowSize.maxWidth / 6 ),
+                  margin: EdgeInsets.only( right: windowSize.maxWidth /6,
+                                                left: windowSize.maxWidth / 6 ),
                   padding: const EdgeInsets.symmetric( vertical: 20),
                   child: StreamBuilder<QuerySnapshot>(
                     stream: resources,
@@ -675,6 +702,11 @@ class _MyHomePageState extends State<MyHomePage> {
                                   phoneUrl = "tel:$phoneNumStr";
                                 }
 
+                                if(data.docs[index]['isVisable'] == null){
+                                  setVisabilityStatus(data.docs[index]['name'],
+                                  true);
+                                }
+
                                 // get full address data for resource
                                 String fullAddress = "";
                                 if (data.docs[index]['resourceType'] == 'In Person') {
@@ -703,115 +735,129 @@ class _MyHomePageState extends State<MyHomePage> {
 
                                 // get pdf download to use
                                 PdfDownload pdfDownload = PdfDownload();
-
-                                return Container(
-                                  height: 100,
-                                  child: Card(
-                                    color: Colors.white,
-                                    elevation: 4,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius:
-                                          BorderRadius.all(Radius.circular(0)),
-                                    ),
-                                    // the format for each resource box
-                                    child: ListTile(
-                                      contentPadding: EdgeInsets.symmetric(
-                                          vertical: 10.0, horizontal: 30.0),
-                                      dense: false,
-                                      title: SizedBox(
-                                          width: index == 0 ? 95 : 80,
-                                          child: Text(
-                                            '${data.docs[index]['name']}',
-                                            textAlign: TextAlign.left,
-                                            overflow: TextOverflow.visible,
-                                            softWrap: true,
-                                            maxLines: isSmallScreen ? 2 : null,
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize:
-                                                    isSmallScreen ? 18 : 25),
-                                          )),
-                                      subtitle: SizedBox(
-                                          width: 80,
-                                          child: Text(
-                                              '${data.docs[index]['description']}',
-                                              overflow: TextOverflow.ellipsis,
-                                              maxLines: 2,
-                                              // softWrap: true,
+                                User? user = FirebaseAuth.instance.currentUser;
+                                if( data.docs[index]['isVisable'] || 
+                                                                  user != null )
+                                {
+                                  return Container(
+                                    height: 100,
+                                    child: Card(
+                                      color: Colors.white,
+                                      elevation: 4,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.all(Radius.circular(0)),
+                                      ),
+                                      // the format for each resource box
+                                      child: ListTile(
+                                        contentPadding: EdgeInsets.symmetric(
+                                            vertical: 10.0, horizontal: 30.0),
+                                        dense: false,
+                                        title: SizedBox(
+                                            width: index == 0 ? 95 : 80,
+                                            child: Text(
+                                              '${data.docs[index]['name']}',
+                                              textAlign: TextAlign.left,
+                                              overflow: TextOverflow.visible,
+                                              softWrap: true,
+                                              maxLines: isSmallScreen ? 2 : null,
                                               style: TextStyle(
                                                   fontWeight: FontWeight.bold,
-                                                  fontSize: isSmallScreen
-                                                      ? 12
-                                                      : 14))),
-                                      trailing: GestureDetector(
-                                        child: Icon(
-                                          Icons.arrow_forward_rounded,
-                                          color: Colors.black,
-                                        ),
-                                        // pop up for a resource with information
-                                        onTap: () {
-                                          showDialog(
-                                            context: context,
-                                            builder: (context) => AlertDialog(
-                                                title: Text(
-                                                    '${data.docs[index]['name']}',
-                                                    style: TextStyle(
-                                                        fontSize: 25.0,
-                                                        fontWeight: FontWeight.bold)),
-                                                content: Container(
-                                                  child: SizedBox(
-                                                    // display resource information in pop-up
-                                                    child: Column(
-                                                        crossAxisAlignment:
-                                                            CrossAxisAlignment
-                                                                .start,
-                                                        children: [
-                                                          Text(resourceInfo,
-                                                              overflow: TextOverflow.visible,
-                                                              softWrap: true,
-                                                              style: TextStyle(
-                                                                  fontSize:
-                                                                      16.0)),
-                                                          // display address active link if resource is in person
-                                                          buildAddressLink(fullAddress, data.docs[index]['resourceType']),
-                                                          // display phone number active link if the resource is in person
-                                                          // or a hotline
-                                                          buildPhoneLink (phoneUrl, phoneNumStr, data.docs[index]['resourceType']),
-                                                          // display url active link for all resource types
-                                                          buildUrlLink(url, urlStr),
-                                                          SizedBox(height:20),
-                                                          ElevatedButton(
-                                                            onPressed: () {
-                                                              // download pdf
-                                                              pdfDownload.printResourceInfo(
-                                                                data.docs[index]['name'],
-                                                                data.docs[index]['description'],
-                                                                data.docs[index]['resourceType'],
-                                                                data.docs[index]['privacy'],
-                                                                data.docs[index]['culturalResponsivness'],
-                                                                fullAddress,
-                                                                phoneNumStr,
-                                                                url,
-                                                              );
-                                                            },
-                                                            child: Text('Download PDF'),
-                                                          ),
-                                                        ]),
+                                                  fontSize:
+                                                      isSmallScreen ? 18 : 25),
+                                            )),
+                                        leading: managerButton(
+                                                  context,
+                                                  user,
+                                                  '${data.docs[index]['name']}',
+                                                  data.docs[index]['isVisable']
+                                                                              ),
+                                        subtitle: SizedBox(
+                                            width: 80,
+                                            child: Text(
+                                                '${data.docs[index]['description']}',
+                                                overflow: TextOverflow.ellipsis,
+                                                maxLines: 2,
+                                                // softWrap: true,
+                                                style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: isSmallScreen
+                                                        ? 12
+                                                        : 14))),
+                                        trailing: GestureDetector(
+                                          child: Icon(
+                                            Icons.arrow_forward_rounded,
+                                            color: Colors.black,
+                                          ),
+                                          // pop up for a resource with information
+                                          onTap: () {
+                                            showDialog(
+                                              context: context,
+                                              builder: (context) => AlertDialog(
+                                                  title: Text(
+                                                      '${data.docs[index]['name']}',
+                                                      style: TextStyle(
+                                                          fontSize: 25.0,
+                                                          fontWeight: FontWeight.bold)),
+                                                  content: Container(
+                                                    child: SizedBox(
+                                                      // display resource information in pop-up
+                                                      child: Column(
+                                                          crossAxisAlignment:
+                                                              CrossAxisAlignment
+                                                                  .start,
+                                                          children: [
+                                                            Text(resourceInfo,
+                                                                overflow: TextOverflow.visible,
+                                                                softWrap: true,
+                                                                style: TextStyle(
+                                                                    fontSize:
+                                                                        16.0)),
+                                                            // display address active link if resource is in person
+                                                            buildAddressLink(fullAddress, data.docs[index]['resourceType']),
+                                                            // display phone number active link if the resource is in person
+                                                            // or a hotline
+                                                            buildPhoneLink (phoneUrl, phoneNumStr, data.docs[index]['resourceType']),
+                                                            // display url active link for all resource types
+                                                            buildUrlLink(url, urlStr),
+                                                            SizedBox(height:20),
+                                                            ElevatedButton(
+                                                              onPressed: () {
+                                                                // download pdf
+                                                                pdfDownload.printResourceInfo(
+                                                                  data.docs[index]['name'],
+                                                                  data.docs[index]['description'],
+                                                                  data.docs[index]['resourceType'],
+                                                                  data.docs[index]['privacy'],
+                                                                  data.docs[index]['culturalResponsivness'],
+                                                                  fullAddress,
+                                                                  phoneNumStr,
+                                                                  url,
+                                                                );
+                                                              },
+                                                              child: Text('Download PDF'),
+                                                            ),
+                                                          ]),
+                                                    ),
                                                   ),
-                                                ),
-                                                actions: [
-                                                  TextButton(
-                                                    child: Text('OK'),
-                                                    onPressed: () =>
-                                                        Navigator.pop(context),
-                                                  )
-                                                ]),
-                                          );
-                                        },
+                                                  actions: [
+                                                    TextButton(
+                                                      child: Text('OK'),
+                                                      onPressed: () =>
+                                                          Navigator.pop(context),
+                                                    )
+                                                  ]),
+                                            );
+                                          },
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                );
+                                  );
+                                }
+                                else
+                                {
+                                  return SizedBox.shrink();
+                                }
                               }
                             )
                           );
@@ -829,6 +875,49 @@ class _MyHomePageState extends State<MyHomePage> {
       }
       ),
     );
+  }
+
+  Widget managerButton( context, User? user, String name, bool vis )
+  {
+    if( user != null )
+    {
+      String visStatus = !vis == true ? "Un-archive" : "Archive";
+      return TextButton(
+        style: ButtonStyle(
+            foregroundColor:
+                MaterialStateProperty.all<Color>(
+                    Colors.white),
+            backgroundColor:
+                MaterialStateProperty.all<Color>(
+                    Colors.blue),
+            shape: MaterialStateProperty.all<
+                    RoundedRectangleBorder>(
+                RoundedRectangleBorder(
+                    borderRadius:
+                        BorderRadius.circular(18.0),
+                    side: BorderSide(color: Colors.blue)))),
+        onPressed: () {
+          String stringStatus = "";
+          setVisabilityStatus( name, !vis ).then(( bool status ) {
+            if(status)
+            {
+              stringStatus = 
+                            "You have successfully ${visStatus} this resource.";
+            }
+            else
+            {
+              stringStatus = "There was a problem ${visStatus} the resource.";
+            }
+            showAlertDialog( context, stringStatus );
+          });
+        },
+        child: Text( visStatus ),
+      );
+    } 
+    else
+    {
+      return const SizedBox.shrink();
+    }
   }
 
   // creates menu items when screen size is small
@@ -854,7 +943,7 @@ class _MyHomePageState extends State<MyHomePage> {
           }
         },
         title: Text(item),
-      ))
+      )) 
           .toList(),
     ),
   );
