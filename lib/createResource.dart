@@ -190,6 +190,7 @@ class createResourceState extends State<CreateResource> {
             'phoneNumber': resourcePhoneNumber,
             'description': resourceDescription,
             'agerange': _currentDropDownValue,
+            'isVisable': true,
             'verified': verified, //Always false upon creation
             'resourceType': resourceType,
             'privacy': selectedPrivacyOptions,
