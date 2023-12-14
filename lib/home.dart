@@ -17,11 +17,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:url_launcher/url_launcher_string.dart';
-import 'package:pdf/pdf.dart';
-import 'package:pdf/widgets.dart' as pw;
-import 'package:path_provider/path_provider.dart';
-import 'dart:io';
-import 'dart:html' as html;
+import 'pdfDownload.dart';
 
 
 //Declare class that has state
@@ -253,21 +249,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
   int _selectedIndex = 0;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-
-  // Future<void> generateResourcePdf(String resourceInfo) async {
-  //   final pdf = pw.Document();
-  //
-  //   pdf.addPage(pw.Page(
-  //     pageFormat: PdfPageFormat.a4,
-  //     build: (pw.Context context) {
-  //       return pw.Center(
-  //         child: pw.Text(resourceInfo, style: GoogleFonts.notoSans(fontSize: 20) as pw.TextStyle),
-  //       );
-  //     }
-  //   ));
-  //   final pdfData = Uint8List.fromList(await pdf.save());
-  //
-  // }
 
   Widget buildAddressLink(fullAddress, resourceType) {
     if(resourceType == "In Person") {
@@ -714,9 +695,14 @@ class _MyHomePageState extends State<MyHomePage> {
                                     'Description: ${data.docs[index]['description']}\n\n'
                                     'Type: ${data.docs[index]['resourceType']}\n\n'
                                     // display the privacy without brackets
-                                    'Privacy: ${data.docs[index]['privacy']is List ? data.docs[index]['privacy'].join(', ') : data.docs[index]['privacy']}\n\n'
+                                    'Privacy: ${data.docs[index]['privacy'] is List
+                                    ? (data.docs[index]['privacy'] as List).map((e) => e.toString()).join(', ')
+                                    : data.docs[index]['privacy']}\n\n'
                                     'Cultural Responsiveness: ${data.docs[index]['culturalResponsivness']} \n';
                                 //'Cost: ${data.docs[index]['cost']}\n';
+
+                                // get pdf download to use
+                                PdfDownload pdfDownload = PdfDownload();
 
                                 return Container(
                                   height: 100,
@@ -794,12 +780,22 @@ class _MyHomePageState extends State<MyHomePage> {
                                                           // display url active link for all resource types
                                                           buildUrlLink(url, urlStr),
                                                           SizedBox(height:20),
-                                                          // ElevatedButton(
-                                                          //   onPressed: () async {
-                                                          //     await generateResourcePdf(resourceInfo);
-                                                          //   },
-                                                          //   child: Text('Download PDF'),
-                                                          // )
+                                                          ElevatedButton(
+                                                            onPressed: () {
+                                                              // download pdf
+                                                              pdfDownload.printResourceInfo(
+                                                                data.docs[index]['name'],
+                                                                data.docs[index]['description'],
+                                                                data.docs[index]['resourceType'],
+                                                                data.docs[index]['privacy'],
+                                                                data.docs[index]['culturalResponsivness'],
+                                                                fullAddress,
+                                                                phoneNumStr,
+                                                                url,
+                                                              );
+                                                            },
+                                                            child: Text('Download PDF'),
+                                                          ),
                                                         ]),
                                                   ),
                                                 ),
