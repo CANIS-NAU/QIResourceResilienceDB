@@ -26,7 +26,7 @@ void main() async {
   await dotenv.load(fileName: './hide.env');
 
   // TimeZone database initialization for browsers.
-  await tz.initializeTimeZone();
+  await tz.initializeTimeZone('assets/packages/timezone/data/latest.tzf');
 
   runApp(const MyApp());
 }
