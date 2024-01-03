@@ -228,7 +228,7 @@ class ResourceDetail extends StatelessWidget {
                   child: ElevatedButton(
                     onPressed: () {
                       // download pdf
-                      pdfDownload.printResourceInfo(
+                      pdfDownload.downloadPdf(
                         resource['name'],
                         resource['description'],
                         resource['resourceType'],
@@ -242,6 +242,24 @@ class ResourceDetail extends StatelessWidget {
                     child: Text('Download PDF'),
                   ),
                 ),
+                 Padding(
+                   padding: fieldPadding,
+                   child: ElevatedButton(
+                     onPressed: () {
+                       pdfDownload.shareResource(
+                         resource['name'],
+                         resource['description'],
+                         resource['resourceType'],
+                         resource['privacy'],
+                         resource['culturalResponsivness'],
+                         fullAddress,
+                         fieldString('phoneNumber'),
+                         url,);
+                     },
+                     child: Text('Share'),
+                  ),
+                 )
+
               ],
             ),
           ),
