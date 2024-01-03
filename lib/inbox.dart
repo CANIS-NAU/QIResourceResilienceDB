@@ -12,6 +12,9 @@ class Inbox extends StatelessWidget
 
     bool inboxEmpty = true;
 
+    final CollectionReference inboxRef = FirebaseFirestore.instance
+                                                       .collection('rrdbInbox');
+
     //Get the current signed in user
     User? currUser = FirebaseAuth.instance.currentUser;
 
@@ -24,13 +27,126 @@ class Inbox extends StatelessWidget
         return email;
     }
 
-    String displayString( int docIndex, 
-                                    List<QueryDocumentSnapshot<Object?>> data )
+    Widget showRubricDetail(BuildContext context, doc)
     {
-        return 'Your resource ${data[ docIndex ][ 'submittedName' ]} has been ${data[ docIndex ][ 'status' ]}. \n' +
-               'Description: \n ${data[ docIndex ][ 'description' ]}\n' + 
-               'Additional Information: ${data[ docIndex ][ 'comments' ]}\n'
-               'Timestamp: ${data[ docIndex ][ 'timestamp' ]}';
+        String parts = doc['description'].replaceAll(', ', '\n');;
+        return AlertDialog(
+            titlePadding: EdgeInsets.fromLTRB(16, 16, 16, 0),
+            contentPadding: EdgeInsets.all(16),
+            title: Text(
+                'Rubric Information',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            content: FractionallySizedBox(
+                widthFactor: null,
+                heightFactor: null,
+                child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                    Text('All Scores:\n${parts}\n\n'),
+                    Text('Additional Information: ${doc['comments']}\n\n'),
+                    Text('Time Reviewed: ${doc['timestamp']}')
+                    // Add more widgets as needed
+                ],
+                ),
+            ),
+            actions: <Widget>[
+                new ElevatedButton(
+                    onPressed: () {
+                        Navigator.of(context).pop();
+                    },
+                    child: const Text('Close'),
+                ),
+            ],
+
+        );
+    }
+
+    Future<void> deleteInboxItem(doc) 
+    {
+        // TODO: Show user via pop up operation status
+        return inboxRef.doc(doc.id).delete()
+        .then((value) => print("Successfully deleted message."))
+        .catchError((error) => print("Error deleting message."));
+    }
+
+    Widget cardDisplay(BuildContext context, int docIndex,
+                                      List<QueryDocumentSnapshot<Object?>> data)
+    {
+        bool resourceApproved = data[docIndex]['status'] == "Approved";
+        String resourceName = 
+                   "Your Resource: resource ${data[docIndex]['submittedName']}";
+        String outcome = "has been ${data[docIndex]['status']}.";
+        return Card(
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+            ),
+            clipBehavior: Clip.antiAliasWithSaveLayer,
+            child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                Center( child: Icon(
+                    resourceApproved ? Icons.check : Icons.close_outlined,
+                    size: 50.0,
+                    color: resourceApproved ? Colors.green : Colors.red,
+                ),
+                ),
+                Container(
+                    padding: const EdgeInsets.fromLTRB(15, 15, 15, 0),
+                    child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                        Center( child: Text(
+                        resourceName + outcome,
+                        style: TextStyle(
+                            fontSize: 24,
+                            color: Colors.black,
+                        ),
+                        )),
+                        Container(height: 10),
+                        Row(
+                        children: <Widget>[
+                            const Spacer(),
+                            TextButton(
+                                style: TextButton.styleFrom(
+                                    foregroundColor: Colors.transparent,
+                                ),
+                                child: const Text(
+                                    "Rubric Info",
+                                    style: TextStyle(color: Colors.blue),
+                                ),
+                                onPressed: () {
+                                    showDialog(
+                                        context: context,
+                                        builder: (BuildContext context) 
+                                        {
+                                            return showRubricDetail(context,
+                                                                data[docIndex]);
+                                        },
+                                    );
+                                },
+                            ),
+                            TextButton(
+                            style: TextButton.styleFrom(
+                                foregroundColor: Colors.transparent,
+                            ),
+                            child: const Text(
+                                "Delete",
+                                style: TextStyle(color: Colors.red),
+                            ),
+                            onPressed: () {
+                                deleteInboxItem(data[docIndex]);
+                            },
+                            ),
+                        ],
+                        ),
+                    ],
+                    ),
+                ),
+                Container(height: 5),
+                ],
+            ),
+        );
     }
 
     Stream<QuerySnapshot> getInboxItems()
@@ -50,15 +166,18 @@ class Inbox extends StatelessWidget
                     padding: const EdgeInsets.symmetric( vertical: 20),
                     child: StreamBuilder<QuerySnapshot>(
                         stream: getInboxItems(),
-                        builder: (
+                        builder: 
+                        (
                             BuildContext context,
-                            AsyncSnapshot<QuerySnapshot> snapshot,
-                        ){
+                            AsyncSnapshot<QuerySnapshot> snapshot
+                        )
+                        {
                             if(snapshot.hasError)
                             {
                                 return Text("${snapshot.error}");
                             }
-                            if( snapshot.connectionState == ConnectionState.waiting )
+                            if(snapshot.connectionState == 
+                                                        ConnectionState.waiting)
                             {
                                 return Text("Loading Inbox Items");
                             }
@@ -67,47 +186,29 @@ class Inbox extends StatelessWidget
 
                             if(data.size != 0)
                             {
-
-                                return Container(
-                                    height: 500,
-                                    child: ListView.builder(
-                                    scrollDirection: Axis.vertical,
-                                    shrinkWrap: true,
-                                    itemCount: data.size,
-                                    itemBuilder: (context, index) {
-                                        return Container(
-                                        height: 100,
-                                        child: Card(
-                                            color: Colors.white,
-                                            elevation: 4,
-                                            shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.all(Radius.circular(0)),
-                                            ),
-                                            // the format for each resource box
-                                            child: 
-                                                Container(
-                                                    child: SingleChildScrollView(
-                                                        child: Column(
-                                                        children: [ 
-                                                            Text(displayString( index, data.docs ),
-                                                            overflow: TextOverflow.visible,
-                                                            softWrap: true,
-                                                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                                                        ],
-                                                    ),
-                                                ),
-                                                
-                                            ),
-                                        ));
-                                    }
+                                return Align( 
+                                    alignment: Alignment.topCenter,
+                                    child: Container(
+                                        width: 
+                                         MediaQuery.of(context).size.width*0.75,
+                                        child: 
+                                            ListView.builder(
+                                                scrollDirection: Axis.vertical,
+                                                shrinkWrap: true,
+                                                itemCount: data.size,
+                                                itemBuilder: (context, index) 
+                                                {
+                                                    return cardDisplay(
+                                                       context,index,data.docs);
+                                                }
+                                            )
                                     )
-
                                 );
                             }
-                        else
-                        {
-                            return Text('No Inbox Messages');
-                        }
+                            else
+                            {
+                                return Text('No inbox items at this time.');
+                            }
                         }
                     ),
                 ),
