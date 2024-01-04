@@ -10,12 +10,8 @@ class Inbox extends StatelessWidget
     Inbox( { super.key } );
     static const String route = '/inbox';
 
-    bool inboxEmpty = true;
-
     final CollectionReference inboxRef = FirebaseFirestore.instance
                                                        .collection('rrdbInbox');
-
-    //Get the current signed in user
     User? currUser = FirebaseAuth.instance.currentUser;
 
     String? returnEmail()
@@ -29,36 +25,49 @@ class Inbox extends StatelessWidget
 
     Widget showRubricDetail(BuildContext context, doc)
     {
-        String parts = doc['description'].replaceAll(', ', '\n');;
-        return AlertDialog(
-            titlePadding: EdgeInsets.fromLTRB(16, 16, 16, 0),
-            contentPadding: EdgeInsets.all(16),
-            title: Text(
-                'Rubric Information',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            content: FractionallySizedBox(
-                widthFactor: null,
-                heightFactor: null,
-                child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                    Text('All Scores:\n${parts}\n\n'),
-                    Text('Additional Information: ${doc['comments']}\n\n'),
-                    Text('Time Reviewed: ${doc['timestamp']}')
-                    // Add more widgets as needed
-                ],
+        String parts = doc['description'].replaceAll(', ', '\n');
+
+        // Avoid bad state if key DNE
+        String reviewer;
+        try
+        {
+            reviewer = doc['reviewedby'];
+        }catch(error)
+        {
+            reviewer = "";
+        }
+
+        return SimpleDialog(
+            title: Center(
+                child: Text(
+                    'Rubric Information',
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                 ),
             ),
-            actions: <Widget>[
-                new ElevatedButton(
+            contentPadding: EdgeInsets.all(16),
+            children: [
+                FractionallySizedBox(
+                    widthFactor: null,
+                    heightFactor: null,
+                    child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                            Text('Reviewed By:\n${reviewer}\n'),
+                            Text('All Scores:\n${parts}\n'),
+                            Text(
+                              'Additional Information: ${doc['comments']}\n'),
+                            Text('Time Reviewed: ${doc['timestamp']}'),
+                        ],
+                    ),
+                ),
+                SizedBox(height: 16),
+                ElevatedButton(
                     onPressed: () {
-                        Navigator.of(context).pop();
+                    Navigator.of(context).pop();
                     },
-                    child: const Text('Close'),
+                    child: Text('Close'),
                 ),
             ],
-
         );
     }
 
@@ -66,17 +75,14 @@ class Inbox extends StatelessWidget
     {
         // TODO: Show user via pop up operation status
         return inboxRef.doc(doc.id).delete()
-        .then((value) => print("Successfully deleted message."))
-        .catchError((error) => print("Error deleting message."));
+        .then((value) => print('Successfully deleted message.'))
+        .catchError((error) => print('Error deleting message.'));
     }
 
     Widget cardDisplay(BuildContext context, int docIndex,
                                       List<QueryDocumentSnapshot<Object?>> data)
     {
-        bool resourceApproved = data[docIndex]['status'] == "Approved";
-        String resourceName = 
-                   "Your Resource: resource ${data[docIndex]['submittedName']}";
-        String outcome = "has been ${data[docIndex]['status']}.";
+        bool resourceApproved = data[docIndex]['status'] == 'Approved';
         return Card(
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
@@ -92,15 +98,29 @@ class Inbox extends StatelessWidget
                 ),
                 ),
                 Container(
-                    padding: const EdgeInsets.fromLTRB(15, 15, 15, 0),
+                    padding: const EdgeInsets.fromLTRB(15,15,15,0),
                     child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                        Center( child: Text(
-                        resourceName + outcome,
-                        style: TextStyle(
-                            fontSize: 24,
-                            color: Colors.black,
+                        Center( 
+                        child: RichText(
+                            text: 
+                                TextSpan(
+                                text: 'Your Resource: ',
+                                style: TextStyle(fontSize: 24),
+                            children: <TextSpan>[
+                                TextSpan(
+                                    text: "${data[docIndex]['submittedName']}",
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                    ),
+                                ),
+                                TextSpan(
+                                    text: 
+                                        "has been ${data[docIndex]['status']}.",
+                                    style: TextStyle(fontSize: 24),
+                                ),
+                            ],
                         ),
                         )),
                         Container(height: 10),
@@ -152,10 +172,10 @@ class Inbox extends StatelessWidget
     Stream<QuerySnapshot> getInboxItems()
     {
         return FirebaseFirestore.instance.collection('rrdbInbox').where('email',
-                                         isEqualTo: returnEmail() ).snapshots();
+                                          isEqualTo: returnEmail()).snapshots();
     } 
 
-    Widget build( BuildContext context )
+    Widget build(BuildContext context)
     {
         return Scaffold(
             appBar: AppBar(
@@ -163,7 +183,7 @@ class Inbox extends StatelessWidget
             ),
             body:
                 new Container(
-                    padding: const EdgeInsets.symmetric( vertical: 20),
+                    padding: const EdgeInsets.symmetric(vertical: 20),
                     child: StreamBuilder<QuerySnapshot>(
                         stream: getInboxItems(),
                         builder: 
@@ -196,7 +216,7 @@ class Inbox extends StatelessWidget
                                                 scrollDirection: Axis.vertical,
                                                 shrinkWrap: true,
                                                 itemCount: data.size,
-                                                itemBuilder: (context, index) 
+                                                itemBuilder:(context,index) 
                                                 {
                                                     return cardDisplay(
                                                        context,index,data.docs);

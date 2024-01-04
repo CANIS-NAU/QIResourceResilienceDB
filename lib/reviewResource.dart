@@ -7,6 +7,7 @@ choose to verify or deny a resource.
 import 'package:cloud_firestore/cloud_firestore.dart';
 //Package imports
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 import 'package:web_app/createResource.dart';
@@ -99,7 +100,11 @@ class _ReviewResourceState extends State<ReviewResource> {
       "Current Rating: ${ currentRating } / 5, " +
       "Language Rating: ${ languageRating } / 5";
 
+    User? currentUser = FirebaseAuth.instance.currentUser;
+    String? reviewer = (currentUser != null) ? currentUser.email : "";
+
     final inboxInstance = {
+      'reviewedby': reviewer,
       'email': email,
       'status': status,
       'description': description,

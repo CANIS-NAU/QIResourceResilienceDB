@@ -120,7 +120,7 @@ class Login extends StatelessWidget {
         User? user = credential.user;
 
         if (user != null) {
-          //if (user.emailVerified) {
+          if (user.emailVerified) {
             IdTokenResult? userToken = await user?.getIdTokenResult();
 
             Map<String, dynamic>? claims = userToken?.claims;
@@ -146,9 +146,9 @@ class Login extends StatelessWidget {
 
               signoutUser();
             }
-          //} else {
-           // showAlertDialog(context, "You have not verified your email", user);
-          //}
+          } else {
+            showAlertDialog(context, "You have not verified your email", user);
+          }
         }
       } on FirebaseAuthException catch (error) {
         String errorMessage = "";
