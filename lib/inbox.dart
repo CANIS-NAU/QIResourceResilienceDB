@@ -14,15 +14,6 @@ class Inbox extends StatelessWidget
                                                        .collection('rrdbInbox');
     User? currUser = FirebaseAuth.instance.currentUser;
 
-    String? returnEmail()
-    {
-        User? currUser = FirebaseAuth.instance.currentUser;
-
-        String? email = currUser != null ? currUser.email : "";
-
-        return email;
-    }
-
     Widget showRubricDetail(BuildContext context, doc)
     {
         String parts = doc['description'].replaceAll(', ', '\n');
@@ -46,19 +37,15 @@ class Inbox extends StatelessWidget
             ),
             contentPadding: EdgeInsets.all(16),
             children: [
-                FractionallySizedBox(
-                    widthFactor: null,
-                    heightFactor: null,
-                    child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                            Text('Reviewed By:\n${reviewer}\n'),
-                            Text('All Scores:\n${parts}\n'),
-                            Text(
-                              'Additional Information: ${doc['comments']}\n'),
-                            Text('Time Reviewed: ${doc['timestamp']}'),
-                        ],
-                    ),
+                Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                        Text('Reviewed By:\n${reviewer}\n'),
+                        Text('All Scores:\n${parts}\n'),
+                        Text(
+                            'Additional Information: ${doc['comments']}\n'),
+                        Text('Time Reviewed: ${doc['timestamp']}'),
+                    ],
                 ),
                 SizedBox(height: 16),
                 ElevatedButton(
@@ -171,8 +158,9 @@ class Inbox extends StatelessWidget
 
     Stream<QuerySnapshot> getInboxItems()
     {
+        String email = currUser?.email ?? "";
         return FirebaseFirestore.instance.collection('rrdbInbox').where('email',
-                                          isEqualTo: returnEmail()).snapshots();
+                                          isEqualTo: email).snapshots();
     } 
 
     Widget build(BuildContext context)
