@@ -179,6 +179,7 @@ class ScheduleRecurring extends Schedule {
   @override
   Map<String, dynamic> toJson() {
     return {
+      "type": type,
       "date": date.toDateJson(),
       "time": time?.toJson(),
       "timeZone": timeZone,
