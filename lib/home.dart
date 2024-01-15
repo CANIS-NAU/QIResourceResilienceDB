@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
 import 'view_resource/resource_summary.dart';
 import 'view_resource/filter.dart';
+import 'package:web_app/pdfDownload.dart';
 
 /// The home page main widget
 class MyHomePage extends StatefulWidget {
@@ -45,6 +46,7 @@ class _MyHomePageState extends State<MyHomePage> {
     final bool isLargeScreen = screenSize.width > 800;
     final bool isSmallScreen = !isLargeScreen;
     _menuItems = menuItems(isSmallScreen);
+    PdfDownload pdfDownload = PdfDownload();
 
     bool Function(QueryDocumentSnapshot) filterFunction =
         clientSideFilter(filter);
@@ -205,19 +207,36 @@ class _MyHomePageState extends State<MyHomePage> {
                       if (data.size == 0) {
                         return Text('No resources');
                       } else {
-                        return Container(
-                          height: 500,
-                          child: ListView.builder(
-                            scrollDirection: Axis.vertical,
-                            shrinkWrap: true,
-                            itemCount: docs.length,
-                            itemBuilder: (context, index) {
-                              return ResourceSummary(
-                                resource: docs[index],
-                                isSmallScreen: isSmallScreen,
-                              );
-                            }
-                          )
+                        return Column(
+                          children: [
+                            Container(
+                            height: 500,
+                            child: ListView.builder(
+                              scrollDirection: Axis.vertical,
+                              shrinkWrap: true,
+                              itemCount: docs.length,
+                              itemBuilder: (context, index) {
+                                return ResourceSummary(
+                                  resource: docs[index],
+                                  isSmallScreen: isSmallScreen,
+                                );
+                              }
+                            )
+                          ),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              child: Align(
+                                alignment: Alignment.bottomRight,
+                                // button to download currently filtered resources
+                                child: ElevatedButton(
+                                    onPressed: () async {
+                                      // create pdf of resources currently being filtered
+                                      await pdfDownload.generateFilteredResourcesPdf(docs);
+                                    },
+                                    child: Text("Download List")),
+                              ),
+                            ),
+                          ]
                         );
                       }
                     }
