@@ -74,7 +74,7 @@ flutter:
   assets:
      - assets/rrdb_logo.png
      - hide.env
-  #   - images/a_dot_ham.jpeg
+     - packages/timezone/data/latest.tzf
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware
