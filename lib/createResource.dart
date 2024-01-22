@@ -72,6 +72,7 @@ const List<String> resourceTypeOptions = [
   'In Person',
   'Hotline',
   'Online',
+  'Podcast',
   'App',
   'Event',
 ];

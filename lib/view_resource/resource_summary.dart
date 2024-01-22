@@ -11,6 +11,7 @@ final typeIcon = const {
   'App': Icons.phone_iphone,
   'Hotline': Icons.phone,
   'Event': Icons.calendar_month,
+  'Podcast': Icons.podcasts,
 };
 
 /// Summary view of a resource as a ListTile, suitable for display
