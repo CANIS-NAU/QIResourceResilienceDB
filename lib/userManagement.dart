@@ -3,6 +3,10 @@ import 'firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:http/http.dart' as http;
+import 'package:cloud_functions/cloud_functions.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'dart:convert';
 
 class Manage extends StatefulWidget {
   const Manage( { super.key } );
@@ -16,103 +20,117 @@ class _ManageState extends State<Manage>{
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Manage Users'),
+        title: Text('Users'),
       ),
-      body: FutureBuilder(
-        future: fetchFirebaseUsers(),
-        builder: (context, snapshot) 
+      body: Container(
+        child: 
+          TextButton(
+          style: ButtonStyle(
+              foregroundColor: MaterialStateProperty.all<Color>( Colors.white ),
+              backgroundColor: MaterialStateProperty.all<Color>( Colors.blue ),
+              shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                  RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular( 18.0 ),
+                  side: BorderSide( color: Colors.blue )
+              )
+          )
+          ), 
+          onPressed: () { 
+              fetchFirebaseUsers();
+          },
+          child: Text('Get Users'),
+  )
+      )
+    ); 
+    }
+
+    Future<void> fetchFirebaseUsers() async 
+    {
+      String? url = "http://127.0.0.1:5001/sunrise-f9b44/us-central1/handleWebSignUpRole/getUsers";
+      User? admin = FirebaseAuth.instance.currentUser;
+      if(admin != null)
+      {
+        IdTokenResult? adminToken = await admin?.getIdTokenResult();
+
+        Map<String, dynamic>? claims = adminToken?.claims;
+
+        if(claims != null)
         {
-          if(snapshot.connectionState == ConnectionState.waiting)
-          {
-            return CircularProgressIndicator();
-          } 
-          else if (snapshot.hasError) 
-          {
-            return Text('Error: ${snapshot.error}');
-          }
-          else 
-          {
-            List<User>? users = snapshot.data;
-            if(users != null)
+            final Map<String, dynamic> requestBody = {
+                'token': adminToken?.token,
+            };
+
+            if(url != null)
             {
-              return ListView.builder(
-                  itemCount: users.length,
-                  itemBuilder: (context, index) 
-                  {
-                      return ListTile(
-                          title: Text(users[index].email ?? "No Email"),
-                          subtitle: SizedBox(
-                            child: ElevatedButton(
-                              onPressed: () 
-                              {
-                                Map<String, dynamic>? anonymousClaims = 
-                                users[index]?.getIdTokenResult().data?.claims;
-                                if(anonymousClaims != null)
-                                { 
-                                  String status = anonymousClaims['disabled'] 
-                                                         ? "Enable" : "Disable";
-                                  changeUserStatus(users[index],
-                                                  !anonymousClaims['disabled']);
-                                }
-                              },
-                              // status is out of scope currently 
-                              // child: Text(status)
-                              child: Text("Enable/Disable"),
-                            ),
-                          ),
-                      );
+              final http.Response response = await http.post(
+                  Uri.parse(url),
+                  headers: <String, String>{
+                  'Content-Type': 'application/json; charset=UTF-8',
                   },
+                  body: jsonEncode(requestBody),
               );
+
+              if(response.statusCode == 200)
+              {
+                print(json.decode( response.body )['Users']);
+              }
+              else
+              {
+                print(response.body);
+                print(json.decode( response.body )['error']);
+              }
             }
             else
             {
-              // Return that there is no users
-                return SizedBox.shrink();
+              print("Cannot find cloud function");
             }
-          }
-        },
-      ),
-    );
-    }
-
-    // Problem: Have to have elevated permissions to execute
-    Future<List<User>> fetchFirebaseUsers() async 
-    {
-        List<User> users = [];
-        try 
-        {
-            UserCredential userCredential = 
-                               await FirebaseAuth.instance.signInAnonymously();
-            User? currentUser = FirebaseAuth.instance.currentUser;
-            User? signedInUser = userCredential.user;
-            Map<String, dynamic>? anonymousClaims;
-
-            if(signedInUser != null)
-            {
-                anonymousClaims = signedInUser.getIdTokenResult().data?.claims;
-                if(anonymousClaims != null)
-                {
-                  if(anonymousClaims['manager'] || anonymousClaims['admin'])
-                  {
-                    users.add(signedInUser);
-                  }
-                }
-            }
-        } 
-        catch(error)
-        {
-            print('Error fetching users: $error');
         }
-
-        return users;
+      }
     }
 
-
-    // DNW, Might have to implement a cloud function to set claims
-    Future<void> changeUserStatus(User user, bool activeStatus) async
+    Future<void> changeUserStatus(String uid) async
     {
-      //await FirebaseAuth.instance.setCustomUserClaims(user.uid, 
-      //                                            {'disabled': activeStatus});
-      await user.updateCustomData({'disabled': activeStatus});
+      String? url = dotenv.env['CHANGE_STATUS'];
+      User? admin = FirebaseAuth.instance.currentUser;
+      if(admin != null)
+      {
+        IdTokenResult? adminToken = await admin?.getIdTokenResult();
+
+        Map<String, dynamic>? claims = adminToken?.claims;
+
+        if(claims != null)
+        {
+            bool adminRole = claims['admin'];
+
+            final Map<String, dynamic> requestBody = {
+                'uid': uid,
+                'token': adminToken?.token,
+            };
+
+            if(url != null)
+            {
+              final http.Response response = await http.post(
+                  Uri.parse(url),
+                  headers: <String, String>{
+                  'Content-Type': 'application/json; charset=UTF-8',
+                  },
+                  body: jsonEncode(requestBody),
+              );
+
+              if(response.statusCode == 200)
+              {
+                print("Success: changed account status.");
+              }
+              else
+              {
+                print("Error: changing account status.");
+              }
+            }
+            else
+            {
+              print("Cannot find cloud function");
+            }
+        }
+      }
     }
 }
