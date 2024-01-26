@@ -9,42 +9,129 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:convert';
 
 class Manage extends StatefulWidget {
-  const Manage( { super.key } );
+  const Manage({super.key});
 
   @override
   State<Manage> createState() => _ManageState();
 }
 
-class _ManageState extends State<Manage>{
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Users'),
-      ),
-      body: Container(
-        child: 
-          TextButton(
-          style: ButtonStyle(
-              foregroundColor: MaterialStateProperty.all<Color>( Colors.white ),
-              backgroundColor: MaterialStateProperty.all<Color>( Colors.blue ),
-              shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                  RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular( 18.0 ),
-                  side: BorderSide( color: Colors.blue )
-              )
-          )
-          ), 
-          onPressed: () { 
-              fetchFirebaseUsers();
-          },
-          child: Text('Get Users'),
-  )
-      )
-    ); 
+class _ManageState extends State<Manage> {
+    showAlertDialog(BuildContext context, String statement) {
+        // set up the button
+        Widget okButton = TextButton(
+        child: Text( "OK" ),
+        onPressed: () {
+            Navigator.pop( context );
+        },
+        );
+
+        // set up the AlertDialog
+        AlertDialog alert = AlertDialog(
+        title: Text( "Alert" ),
+        content: Text( statement ),
+        actions: [
+            okButton,
+        ],
+        );
+
+        //show the dialog
+        showDialog(
+        context: context,
+        builder: ( BuildContext context ) {
+            return alert;
+        },
+        );
     }
 
-    Future<void> fetchFirebaseUsers() async 
+    @override
+    Widget build(BuildContext context) {
+      return FutureBuilder<List<dynamic>>(
+        future: fetchFirebaseUsers(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return CircularProgressIndicator();
+          } 
+          else if (snapshot.hasError) {
+            return Text('Error: ${snapshot.error}');
+          }
+          else if (snapshot.data == null || snapshot.data!.isEmpty) {
+            return Text('No users found.');
+          }
+          else {
+            List<dynamic> users = snapshot.data ?? [];
+            return ListView.builder(
+              itemCount: users.length,
+              itemBuilder: (context, index) {
+                return Card(
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                    ),
+                    clipBehavior: Clip.antiAliasWithSaveLayer,
+                    child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                        Container(
+                            padding: const EdgeInsets.fromLTRB(15,15,15,0),
+                            child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                                Center( 
+                                child: RichText(
+                                    text: 
+                                        TextSpan(
+                                        text: users[index]['email'] ?? "",
+                                        style: TextStyle(fontSize: 24),
+                                    children: <TextSpan>[
+                                        TextSpan(
+                                            text: " account is currently ",
+                                            style: TextStyle(fontSize: 24),
+                                        ),
+                                        TextSpan(
+                                            text: 
+                                              users[index]['disabled'] 
+                                                       ? "Disabled" : "Enabled",
+                                            style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                            ),
+                                        ),
+                                    ],
+                                ),
+                                )),
+                                Container(height: 10),
+                                Row(
+                                children: <Widget>[
+                                    const Spacer(),
+                                    TextButton(
+                                        style: TextButton.styleFrom(
+                                            foregroundColor: Colors.transparent,
+                                        ),
+                                        child: const Text(
+                                            "Enable/Disable",
+                                            style: 
+                                                  TextStyle(color: Colors.blue),
+                                        ),
+                                        onPressed: () {
+                                          changeUserStatus(
+                                                   context,users[index]['uid']);
+                                        },
+                                    ),
+                                ],
+                                ),
+                            ],
+                            ),
+                        ),
+                        Container(height: 5),
+                        ],
+                    ),
+                );
+              },
+            );
+          }
+        },
+      );
+    }
+
+    Future<List<dynamic>> fetchFirebaseUsers() async 
     {
       String? url = "http://127.0.0.1:5001/sunrise-f9b44/us-central1/handleWebSignUpRole/getUsers";
       User? admin = FirebaseAuth.instance.currentUser;
@@ -72,11 +159,10 @@ class _ManageState extends State<Manage>{
 
               if(response.statusCode == 200)
               {
-                print(json.decode( response.body )['Users']);
+                return json.decode( response.body )['Users'];
               }
               else
               {
-                print(response.body);
                 print(json.decode( response.body )['error']);
               }
             }
@@ -86,11 +172,13 @@ class _ManageState extends State<Manage>{
             }
         }
       }
+
+      return [];
     }
 
-    Future<void> changeUserStatus(String uid) async
+    Future<void> changeUserStatus(context, String uid) async
     {
-      String? url = dotenv.env['CHANGE_STATUS'];
+      String? url = "http://127.0.0.1:5001/sunrise-f9b44/us-central1/handleWebSignUpRole/updateAccountStatus";
       User? admin = FirebaseAuth.instance.currentUser;
       if(admin != null)
       {
@@ -119,11 +207,11 @@ class _ManageState extends State<Manage>{
 
               if(response.statusCode == 200)
               {
-                print("Success: changed account status.");
+                showAlertDialog(context,"Success: changed account status.");
               }
               else
               {
-                print("Error: changing account status.");
+                showAlertDialog(context,"Error: changing account status.");
               }
             }
             else

@@ -167,8 +167,6 @@ app.post('/getUsers', async (req,res) => {
   });
 });
 
-// TODO: Check roles on client side
-
 // Updates an account's disabled/enabled status
 app.post('/updateAccountStatus', async (req,res) => { 
   res = setResAttr(res,'*','POST','Content-Type, application/json');
