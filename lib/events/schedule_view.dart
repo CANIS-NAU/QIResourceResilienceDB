@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:web_app/common.dart';
 import 'package:web_app/time.dart';
 
 import 'schedule.dart';
@@ -29,13 +28,7 @@ class ScheduleOnceView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      filterJoin([
-        longDateFormat.format(schedule.date),
-        if (schedule.time != null) schedule.time!.format(context),
-        if (schedule.timeZone != null) '(${schedule.timeZone})',
-      ], separator: ' ')!,
-    );
+    return Text(schedule.format(schedule.date));
   }
 }
 
@@ -46,12 +39,7 @@ class ScheduleRecurringView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final started = filterJoin([
-      longDateFormat.format(schedule.date),
-      if (schedule.time != null) schedule.time!.format(context),
-      if (schedule.timeZone != null) '(${schedule.timeZone})',
-    ], separator: ' ')!;
-
+    String started = schedule.format(schedule.date);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

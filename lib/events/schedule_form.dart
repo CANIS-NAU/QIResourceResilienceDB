@@ -24,24 +24,39 @@ const double iconButtonRadius = 20.0;
 class _ScheduleFormState extends State<ScheduleFormFields> {
   DateTime _date = DateTime.now().withoutTime();
   TimeOfDay? _time;
+  TimeOfDay? _endTime;
   String? _timeZone = 'US/Arizona';
   bool _isRecurring = false;
   Frequency _frequency = Frequency.daily;
   DateTime? _until;
 
+  /// Respond to form changes by triggering the widget's onChanged
+  /// with the Schedule instance that results from this form.
+  /// If the form is invalid, onChanged is given null instead.
   void onChanged() {
     Schedule? schedule = null;
+    int? startTimeMinute = _time == null ? null : toMinuteOfDay(_time!);
+    int? endTimeMinute = _endTime == null ? null : toMinuteOfDay(_endTime!);
+    // timezone and end time are only valid if start time is set
+    final z = _time == null ? null : _timeZone;
+    final et = _time == null ? null : _endTime;
+
     if (_time != null && _timeZone == null) {
       // If time is set, time zone is required.
       schedule = null;
+    } else if (startTimeMinute != null &&
+        endTimeMinute != null &&
+        startTimeMinute >= endTimeMinute) {
+      // endTime, if set, must come after start time.
+      schedule = null;
     } else if (!_isRecurring) {
-      final z = _time == null ? null : _timeZone;
-      schedule = ScheduleOnce(date: _date, time: _time, timeZone: z);
+      schedule =
+          ScheduleOnce(date: _date, time: _time, endTime: et, timeZone: z);
     } else {
-      final z = _time == null ? null : _timeZone;
       schedule = ScheduleRecurring(
           date: _date,
           time: _time,
+          endTime: et,
           timeZone: z,
           frequency: _frequency,
           until: _until);
@@ -105,7 +120,7 @@ class _ScheduleFormState extends State<ScheduleFormFields> {
         child: Row(children: [
           Container(
             margin: rowMargin,
-            child: Text('Event time:'),
+            child: Text('Event start time:'),
           ),
           Container(
             margin: rowMargin,
@@ -139,10 +154,67 @@ class _ScheduleFormState extends State<ScheduleFormFields> {
               splashRadius: iconButtonRadius,
               onPressed: () {
                 setState(() {
+                  // Can't have end time if start time is blank.
                   _time = null;
+                  _endTime = null;
                   onChanged();
                 });
               },
+              tooltip: 'Clear Time',
+            ),
+          ),
+        ]),
+      ),
+
+      Padding(
+        padding: fieldPadding,
+        child: Row(children: [
+          Container(
+            margin: rowMargin,
+            child: Text('Event end time:'),
+          ),
+          Container(
+            margin: rowMargin,
+            child: Text(_endTime != null ? _endTime!.format(context) : 'None'),
+          ),
+          Spacer(),
+          Container(
+            margin: rowMargin,
+            child: IconButton(
+              icon: Icon(Icons.edit),
+              splashRadius: iconButtonRadius,
+              // disabled if there's no start time selected
+              onPressed: _time == null
+                  ? null
+                  : () async {
+                      TimeOfDay? selection = await showTimePicker(
+                        context: context,
+                        initialTime: _endTime ?? TimeOfDay.now(),
+                      );
+                      if (selection != null) {
+                        setState(() {
+                          _endTime = selection;
+                          onChanged();
+                        });
+                      }
+                    },
+              tooltip: 'Change Time',
+            ),
+          ),
+          Container(
+            margin: rowMargin,
+            child: IconButton(
+              icon: Icon(Icons.clear),
+              splashRadius: iconButtonRadius,
+              // disabled if there's no start time selected
+              onPressed: _time == null
+                  ? null
+                  : () {
+                      setState(() {
+                        _endTime = null;
+                        onChanged();
+                      });
+                    },
               tooltip: 'Clear Time',
             ),
           ),
