@@ -55,6 +55,7 @@ final categories = UnmodifiableListView<FilterCategory>([
         "App",
         "Hotline",
         "Event",
+        "Podcast",
       ])),
   FilterCategory("Cultural Responsiveness", "culturalResponse",
       values: UnmodifiableListView([
