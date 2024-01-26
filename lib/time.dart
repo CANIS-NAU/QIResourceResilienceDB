@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:flutter/material.dart';
 
 import 'package:intl/intl.dart';
 
@@ -43,6 +44,10 @@ bool isLeapYear(int year) {
 int daysInMonth(int year, int month) {
   final dim = isLeapYear(year) ? _daysInMonthLeapYear : _daysInMonthNormalYear;
   return dim[month - 1];
+}
+
+int toMinuteOfDay(TimeOfDay time) {
+  return time.hour * 60 + time.minute;
 }
 
 enum Frequency implements HasLabel {
