@@ -225,10 +225,11 @@ class ResourceDetail extends StatelessWidget {
                   ),
                 Padding(
                   padding: fieldPadding,
+                  // button to download resource pdf
                   child: ElevatedButton(
-                    onPressed: () {
-                      // download pdf
-                      pdfDownload.printResourceInfo(
+                    onPressed: () async {
+                      // generate PDF
+                      List<int> pdfBytes = await pdfDownload.generateResourcePdf(
                         resource['name'],
                         resource['description'],
                         resource['resourceType'],
@@ -236,12 +237,32 @@ class ResourceDetail extends StatelessWidget {
                         resource['culturalResponsivness'],
                         fullAddress,
                         fieldString('phoneNumber'),
-                        url,
-                      );
+                        url);
+
+                      // download PDF
+                      pdfDownload.downloadPdf(pdfBytes, resource['name']);
                     },
                     child: Text('Download PDF'),
                   ),
                 ),
+                 // Padding(
+                 //   padding: fieldPadding,
+                 //   // button to share resource
+                 //   child: ElevatedButton(
+                 //     onPressed: () {
+                 //       pdfDownload.shareResource(
+                 //         resource['name'],
+                 //         resource['description'],
+                 //         resource['resourceType'],
+                 //         resource['privacy'],
+                 //         resource['culturalResponsivness'],
+                 //         fullAddress,
+                 //         fieldString('phoneNumber'),
+                 //         url,);
+                 //     },
+                 //     child: Text('Share'),
+                 //  ),
+                 // )
               ],
             ),
           ),
