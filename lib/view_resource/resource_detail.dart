@@ -245,24 +245,24 @@ class ResourceDetail extends StatelessWidget {
                     child: Text('Download PDF'),
                   ),
                 ),
-                 Padding(
-                   padding: fieldPadding,
-                   // button to share resource
-                   child: ElevatedButton(
-                     onPressed: () {
-                       pdfDownload.shareResource(
-                         resource['name'],
-                         resource['description'],
-                         resource['resourceType'],
-                         resource['privacy'],
-                         resource['culturalResponsivness'],
-                         fullAddress,
-                         fieldString('phoneNumber'),
-                         url,);
-                     },
-                     child: Text('Share'),
-                  ),
-                 )
+                 // Padding(
+                 //   padding: fieldPadding,
+                 //   // button to share resource
+                 //   child: ElevatedButton(
+                 //     onPressed: () {
+                 //       pdfDownload.shareResource(
+                 //         resource['name'],
+                 //         resource['description'],
+                 //         resource['resourceType'],
+                 //         resource['privacy'],
+                 //         resource['culturalResponsivness'],
+                 //         fullAddress,
+                 //         fieldString('phoneNumber'),
+                 //         url,);
+                 //     },
+                 //     child: Text('Share'),
+                 //  ),
+                 // )
               ],
             ),
           ),
