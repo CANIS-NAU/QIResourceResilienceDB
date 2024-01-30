@@ -1,56 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:web_app/common.dart';
 import 'package:web_app/events/schedule.dart';
 import 'package:web_app/events/schedule_view.dart';
+import 'package:web_app/file_attachments.dart';
 import 'package:web_app/pdfDownload.dart';
-
-class Link extends StatelessWidget {
-  Link({super.key, required this.text, required this.uri});
-
-  final String text;
-  final Uri uri;
-
-  void onError(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text("Error"),
-        content: Text("Failed to launch address"),
-        actions: [
-          TextButton(
-            child: Text("OK"),
-            onPressed: () => Navigator.pop(context),
-          )
-        ],
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () async {
-        if (await canLaunchUrl(uri)) {
-          launchUrl(uri);
-        } else {
-          onError(context);
-        }
-      },
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
-        child: Text(
-          this.text,
-          style: TextStyle(
-            color: Colors.blue,
-            decoration: TextDecoration.underline,
-          ),
-        ),
-      ),
-    );
-  }
-}
+import 'package:web_app/util.dart';
 
 class AddressLink extends StatelessWidget {
   AddressLink({super.key, required this.fullAddress});
@@ -164,6 +119,7 @@ class ResourceDetail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    List<Attachment> attachments = getAttachmentsFromResource(resource);
     String? fullAddress = addressString();
     Uri? url =
         fieldDefined('location') ? Uri.parse(fieldString('location')!) : null;
@@ -222,6 +178,17 @@ class ResourceDetail extends StatelessWidget {
                   field(
                     'URL',
                     UrlLink(text: 'link to website here', url: url),
+                  ),
+                if (attachments.length > 0)
+                  Padding(
+                    padding: fieldPadding,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Attachments: '),
+                        AttachmentsList(attachments: attachments),
+                      ],
+                    ),
                   ),
                 Padding(
                   padding: fieldPadding,

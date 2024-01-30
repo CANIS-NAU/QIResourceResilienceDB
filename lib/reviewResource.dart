@@ -5,14 +5,14 @@ choose to verify or deny a resource.
  */
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 //Package imports
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:url_launcher/url_launcher_string.dart';
-import 'package:web_app/createResource.dart';
 import 'package:web_app/events/schedule.dart';
 import 'package:web_app/time.dart';
+import 'package:web_app/util.dart';
 
 class ReviewResource extends StatefulWidget {
   final QueryDocumentSnapshot resourceData;

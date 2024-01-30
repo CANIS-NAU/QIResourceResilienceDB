@@ -5,16 +5,13 @@ name, description, link, address (if in person),
 phone number (if hotline or in person), type, privacy,
 cost, cultural responsiveness, and age range.
 */
-
-//Import packages
-import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'events/schedule.dart';
-import 'events/schedule_form.dart';
-
-final now = DateTime.now();
-final date = "${now.month}/${now.day}/${now.year}";
+import 'package:flutter/material.dart';
+import 'package:web_app/events/schedule.dart';
+import 'package:web_app/events/schedule_form.dart';
+import 'package:web_app/file_attachments.dart';
+import 'package:web_app/util.dart';
 
 //List of ages for dropdown
 const List<String> ageItems = [
@@ -30,43 +27,6 @@ const List<String> ageItems = [
   "76+"
 ];
 
-showAlertDialog(BuildContext context, String statement) {
-  // set up the button
-  Widget okButton = TextButton(
-    child: Text("OK"),
-    onPressed: () {
-      Navigator.pop(context);
-    },
-  );
-
-  // set up the AlertDialog
-  AlertDialog alert = AlertDialog(
-    title: Text("Alert"),
-    content: Text(statement),
-    actions: [
-      okButton,
-    ],
-  );
-
-  //show the dialog
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return alert;
-    },
-  );
-}
-
-//Specify page that has state
-class CreateResource extends StatefulWidget {
-  CreateResource({super.key});
-
-  //final String title;
-
-  @override
-  State<CreateResource> createState() => createResourceState();
-}
-
 //List of strings for resource type
 const List<String> resourceTypeOptions = [
   'In Person',
@@ -78,7 +38,7 @@ const List<String> resourceTypeOptions = [
 ];
 
 // list of privacy options
-const List<String> resourcePrivacy = <String>[
+const List<String> resourcePrivacy = [
   'HIPAA Compliant',
   'Anonymous',
   'Mandatory Reporting',
@@ -93,12 +53,26 @@ const List<String> resourceCostOptions = [
   'Fees associated'
 ];
 
-//Create resource page
-class createResourceState extends State<CreateResource> {
-  //Specify route
-  static const String route = '/createresource';
+String culturalResponseScoreToText(double sliderValue) {
+  if (sliderValue <= 1) {
+    return "Low Cultural Responsivness";
+  } else if (sliderValue <= 3) {
+    return "Medium Cultural Responsivness";
+  } else {
+    return "High Cultural Responsivness";
+  }
+}
 
-  //Varible initalizaton
+// Create resource page
+class CreateResource extends StatefulWidget {
+  @override
+  State<CreateResource> createState() => _CreateResourceState();
+}
+
+class _CreateResourceState extends State<CreateResource> {
+  CollectionReference resourceCollection =
+      FirebaseFirestore.instance.collection('resources');
+
   String resourceName = "";
   String resourceLocation = "";
   String resourceAddress = "";
@@ -109,21 +83,20 @@ class createResourceState extends State<CreateResource> {
   String resourcePhoneNumber = "";
   String resourceDescription = "";
   String resourceLocationBoxText = "Link to the resource";
-  double _currentSliderValue = 0;
   String resourceCost = "";
   String resourceType = "";
+  double _culturalResponseSliderValue = 0;
+  String _ageRange = ageItems.first;
   Schedule? resourceSchedule = null;
+  List<FileUpload> _attachments = [];
 
-  //Specifies first value in dropdown to first in the list
-  String _currentDropDownValue = ageItems.first;
-
-  //Tags created stored in tag array
+  // Tags created stored in tag array
   List<dynamic> selectedTags = [];
 
-  //For text deletion on textbox submit
-  var _controller = TextEditingController();
+  // For tags text input.
+  final _tagsController = TextEditingController();
 
-  // used to store selected privacy options
+  // Used to store selected privacy options
   final List<bool> _selectedPrivacy =
       List<bool>.filled(resourcePrivacy.length, false);
   List<String> selectedPrivacyOptions = [];
@@ -133,61 +106,143 @@ class createResourceState extends State<CreateResource> {
   bool isInPersonSelected = false;
   bool isEventSelected = false;
 
-  bool vertical = false;
-  bool verified = false;
+  // Form submission status/progress.
+  var _isSubmitted = false;
+  var _uploadProgress = 0.0;
 
-  //Submit to DB
-  void submitResource(
-      resourceName, resourceLocation, resourceDescription, context) {
-    User? user = FirebaseAuth.instance.currentUser;
+  // Submit to DB
+  void trySubmitResource() async {
+    try {
+      setState(() {
+        _isSubmitted = true;
+        _uploadProgress = 0.0;
+      });
 
-    if (user != null) {
-      CollectionReference resourceCollection =
-          FirebaseFirestore.instance.collection('resources');
-
-      String culturalResponse = "";
-      if (_currentSliderValue >= 0 && _currentSliderValue <= 1) {
-        culturalResponse = "Low Cultural Responsivness";
-      } else if (_currentSliderValue >= 2 && _currentSliderValue <= 3) {
-        culturalResponse = "Medium Cultural Responsivness";
-      } else {
-        culturalResponse = "High Cultural Responsivness";
+      // Form authorization:
+      // User must be logged in (preferably they wouldn't even get to this page...)
+      User? user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        await showMessageDialog(
+          context,
+          title: "Error",
+          message: "You need to log in to submit a resource.",
+        );
+        return;
       }
 
-      //TODO: Need better error handling here
-      resourceCollection
-          .add({
-            'name': resourceName,
-            'location': resourceLocation,
-            'address': resourceAddress,
-            'building': resourceBldg,
-            'city': resourceCity,
-            'state': resourceState,
-            'zipcode': resourceZip,
-            'phoneNumber': resourcePhoneNumber,
-            'description': resourceDescription,
-            'agerange': _currentDropDownValue,
-            'isVisable': true,
-            'verified': verified, //Always false upon creation
-            'resourceType': resourceType,
-            'privacy': selectedPrivacyOptions,
-            'culturalResponse': culturalResponse,
-            'culturalResponsivness': _currentSliderValue,
-            'tagline': selectedTags,
-            'dateAdded': date,
-            'createdBy': user.email,
-            'cost': resourceCost,
-            if (resourceSchedule != null)
-              'schedule': resourceSchedule!.toJson(),
-          })
-          .then((value) =>
-              showAlertDialog(context, "Submitted resource for review"))
-          .catchError((error) {
-            debugPrint(error.toString());
-            showAlertDialog(context, "Unable to submit. Please try again");
-          });
-    } else {
-      showAlertDialog(context, "You need to login to submit a resource");
+      // Form validation:
+      // Check if any of text boxes are empty based on the type of resource
+      if (resourceName == "" ||
+          resourceDescription == "" ||
+          resourceLocation == "" ||
+          (isInPersonSelected &&
+              (resourceAddress == "" ||
+                  resourceCity == "" ||
+                  resourceState == "" ||
+                  resourceZip == "")) ||
+          ((isInPersonSelected || isHotlineSelected) &&
+              resourcePhoneNumber == "") ||
+          (isEventSelected && (resourceSchedule == null))) {
+        await showMessageDialog(
+          context,
+          title: "Alert",
+          message:
+              "One or more of the mandatory fields are blank. Please fill out all of the fields before submitting.",
+        );
+        return;
+      }
+
+      // Check if any of the type, privacy, or cost options are not selected.
+      if (resourceType == "" ||
+          selectedPrivacyOptions.isEmpty ||
+          resourceCost == "") {
+        await showMessageDialog(
+          context,
+          title: "Alert",
+          message:
+              "Please select a resource type, privacy option, and cost before submitting.",
+        );
+        return;
+      }
+
+      // Otherwise, all fields are filled out correctly: continue.
+      // Get a newly generated ID for this resource.
+      final resourceRef = resourceCollection.doc();
+      final resourceId = resourceRef.id;
+
+      // Upload attachments
+      List<Attachment> attachments = _attachments.isEmpty
+          ? []
+          : await uploadAttachments(
+              resourceId, // use resource document ID as the file path
+              _attachments,
+              onProgress: (ratio) {
+                setState(() {
+                  _uploadProgress = ratio;
+                });
+              },
+            );
+
+      // Create the resource document JSON.
+      final now = DateTime.now();
+      final date = "${now.month}/${now.day}/${now.year}";
+      final resource = {
+        'name': resourceName,
+        'location': resourceLocation,
+        'address': resourceAddress,
+        'building': resourceBldg,
+        'city': resourceCity,
+        'state': resourceState,
+        'zipcode': resourceZip,
+        'phoneNumber': resourcePhoneNumber,
+        'description': resourceDescription,
+        'agerange': _ageRange,
+        'isVisable': true,
+        'verified': false, // Always false upon creation.
+        'resourceType': resourceType,
+        'privacy': selectedPrivacyOptions,
+        'culturalResponse':
+            culturalResponseScoreToText(_culturalResponseSliderValue),
+        'culturalResponsivness': _culturalResponseSliderValue,
+        'cost': resourceCost,
+        'tagline': selectedTags,
+        if (resourceSchedule != null) 'schedule': resourceSchedule!.toJson(),
+        'attachments': attachments.map((x) => x.toJson()),
+        'dateAdded': date,
+        'createdBy': user.email,
+        'createdTime': FieldValue.serverTimestamp(),
+      };
+
+      // Set the data of the document.
+      await resourceRef.set(resource);
+
+      setState(() {
+        // Just to make sure the progress bar shows full,
+        // regardless of whether or not there were any attachments.
+        _uploadProgress = 1.0;
+      });
+
+      debugPrint("Created resource ${resourceId}");
+      await showMessageDialog(
+        context,
+        title: "Success",
+        message: "Submitted resource for review.",
+      );
+
+      // Return to origin page after successful document creation.
+      // This avoid issues with stale form values from previous submissions.
+      Navigator.pop(context);
+    } on Exception catch (error) {
+      debugPrint(error.toString());
+      await showMessageDialog(
+        context,
+        title: "Error",
+        message: "Unable to submit. Please try again.",
+      );
+    } finally {
+      setState(() {
+        _isSubmitted = false;
+      });
     }
   }
 
@@ -223,372 +278,320 @@ class createResourceState extends State<CreateResource> {
     );
   }
 
-// Create resource UI
+  // Create resource UI
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Submit Resource'),
       ),
-      body: LayoutBuilder(
-        builder: (context, windowSize) {
-          return Align(
-              alignment: Alignment.topCenter,
-              child: Container(
-                  constraints: BoxConstraints(maxWidth: 600),
-                  padding: EdgeInsets.all(16.0),
-                  child: Form(
-                      child: ListView(
+      body: Center(
+        child: Container(
+          constraints: BoxConstraints(
+            minWidth: 400,
+            maxWidth: 600,
+          ),
+          padding: EdgeInsets.symmetric(vertical: 16.0),
+          child: Form(
+            child: ListView(
+              // Some padding to keep the scroll bar from overlapping form fields.
+              padding: EdgeInsets.only(right: 16.0),
+              children: [
+                buildTitles("Resource Type"),
+                ListView(
+                  shrinkWrap: true,
+                  children: resourceTypeOptions.map((option) {
+                    return RadioListTile(
+                      title: Text(
+                        option,
+                        style: TextStyle(fontSize: 16),
+                      ),
+                      value: option,
+                      groupValue: resourceType,
+                      onChanged: (value) => setState(() {
+                        resourceType = value!;
+                        isHotlineSelected = (value == "Hotline");
+                        isInPersonSelected = (value == "In Person");
+                        isEventSelected = (value == "Event");
+                      }),
+                      controlAffinity: ListTileControlAffinity.leading,
+                      dense: true,
+                    );
+                  }).toList(),
+                ),
+                buildTextFieldContainer(
+                  'Name of the Resource',
+                  true,
+                  (text) {
+                    resourceName = text;
+                  },
+                ),
+                buildTextFieldContainer(
+                  'Link to the Resource',
+                  true,
+                  (text) {
+                    resourceLocation = text;
+                  },
+                ),
+                buildTextFieldContainer(
+                  'Address',
+                  isInPersonSelected,
+                  (text) {
+                    resourceAddress = text;
+                  },
+                ),
+                buildTextFieldContainer(
+                  'Apartment, building, floor, etc.',
+                  isInPersonSelected,
+                  (text) {
+                    resourceBldg = text;
+                  },
+                ),
+                buildTextFieldContainer(
+                  'City',
+                  isInPersonSelected,
+                  (text) {
+                    resourceCity = text;
+                  },
+                ),
+                buildTextFieldContainer(
+                  'State',
+                  isInPersonSelected,
+                  (text) {
+                    resourceState = text;
+                  },
+                ),
+                buildTextFieldContainer(
+                  'Zip Code',
+                  isInPersonSelected,
+                  (text) {
+                    resourceZip = text;
+                  },
+                ),
+                buildTextFieldContainer(
+                  'Phone Number',
+                  isHotlineSelected || isInPersonSelected,
+                  (text) {
+                    resourcePhoneNumber = text;
+                  },
+                ),
+                buildTextFieldContainer(
+                  'Description of the Resource',
+                  true,
+                  (text) {
+                    resourceDescription = text;
+                  },
+                ),
+                Container(
+                  padding: EdgeInsets.symmetric(vertical: 8.0),
+                  child: TextField(
+                    obscureText: false,
+                    controller: _tagsController,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(),
+                      labelText: 'Please provide tags for the resource',
+                    ),
+                    onSubmitted: (text) {
+                      if (text != "") {
+                        setState(() {
+                          _tagsController.clear();
+                          selectedTags.add(text);
+                        });
+                      }
+                    },
+                  ),
+                ),
+                Container(
+                  child: new Stack(
                     children: [
-                      buildTextFieldContainer(
-                        'Name of the Resource',
-                        true,
-                        (text) {
-                          resourceName = text;
-                        },
-                      ),
-                      buildTextFieldContainer(
-                        'Link to the Resource',
-                        true,
-                        (text) {
-                          resourceLocation = text;
-                        },
-                      ),
-                      buildTextFieldContainer(
-                        'Address',
-                        isInPersonSelected,
-                        (text) {
-                          resourceAddress = text;
-                        },
-                      ),
-                      buildTextFieldContainer(
-                        'Apartment, building, floor, etc.',
-                        isInPersonSelected,
-                        (text) {
-                          resourceBldg = text;
-                        },
-                      ),
-                      buildTextFieldContainer(
-                        'City',
-                        isInPersonSelected,
-                        (text) {
-                          resourceCity = text;
-                        },
-                      ),
-                      buildTextFieldContainer(
-                        'State',
-                        isInPersonSelected,
-                        (text) {
-                          resourceState = text;
-                        },
-                      ),
-                      buildTextFieldContainer(
-                        'Zip Code',
-                        isInPersonSelected,
-                        (text) {
-                          resourceZip = text;
-                        },
-                      ),
-                      buildTextFieldContainer(
-                        'Phone Number',
-                        isHotlineSelected || isInPersonSelected,
-                        (text) {
-                          resourcePhoneNumber = text;
-                        },
-                      ),
-                      buildTextFieldContainer(
-                        'Description of the Resource',
-                        true,
-                        (text) {
-                          resourceDescription = text;
-                        },
+                      Text(
+                        "Your active tags. Click to remove",
+                        style: TextStyle(fontSize: 14.0),
                       ),
                       Container(
-                        padding: EdgeInsets.symmetric(vertical: 8.0),
-                        child: TextField(
-                          obscureText: false,
-                          controller: _controller,
-                          decoration: InputDecoration(
-                            border: OutlineInputBorder(),
-                            labelText: 'Please provide tags for the resource',
-                          ),
-                          onSubmitted: (text) {
-                            if (text != "") {
-                              setState(() {
-                                _controller.clear();
-                                selectedTags.add(text);
-                              });
-                            }
-                          },
-                        ),
-                      ),
-                      Container(
-                        child: new Stack(
-                          children: [
-                            Text(
-                              "Your active tags. Click to remove",
-                              style: TextStyle(fontSize: 14.0),
-                            ),
-                            Container(
-                              padding: EdgeInsets.symmetric(vertical: 16.0),
-                              child: Wrap(
-                                spacing: 5.0,
-                                children: selectedTags.map((tag) {
-                                  return Padding(
-                                    padding: EdgeInsets.symmetric(
-                                        horizontal: 4.0, vertical: 20.0),
-                                    child: InputChip(
-                                      label: Text(tag),
-                                      backgroundColor: Colors.blue[200],
-                                      onDeleted: () {
-                                        setState(() {
-                                          selectedTags.remove(tag);
-                                        });
-                                      },
-                                    ),
-                                  );
-                                }).toList(),
+                        padding: EdgeInsets.symmetric(vertical: 16.0),
+                        child: Wrap(
+                          spacing: 5.0,
+                          children: selectedTags.map((tag) {
+                            return Padding(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 4.0, vertical: 20.0),
+                              child: InputChip(
+                                label: Text(tag),
+                                backgroundColor: Colors.blue[200],
+                                onDeleted: () {
+                                  setState(() {
+                                    selectedTags.remove(tag);
+                                  });
+                                },
                               ),
-                            ),
-                          ],
+                            );
+                          }).toList(),
                         ),
                       ),
-                      Visibility(
-                        visible: isEventSelected,
-                        child: Column(children: [
-                          buildTitles("Event Schedule"),
-                          ScheduleFormFields(
-                            onChanged: (schedule) {
-                              setState(() {
-                                resourceSchedule = schedule;
-                              });
-                            },
-                          ),
-                        ]),
-                      ),
-                      buildTitles("Resource Type"),
-                      Container(
-                        child: ListView(
-                          scrollDirection: Axis.vertical,
-                          shrinkWrap: true,
-                          children: [
-                            Column(
-                              children: resourceTypeOptions.map((option) {
-                                return ListTile(
-                                  dense: true,
-                                  leading: Radio(
-                                    value: option,
-                                    groupValue: resourceType,
-                                    onChanged: (value) {
-                                      setState(() {
-                                        resourceType = value!;
-                                        isHotlineSelected =
-                                            (value == "Hotline");
-                                        isInPersonSelected =
-                                            (value == "In Person");
-                                        isEventSelected = (value == "Event");
-                                      });
-                                    },
-                                  ),
-                                  title: Text(
-                                    option,
-                                    style: TextStyle(fontSize: 16),
-                                  ),
-                                );
-                              }).toList(),
-                            ),
-                          ],
-                        ),
-                      ),
-                      buildTitles("Privacy Protections"),
-                      Container(
-                        child: SizedBox(
-                          child: ListView(
-                            shrinkWrap: true,
-                            children: List<Widget>.generate(
-                                _selectedPrivacy.length,
-                                (int index) => CheckboxListTile(
-                                      title: Text(resourcePrivacy[index],
-                                          style: TextStyle(fontSize: 16)),
-                                      value: _selectedPrivacy[index],
-                                      onChanged: (value) {
-                                        setState(() {
-                                          _selectedPrivacy[index] = value!;
-                                          if (value) {
-                                            selectedPrivacyOptions
-                                                .add(resourcePrivacy[index]);
-                                          } else {
-                                            selectedPrivacyOptions
-                                                .remove(resourcePrivacy[index]);
-                                          }
-                                        });
-                                      },
-                                      controlAffinity:
-                                          ListTileControlAffinity.leading,
-                                      dense: true,
-                                    )),
-                          ),
-                        ),
-                      ),
-                      buildTitles("Resource Cost"),
-                      Center(
-                        child: new Container(
-                          child: SizedBox(
-                            child: ListView(
-                                padding: EdgeInsets.only(right: 30),
-                                scrollDirection: Axis.vertical,
-                                shrinkWrap: true,
-                                children: [
-                                  Column(
-                                    children: resourceCostOptions.map((option) {
-                                      return ListTile(
-                                        dense: true,
-                                        leading: Radio(
-                                          value: option,
-                                          groupValue: resourceCost,
-                                          onChanged: (value) {
-                                            setState(() {
-                                              resourceCost = value!;
-                                            });
-                                          },
-                                        ),
-                                        title: Text(option,
-                                            style: TextStyle(fontSize: 16)),
-                                      );
-                                    }).toList(),
-                                  ),
-                                ]),
-                          ),
-                        ),
-                      ),
-                      buildTitles("Cultural Responsiveness"),
-                      Center(
-                        child: new Container(
-                          child: Center(
-                            child: Stack(
-                              children: [
-                                SliderTheme(
-                                  data: SliderTheme.of(context).copyWith(
-                                    valueIndicatorColor: Colors.blue,
-                                    valueIndicatorTextStyle:
-                                        TextStyle(color: Colors.white),
-                                  ),
-                                  child: Slider(
-                                    value: _currentSliderValue,
-                                    max: 5,
-                                    divisions: 5,
-                                    label:
-                                        _currentSliderValue.round().toString(),
-                                    onChanged: (double value) {
-                                      setState(() {
-                                        _currentSliderValue = value;
-                                      });
-                                    },
-                                  ),
-                                ),
-                                // anchor descriptions for slider
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Tooltip(
-                                        message:
-                                            "Not culturally specific to Hopi or Indigenous communities",
-                                        child: Text("Low ")),
-                                    Spacer(),
-                                    Tooltip(
-                                        message:
-                                            "Specific resource for Hopi community",
-                                        child: Text("High")),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      buildTitles("Age Range of Resource"),
-                      Center(
-                        child: new Container(
-                          child: DropdownButton(
-                            value: _currentDropDownValue,
-                            onChanged: (String? newValue) {
-                              setState(() {
-                                _currentDropDownValue = newValue!;
-                              });
-                            },
-                            items: ageItems
-                                .map<DropdownMenuItem<String>>((String value) {
-                              return DropdownMenuItem<String>(
-                                value: value,
-                                child: Text(value),
-                              );
-                            }).toList(),
-                          ),
-                        ),
-                      ),
-                      Center(
-                        child: new Container(
-                            padding: EdgeInsets.symmetric(vertical: 20.0),
-                            child: TextButton(
-                              style: ButtonStyle(
-                                  minimumSize: MaterialStateProperty.all<Size>(
-                                      Size(150, 45)),
-                                  foregroundColor:
-                                      MaterialStateProperty.all<Color>(
-                                          Colors.white),
-                                  backgroundColor:
-                                      MaterialStateProperty.all<Color>(
-                                          Colors.blue),
-                                  shape: MaterialStateProperty.all<
-                                          RoundedRectangleBorder>(
-                                      RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(18.0),
-                                          side:
-                                              BorderSide(color: Colors.blue)))),
-                              onPressed: () {
-                                // check if any of text boxes are empty based on the type of resource
-                                if (resourceName == "" ||
-                                    resourceDescription == "" ||
-                                    resourceLocation == "" ||
-                                    (isInPersonSelected &&
-                                        (resourceAddress == "" ||
-                                            resourceCity == "" ||
-                                            resourceState == "" ||
-                                            resourceZip == "")) ||
-                                    ((isInPersonSelected ||
-                                            isHotlineSelected) &&
-                                        resourcePhoneNumber == "") ||
-                                    (isEventSelected &&
-                                        (resourceSchedule == null))) {
-                                  showAlertDialog(
-                                    context,
-                                    "One or more of the mandatory fields are blank. Please fill out all of the fields before submitting.",
-                                  );
-                                }
-                                // check if any of the type, privacy, or cost options are not selected
-                                else if (resourceType == "" ||
-                                    selectedPrivacyOptions.isEmpty ||
-                                    resourceCost == "") {
-                                  showAlertDialog(
-                                    context,
-                                    "Please select a resource type, privacy option, and cost before submitting.",
-                                  );
-                                }
-                                // otherwise, all fields are filled out and submit the resource
-                                else {
-                                  submitResource(resourceName, resourceLocation,
-                                      resourceDescription, context);
-                                }
-                              },
-                              child: Text('Submit Resource'),
-                            )),
-                      )
                     ],
-                  ))));
-        },
+                  ),
+                ),
+                Visibility(
+                  visible: isEventSelected,
+                  child: Column(children: [
+                    buildTitles("Event Schedule"),
+                    ScheduleFormFields(
+                      onChanged: (schedule) {
+                        setState(() {
+                          resourceSchedule = schedule;
+                        });
+                      },
+                    ),
+                  ]),
+                ),
+
+                buildTitles("Privacy Protections"),
+                ListView(
+                  shrinkWrap: true,
+                  children: List<Widget>.generate(
+                    _selectedPrivacy.length,
+                    (int index) => CheckboxListTile(
+                      title: Text(
+                        resourcePrivacy[index],
+                        style: TextStyle(fontSize: 16),
+                      ),
+                      value: _selectedPrivacy[index],
+                      onChanged: (value) => setState(() {
+                        _selectedPrivacy[index] = value!;
+                        if (value) {
+                          selectedPrivacyOptions.add(resourcePrivacy[index]);
+                        } else {
+                          selectedPrivacyOptions.remove(resourcePrivacy[index]);
+                        }
+                      }),
+                      controlAffinity: ListTileControlAffinity.leading,
+                      dense: true,
+                    ),
+                  ),
+                ),
+                buildTitles("Resource Cost"),
+                ListView(
+                  shrinkWrap: true,
+                  children: resourceCostOptions.map((option) {
+                    return RadioListTile(
+                      title: Text(
+                        option,
+                        style: TextStyle(fontSize: 16),
+                      ),
+                      value: option,
+                      groupValue: resourceCost,
+                      onChanged: (value) => setState(() {
+                        resourceCost = value!;
+                      }),
+                      controlAffinity: ListTileControlAffinity.leading,
+                      dense: true,
+                    );
+                  }).toList(),
+                ),
+                buildTitles("Cultural Responsiveness"),
+                Center(
+                  child: new Container(
+                    child: Center(
+                      child: Stack(
+                        children: [
+                          SliderTheme(
+                            data: SliderTheme.of(context).copyWith(
+                              valueIndicatorColor: Colors.blue,
+                              valueIndicatorTextStyle:
+                                  TextStyle(color: Colors.white),
+                            ),
+                            child: Slider(
+                              value: _culturalResponseSliderValue,
+                              max: 5,
+                              divisions: 5,
+                              label: _culturalResponseSliderValue
+                                  .round()
+                                  .toString(),
+                              onChanged: (double value) {
+                                setState(() {
+                                  _culturalResponseSliderValue = value;
+                                });
+                              },
+                            ),
+                          ),
+                          // anchor descriptions for slider
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Tooltip(
+                                  message:
+                                      "Not culturally specific to Hopi or Indigenous communities",
+                                  child: Text("Low ")),
+                              Spacer(),
+                              Tooltip(
+                                  message:
+                                      "Specific resource for Hopi community",
+                                  child: Text("High")),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                buildTitles("Age Range of Resource"),
+                Center(
+                  child: new Container(
+                    child: DropdownButton(
+                      value: _ageRange,
+                      onChanged: (String? newValue) {
+                        setState(() {
+                          _ageRange = newValue!;
+                        });
+                      },
+                      items: ageItems
+                          .map<DropdownMenuItem<String>>((String value) {
+                        return DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(value),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ),
+
+                // Attachments
+                buildTitles("File Attachments"),
+                AttachmentsManager(
+                  onChanged: (files) {
+                    _attachments = files;
+                  },
+                ),
+
+                // Submit button and progress indicator (while submitting)
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: 48.0),
+                  child: Column(children: [
+                    ElevatedButton(
+                      onPressed: _isSubmitted ? null : trySubmitResource,
+                      child: Text('Submit Resource'),
+                    ),
+                    if (_isSubmitted)
+                      Padding(
+                        padding: EdgeInsets.all(16.0),
+                        child: LinearProgressIndicator(
+                          value: _uploadProgress,
+                        ),
+                      ),
+                  ]),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _tagsController.dispose();
+    super.dispose();
   }
 }
