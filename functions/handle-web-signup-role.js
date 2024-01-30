@@ -62,60 +62,68 @@ function setResAttr(res,origins,methods,headers) {
   return res;
 }
 
-// Sign up a user with claims
 app.post('/handleWebSignUpRole', async (req, res) => {
 
-  res = setResAttr(res,'*','POST','Content-Type, Authorization');
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'POST');
+  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-  const reqInfo = {
-    'body': req.body,
-    'email': req.body.email,
-    'password': req.body.password,
-    'role': req.body.role,
-    'token': req.body.adminToken
-  };
+  const successfulResponse = 200;
+  const unsucessfulResponse = 500;
 
-  // Creates a new user with correct claims 
+  //Global state varibles
+  const reqBody = req.body;
+  const email = reqBody.email;
+  const password = reqBody.password;
+  const role = reqBody.role;
+  const adminToken = reqBody.adminToken;
+  var adminBool = false;
+  var managerBool = false;
+
   const createUserWithClaims = async () => {
-    let managerBool = reqInfo['role'] === MANAGER_STR;
-    let adminBool = reqInfo['role'] === ADMIN_STR;
-
+    managerBool = role === MANAGER_STR;
+    adminBool = role === ADMIN_STR;
     if(adminBool || managerBool) {
       try {
-        // Create a new user with provided creds
         const userRecord = await admin.auth().createUser({
           email: email,
           password: password,
         });
-
+    
         const uid = userRecord.uid;
+    
         await admin.auth().setCustomUserClaims(uid, {
-          MANAGER_STR: managerBool,
-          ADMIN_STR: adminBool,
+          'manager': managerBool,
+          'admin': adminBool,
         });
-        return res.status(SUCCESSFUL_RES).send({'data': userRecord}).end();
+        return res.status(successfulResponse).send({'data': userRecord});
       } 
       catch(error) {
-        return res.status(UNSUCCESSFUL_RES).send({'error': error}).end();
+        return res.status(unsucessfulResponse).send({'error': error});
       }
     }
     else {
-      return res.status(UNSUCCESSFUL_RES).send(
-                                         {'error': "Not a correct role"}).end();
+      return res.status(unsucessfulResponse).send(
+                                               {'error': "Not a correct role"});
     }
-  };
+  }
 
-  admin.auth(adminApp).verifyIdToken(token).then((decodedToken) => {
+  admin.auth(adminApp).verifyIdToken(adminToken).then((decodedToken) => {
     admin.auth(adminApp).getUser(decodedToken.uid).then((userRecord) => {
-      let claims = userRecord.customClaims;
-      if(claims !== null && claims[ADMIN_STR]) {
+      const claims = userRecord.customClaims;
+      if(claims !== null && claims['admin']) {
         createUserWithClaims();
       }
+      else {
+        return res.status( unsucessfulResponse ).send(
+                                                   {'error': 'User not admin'});
+      }
     }).catch((error) => {
-      return res.status(UNSUCCESSFUL_RES).send({'error': error}).end();
+      return res.status( unsucessfulResponse ).send({'error': error });
     });
-  }).catch((error) => {
-    return res.status(UNSUCCESSFUL_RES).send({'error': error}).end();
+  })
+  .catch( (error) => {
+    return res.status(unsucessfulResponse).send({ 'error': error});
   });
 });
 

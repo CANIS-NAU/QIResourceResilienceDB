@@ -97,7 +97,7 @@ class Inbox extends StatelessWidget
                                 style: TextStyle(fontSize: 24),
                             children: <TextSpan>[
                                 TextSpan(
-                                    text: "${data[docIndex]['submittedName']}",
+                                    text: "${data[docIndex]['submittedName']} ",
                                     style: TextStyle(
                                         fontWeight: FontWeight.bold,
                                     ),

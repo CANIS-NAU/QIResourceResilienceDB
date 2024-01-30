@@ -440,7 +440,6 @@ class ProfileIcon extends StatelessWidget {
                     if(item == Menu.itemThree)
                       {
                         // do nothing since we don't have a settings page yet
-                        Navigator.pushNamed( context, '/usermanagement' );
                       }
                     if(item == Menu.itemFour)
                       {
@@ -459,7 +458,7 @@ class ProfileIcon extends StatelessWidget {
                     ),
                     PopupMenuItem<Menu>(
                       value: Menu.itemThree,
-                      child: Text('Manage Users'),
+                      child: Text('Settings'),
                     ),
                     PopupMenuItem<Menu>(
                       value: Menu.itemFour,
