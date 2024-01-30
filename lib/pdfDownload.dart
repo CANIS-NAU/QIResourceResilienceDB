@@ -1,7 +1,6 @@
 // pdfDownload.dart
 import 'dart:convert';
 import 'dart:html' as html;
-import 'dart:typed_data';
 import 'dart:ui';
 import 'package:share_plus/share_plus.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
@@ -147,38 +146,13 @@ class PdfDownload {
       ..click();
   }
 
-  // // function to share resource
-  // Future<void> shareResource (
-  //     String name,
-  //     String description,
-  //     String resourceType,
-  //     List<dynamic> privacy,
-  //     int culturalResponsiveness,
-  //     String? fullAddress,
-  //     String? phoneNumber,
-  //     Uri? urlStr) async {
-  //   List<int> pdfBytes = await generateResourcePdf(
-  //     name,
-  //     description,
-  //     resourceType,
-  //     privacy,
-  //     culturalResponsiveness,
-  //     fullAddress,
-  //     phoneNumber,
-  //     urlStr,
-  //   );
-  //
-  //   // convert pdf
-  //   final ByteData bytes = ByteData.view(Uint8List.fromList(pdfBytes).buffer);
-  //   final Uint8List uint8List = bytes.buffer.asUint8List();
-  //
-  //   // share pdf
-  //   await Share.shareXFiles(
-  //     [XFile.fromData(uint8List, name: '${name}_resource.pdf')],
-  //     text: '${name} resource attached',
-  //     subject: 'Check out this resource: ${name}'
-  //   );
-  // }
+  // function to share resource
+  Future<void> shareResourceLink (String name, Uri? urlStr) async {
+    // share resource link
+    await Share.share( "Check out this resource here: ${urlStr}",
+      subject: 'Check out this resource: ${name}'
+    );
+  }
 
   // function to add rows to a grid
   void addRow(PdfGrid grid, String label, dynamic value) {
