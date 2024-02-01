@@ -352,6 +352,7 @@ class _PickAttachmentDialogState extends State<PickAttachmentDialog> {
 const EdgeInsets fieldPadding = EdgeInsets.symmetric(vertical: 8.0);
 
 /// A form widget for including file attachments.
+/// Designed for a display width of 600.
 class AttachmentsManager extends StatefulWidget {
   final Function(List<FileUpload>) onChanged;
 
@@ -383,18 +384,47 @@ class _AttachmentsManagerState extends State<AttachmentsManager> {
         // Table listing the chosen attachments with a button to remove a file.
         DataTable(
           columns: [
-            "Display Name",
-            "File Name",
+            "Name",
             "Size",
             "Type",
             "", // remove button
           ].map(_column).toList(),
+          columnSpacing: 12.0,
           rows: _attachments.map((file) {
             return DataRow(cells: <DataCell>[
-              DataCell(Text(file.displayName)),
-              DataCell(Text(file.fileName)),
-              DataCell(Text(formatFileSize(file.fileSize))),
-              DataCell(Text(file.mimeType)),
+              DataCell(
+                ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: 192),
+                  child: Tooltip(
+                    message: file.fileName,
+                    child: Text(
+                      file.displayName,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+              ),
+              DataCell(
+                ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: 80),
+                  child: Text(
+                    formatFileSize(file.fileSize),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ),
+              DataCell(
+                ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: 128),
+                  child: Tooltip(
+                    message: file.mimeType,
+                    child: Text(
+                      file.mimeType,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+              ),
               DataCell(
                 IconButton(
                   icon: Icon(Icons.remove_circle_outline),

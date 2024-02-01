@@ -288,10 +288,10 @@ class _CreateResourceState extends State<CreateResource> {
       body: Center(
         child: Container(
           constraints: BoxConstraints(
-            minWidth: 400,
+            minWidth: 600,
             maxWidth: 600,
           ),
-          padding: EdgeInsets.symmetric(vertical: 16.0),
+          padding: EdgeInsets.symmetric(horizontal: 16.0),
           child: Form(
             child: ListView(
               // Some padding to keep the scroll bar from overlapping form fields.
