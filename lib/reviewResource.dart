@@ -181,7 +181,7 @@ class _ReviewResourceState extends State<ReviewResource> {
     'Specific to people living away from home (e.g., college students or people living away from Hopi)',
   ];
 
-  final List<bool> selectedExperiences = List<bool>.filled(6, false);
+  final List<bool> selectedExperiences = List<bool>.filled(5, false);
   List<String> selectedLifeExperiences = [];
 
   //Potential accessibility features
@@ -193,7 +193,7 @@ class _ReviewResourceState extends State<ReviewResource> {
     'Resource is related to a sober living facility, which has been verified by ADHS and AHCCCS.',
   ];
 
-  final List<bool> selectedAccessibility = List<bool>.filled(6, false);
+  final List<bool> selectedAccessibility = List<bool>.filled(5, false);
   List<String> selectedAccessibilityFeatures = [];
 
   // take in the name of the standard and description and displays it
