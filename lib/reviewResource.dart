@@ -43,16 +43,16 @@ class _ReviewResourceState extends State<ReviewResource> {
   Future<void> deleteResource(name) {
     return resourceCollection.doc(name.id).delete()
         .then((value) => showAlertDialog(context, "Resource has been denied."))
+        .then((value) => Navigator.pushNamed( context, '/dashboard' ))
         .catchError((error) => showAlertDialog(context, "Failed to delete resource: $error"));
-        //redirect to resource verification page
-        Navigator.pushNamed( context, '/dashboard' );
+        //redirect to resource verification page      
   }
 
   // function to add rubric info to a resource
   Future<void> updateResourceRubric(resource, userComments, totalScore) {
     // define rubric and all sub-fields (score, ratings, comments)
     final rubric = {
-      'avoidRasism': avoidRacism,
+      'avoidRacism': avoidRacism,
       'avoidStereotyping': avoidStereotyping,
       'avoidAppropriation': avoidAppropriation,
       'avoidSexism': avoidSexism,
@@ -88,7 +88,8 @@ class _ReviewResourceState extends State<ReviewResource> {
     String timestamp = "${currentTime}";
     
     String description = "" +
-      "Cultural Rating: ${ culturalRating } / 5, "
+      "Cultural Rating part 1: ${ culturalRatingHopi } / 5, " +
+      "Cultural Rating part 2: ${ culturalRatingIndigenous } / 5, "
       /*"Experience Rating: ${ experienceRating } / 5, " +
       "Social Rating: ${ socialRating } / 5, " +
       "Production Rating: ${ productionRating } / 5, " +
@@ -122,7 +123,8 @@ class _ReviewResourceState extends State<ReviewResource> {
   }
 
   // initialize all ratings to 0
-  int? culturalRating = 0;
+  int? culturalRatingIndigenous = 0;
+  int? culturalRatingHopi = 0;
   int? experienceRating = 0;
   int? socialRating = 0;
   int? productionRating = 0;
@@ -135,14 +137,14 @@ class _ReviewResourceState extends State<ReviewResource> {
   int? trustworthyRating = 0;
   int? currentRating = 0;
   int? languageRating = 0;
-  String? avoidRacism = 'Yes';
-  String? avoidStereotyping = 'Yes';
-  String? avoidAppropriation = 'Yes';
-  String? avoidLanguage = 'Yes';
-  String? appropriate = 'Yes';
-  String? avoidCond = 'Yes';
-  String? avoidAgeism = 'Yes';
-  String? avoidSexism = 'Yes';
+  String? avoidRacism = '/null';
+  String? avoidStereotyping = '/null';
+  String? avoidAppropriation = '/null';
+  String? avoidLanguage = '/null';
+  String? appropriate = '/null';
+  String? avoidCond = '/null';
+  String? avoidAgeism = '/null';
+  String? avoidSexism = '/null';
   int? sexuality = 0;
   int? contentAccurate = 0;
   int? contentTrustworthy = 0;
@@ -179,7 +181,7 @@ class _ReviewResourceState extends State<ReviewResource> {
     'Specific to people living away from home (e.g., college students or people living away from Hopi)',
   ];
 
-  final List<bool> selectedExperiences = List<bool>.filled(5, false);
+  final List<bool> selectedExperiences = List<bool>.filled(6, false);
   List<String> selectedLifeExperiences = [];
 
   //Potential accessibility features
@@ -191,7 +193,7 @@ class _ReviewResourceState extends State<ReviewResource> {
     'Resource is related to a sober living facility, which has been verified by ADHS and AHCCCS.',
   ];
 
-  final List<bool> selectedAccessibility = List<bool>.filled(5, false);
+  final List<bool> selectedAccessibility = List<bool>.filled(6, false);
   List<String> selectedAccessibilityFeatures = [];
 
   // take in the name of the standard and description and displays it
@@ -304,6 +306,7 @@ class _ReviewResourceState extends State<ReviewResource> {
                 if(newValue == 'No')
                 {
                     deleteResource(widget.resourceData);
+                    Navigator.pop(context);
                     Navigator.pushNamed( context, '/inbox' );
                     //submitToInbox( widget.resourceData, "Denied", userComments);
                 }
@@ -500,7 +503,7 @@ class _ReviewResourceState extends State<ReviewResource> {
 
     String userComments = "";
 
-    int totalScore = culturalRating! + experienceRating! + sexuality!;
+    int totalScore = culturalRatingHopi! + culturalRatingIndigenous! + experienceRating! + sexuality!;
 
     String resourceInfo = 'Name: ${widget.resourceData['name']}\n\n'
         'Description: ${widget.resourceData['description']}\n\n'
@@ -731,9 +734,9 @@ class _ReviewResourceState extends State<ReviewResource> {
                       SizedBox(height: 10.0),
                       // create rating buttons and assign to correct rating
                       SizedBox(
-                          child: buildRating(culturalRating, (newValue) {
+                          child: buildRating(culturalRatingIndigenous, (newValue) {
                             setState(() {
-                              culturalRating = newValue;
+                              culturalRatingIndigenous = newValue;
                             });
                           }, screenSize)),
                       SizedBox(height: 15),
@@ -744,9 +747,9 @@ class _ReviewResourceState extends State<ReviewResource> {
                       SizedBox(height: 10.0),
                       // create rating buttons and assign to correct rating
                       SizedBox(
-                          child: buildRating(culturalRating, (newValue) {
+                          child: buildRating(culturalRatingHopi, (newValue) {
                             setState(() {
-                              culturalRating = newValue;
+                              culturalRatingHopi = newValue;
                             });
                           }, screenSize)),
 
