@@ -138,7 +138,8 @@ class Login extends StatelessWidget {
                 Navigator.pushNamedAndRemoveUntil(
                     context, '/home', (route) => false);
               }
-            } else {
+            } 
+            else {
               showAlertDialog(
                   context,
                   "You don't have the authority to login on this platform",
@@ -146,7 +147,8 @@ class Login extends StatelessWidget {
 
               signoutUser();
             }
-          } else {
+          } 
+          else {
             showAlertDialog(context, "You have not verified your email", user);
           }
         }
@@ -155,19 +157,19 @@ class Login extends StatelessWidget {
         switch (error.code) {
           case 'user-not-found':
             errorMessage =
-                "Invalid Username or Password! Please check them and try again.";
+               "Invalid Username or Password! Please check them and try again.";
             break;
           case 'wrong-password':
             errorMessage =
-                "Invalid Username or Password! Please check them and try again.";
+               "Invalid Username or Password! Please check them and try again.";
             break;
           case 'invalid-email':
             errorMessage =
-                "Invalid Username or Password! Please check them and try again.";
+               "Invalid Username or Password! Please check them and try again.";
             break;
           case 'user-disabled':
             errorMessage =
-                "Invalid Username or Password! Please check them and try again.";
+               "Invalid Username or Password! Please check them and try again.";
             break;
           default:
             errorMessage = "Something went wrong. Please try again.";

@@ -23,12 +23,13 @@ class _ManageState extends State<Manage> {
         child: Text("OK"),
         onPressed: () {
             Navigator.pop( context );
+            setState((){});
         },
         );
 
         // set up the AlertDialog
         AlertDialog alert = AlertDialog(
-        title: Text("Alert"),
+        title: Text("Status Alert"),
         content: Text( statement ),
         actions: [
             okButton,
@@ -44,8 +45,6 @@ class _ManageState extends State<Manage> {
         );
     }
 
-    bool globalIsDisabled = false;
-
     @override
     Widget build(BuildContext context) {
       return Scaffold(
@@ -57,11 +56,14 @@ class _ManageState extends State<Manage> {
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return Center(child: Text("Loading Users"));
-            } else if (snapshot.hasError) {
+            } 
+            else if (snapshot.hasError) {
               return Center(child: Text('Error: ${snapshot.error}'));
-            } else if (snapshot.data == null || snapshot.data!.isEmpty) {
+            } 
+            else if (snapshot.data == null || snapshot.data!.isEmpty) {
               return Center(child: Text('No users found.'));
-            } else {
+            } 
+            else {
               List<dynamic> users = snapshot.data ?? [];
               String currentState = "";
               return Center(
@@ -111,13 +113,37 @@ class _ManageState extends State<Manage> {
                                       style: TextButton.styleFrom(
                                         foregroundColor: Colors.blue,
                                       ),
-                                      child: const Text(
-                                        "Enable/Disable",
+                                      child: Text(
+                                        users[index]['disabled'] ? "Enable" : 
+                                        "Disable",
                                         style: TextStyle(color: Colors.blue),
                                       ),
                                       onPressed: () {
-                                        changeUserStatus(
-                                            context, users[index]['uid']);
+                                        String suc = 
+                                      "Successfully changed account status to ";
+                                        String fail = 
+                                           "Failure changed account status to ";
+                                        String statusSubStr; 
+                                        String stringStatus = 
+                                              users[index]['disabled'] ?
+                                                         "Enabled" : "Disabled";
+                                        changeUserStatus(context, 
+                                                            users[index]['uid'],
+                                                             stringStatus).then(
+                                                                 (bool status) {
+                                                              if(status) {
+                                                                statusSubStr = 
+                                                                            suc;
+                                                              }
+                                                              else {
+                                                                statusSubStr =
+                                                                           fail;
+                                                              }
+                                                              showAlertDialog(
+                                                                context,
+                                                                statusSubStr +
+                                                                  stringStatus);
+                                                             });
                                       },
                                     ),
                                   ],
@@ -138,24 +164,20 @@ class _ManageState extends State<Manage> {
       );
     }
 
-    Future<List<dynamic>> fetchFirebaseUsers() async 
-    {
+    Future<List<dynamic>> fetchFirebaseUsers() async {
       String? url = dotenv.env['GET_USERS'];
       User? admin = FirebaseAuth.instance.currentUser;
-      if(admin != null)
-      {
+      if(admin != null) {
         IdTokenResult? adminToken = await admin?.getIdTokenResult();
 
         Map<String, dynamic>? claims = adminToken?.claims;
 
-        if(claims != null)
-        {
+        if(claims != null) {
             final Map<String, dynamic> requestBody = {
                 'token': adminToken?.token,
             };
 
-            if(url != null)
-            {
+            if(url != null) {
               final http.Response response = await http.post(
                   Uri.parse(url),
                   headers: <String, String>{
@@ -164,38 +186,34 @@ class _ManageState extends State<Manage> {
                   body: jsonEncode(requestBody),
               );
 
-              if(response.statusCode == 200)
-              {
+              if(response.statusCode == 200) {
                 List<dynamic> users = json.decode( response.body )['Users'];
                 List<dynamic> finalUsers = [];
                 // Show only manager accounts, otherwise assume super user
-                if(claims['admin']) {
-                  users.forEach((user) {
+                users.forEach((user) {
                     /*
                     cant modify and iterate at same time
                       if(!user['customClaims']['manager']) {
                         users.remove(user);
                       }
                     */
-                    if(user['customClaims']['manager']) {
-                      finalUsers.add(user);
+                    // Show only manager accounts, otherwise assume super user
+                    if(claims['admin']) {
+                      if(user['customClaims']['manager']) {
+                        finalUsers.add(user);
+                      }
+                    }
+                    else {
+                      // Superuser can see admin and managers
+                      if(user['customClaims']['manager'] || 
+                                                user['customClaims']['admin']) {
+                        finalUsers.add(user);
+                      }
                     }
 
-                  });
-                }
-                else {
-                  finalUsers = users;
-                }
+                });
                 return finalUsers;
               }
-              else
-              {
-                print(json.decode( response.body )['error']);
-              }
-            }
-            else
-            {
-              print("Cannot find cloud function");
             }
         }
       }
@@ -203,49 +221,38 @@ class _ManageState extends State<Manage> {
       return [];
     }
 
-    Future<void> changeUserStatus(context, String uid) async
-    {
+    Future<bool> changeUserStatus(context, String uid, String newStatus) async {
+      bool returnStatus = false;
       String? url = dotenv.env['CHANGE_STATUS'];
       User? admin = FirebaseAuth.instance.currentUser;
-      if(admin != null)
-      {
+      if(admin != null) {
         IdTokenResult? adminToken = await admin?.getIdTokenResult();
 
         Map<String, dynamic>? claims = adminToken?.claims;
 
-        if(claims != null)
-        {
-            bool adminRole = claims['admin'];
+        if(claims != null) {
+          bool adminRole = claims['admin'];
 
-            final Map<String, dynamic> requestBody = {
+          final Map<String, dynamic> requestBody = {
                 'uid': uid,
                 'token': adminToken?.token,
-            };
+          };
 
-            if(url != null)
-            {
-              final http.Response response = await http.post(
-                  Uri.parse(url),
-                  headers: <String, String>{
-                  'Content-Type': 'application/json; charset=UTF-8',
-                  },
-                  body: jsonEncode(requestBody),
-              );
+          if(url != null) {
+            final http.Response response = await http.post(
+                Uri.parse(url),
+                headers: <String, String>{
+                'Content-Type': 'application/json; charset=UTF-8',
+                },
+                body: jsonEncode(requestBody),
+            );
 
-              if(response.statusCode == 200)
-              {
-                showAlertDialog(context,"Success: changed account status.");
-              }
-              else
-              {
-                showAlertDialog(context,"Error: changing account status.");
-              }
+            if(response.statusCode == 200) {
+              returnStatus = true;
             }
-            else
-            {
-              print("Cannot find cloud function");
-            }
+          }
         }
       }
+      return returnStatus;
     }
 }
