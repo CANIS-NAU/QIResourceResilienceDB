@@ -342,7 +342,7 @@ List<String> menuItems(bool isSmallScreen)
 
 List<String> _menuItems = [];
 
-enum Menu { itemOne, itemTwo, itemThree, itemFour }
+enum Menu { itemOne, itemTwo, itemThree, itemFour, itemFive }
 
 void signoutUser() async
 {
@@ -409,7 +409,11 @@ class ProfileIcon extends StatelessWidget {
                       {
                         Navigator.pushNamed( context, '/register' );
                       }
-                    if(item == Menu.itemFour)
+                    if(item == Menu.itemFour )
+                      {
+                        Navigator.pushNamed( context, '/usermanagement' );
+                      }
+                    if(item == Menu.itemFive)
                       {
                         signoutUser();
                         Navigator.pushNamedAndRemoveUntil( context, '/home', (route) => false );
@@ -430,6 +434,10 @@ class ProfileIcon extends StatelessWidget {
                     ),
                     PopupMenuItem<Menu>(
                       value: Menu.itemFour,
+                      child: Text("Manage Users"),
+                    ),
+                    PopupMenuItem<Menu>(
+                      value: Menu.itemFive,
                       child: Text("Sign Out"),
                     ),
                   ]);
