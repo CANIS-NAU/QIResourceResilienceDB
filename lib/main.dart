@@ -21,10 +21,11 @@ import './userManagement.dart';
 
 //Main fubction
 void main() async {
+  await dotenv.load(fileName: "env");
+  debugPrint("Loaded environment: ${dotenv.get('APP_ENV_NAME')}.");
+
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-
-  await dotenv.load(fileName: './hide.env');
 
   // TimeZone database initialization for browsers.
   await tz.initializeTimeZone('assets/packages/timezone/data/latest.tzf');
@@ -32,16 +33,16 @@ void main() async {
   runApp(const MyApp());
 }
 
-//Serves as the root of application 
+//Serves as the root of application
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
-  
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: "Resource Web Page",
 
-      //Initial Route to home 
+      //Initial Route to home
       initialRoute: '/',
 
       //Declare app routes. New screen routes to be added here
@@ -64,3 +65,4 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+

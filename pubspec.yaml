@@ -75,8 +75,8 @@ flutter:
   # the material Icons class.
   uses-material-design: true
   assets:
+     - env
      - assets/rrdb_logo.png
-     - hide.env
      - packages/timezone/data/latest.tzf
 
   # An image asset can refer to one or more resolution-specific "variants", see
