@@ -1,5 +1,9 @@
 {
   "projects": {
-    "default": "sunrise-f9b44"
-  }
+    "default": "sunrise-f9b44",
+    "production": "rrdb-production",
+    "development": "sunrise-f9b44"
+  },
+  "targets": {},
+  "etags": {}
 }

@@ -12,8 +12,25 @@ The goal of the Resilience Resource Database is to be a dynamic, searchable data
 
 Our hope is that this codebase would be a resource for a wider group of tribal communities and organizations that serve American Indian/Alaska Native communities and more resources for supporting the implementation of this resource in other settings will be forthcoming. 
 
-## Flutter Installation
-> Follow the instructions provided by the following link: https://docs.flutter.dev/get-started/install
+## Development Setup
+
+### Flutter Installation
+
+Follow the instructions provided by the following link: https://docs.flutter.dev/get-started/install
+
+### Firebase CLI
+
+The Firebase CLI will help you interact with Firebase features, testing Cloud Functions locally, deploying application components, etc. If you will be doing this sort of work, you can follow [Firebase CLI's installation instructions](https://firebase.google.com/docs/cli) for your platform. We've already configured the project, so once you've done `firebase login` you have completed the setup.
+
+Know that we use two separate Firebase Projects for RRDB -- one to host a development environment (for us to use as developers) and the other for production (for real users to interact with). When using the Firebase CLI, you'll want to be sure your currently active project is the correct one. If you enter command `firebase use`, it should list the configured projects and indicate which is currently active. (It should use the "default"/"development" project by default.) If you need to switch, for instance to the development project, you can enter the command `firebase use development`. Any subsequent Firebase CLI command will affect that project (unless you override that).
+
+### Environment Files
+
+Environment files contain secret values the app uses to communicate with the server back-end. Because they're supposed to be secret, it's bad practice to commit them to git! So you'll have to download these files yourself and put them in the right spot with the right name.
+
+Open the [SUNRISE Google Drive, in the RRDB Secrets folder](https://drive.google.com/drive/folders/1FZ4E5xWmeBb3uxIzHn8gFQy_Qw24IMOq). You should be developing against the dev environment, so download the `dev.env` file. Place it in the project, then rename it `env` -- careful: no dot!
+
+`prod.env` contains keys used by the production server, which is why there are two files, but you won't need that file for normal development. We configured git to ignore env files, but take care never to commit them accidentally!
 
 ## Run Web App
 > Once the installation is complete:

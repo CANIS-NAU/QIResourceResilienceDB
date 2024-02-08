@@ -97,8 +97,7 @@ Future<List<Attachment>> uploadAttachments(
   List<FileUpload> uploads, {
   Function(double)? onProgress,
 }) async {
-  final bucket = dotenv.env['ATTACHMENTS_BUCKET'] ??
-      "gs://sunrise-f9b44--rrdb-attachments";
+  final bucket = dotenv.get('ATTACHMENTS_BUCKET');
   final storageRef = FirebaseStorage.instanceFor(bucket: bucket).ref();
 
   final List<Attachment> results = [];
