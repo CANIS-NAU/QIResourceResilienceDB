@@ -28,5 +28,12 @@
     "frameworksBackend": {
       "region": "us-west1"
     }
-  }
+  },
+  "storage": [{
+    "bucket": "rrdb-production--attachments",
+    "rules": "storage.rules"
+  }, {
+    "bucket": "sunrise-f9b44--rrdb-attachments",
+    "rules": "storage.rules"
+  }]
 }
