@@ -15,16 +15,11 @@ import 'package:web_app/util.dart';
 
 //List of ages for dropdown
 const List<String> ageItems = [
-  "All ages",
-  "0-5",
-  "6-10",
-  "11-15",
-  "16-20",
-  "21-25",
-  "26-35",
-  "36-55",
-  "56-75",
-  "76+"
+    'Under 18',
+    '18-24',
+    '24-65',
+    '65+',
+    'All ages'
 ];
 
 //List of strings for resource type

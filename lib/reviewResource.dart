@@ -90,18 +90,12 @@ class _ReviewResourceState extends State<ReviewResource> {
     String description = "" +
       "Cultural Rating part 1: ${ culturalRatingHopi } / 5, " +
       "Cultural Rating part 2: ${ culturalRatingIndigenous } / 5, "
-      /*"Experience Rating: ${ experienceRating } / 5, " +
-      "Social Rating: ${ socialRating } / 5, " +
-      "Production Rating: ${ productionRating } / 5, " +
-      "Relevance Rating: ${ relevanceRating } / 5, " +
-      "Consistency Rating: ${ consistencyRating } / 5, " +
-      "Modularity Rating: ${ modularityRating }/ 5, " +
-      "Authenticity Rating: ${ authenticityRating } / 5, " +
-      "Moral Rating: ${ moralRating } / 5, " +
-      "Accuracy Rating: ${ accurateRating } / 5, " +
-      "Trustworthy Rating: ${ trustworthyRating } / 5, " +
+      "Experience Rating: ${ experienceRating } / 5, " +
       "Current Rating: ${ currentRating } / 5, " +
-      "Language Rating: ${ languageRating } / 5"*/;
+      "Behavioral Health Accuracy Rating: ${ contentAccurate } / 5, " +
+      "Behavioral Health Trustworthy Rating: ${ contentTrustworthy } / 5, " +
+      "Current Rating: ${ currentRating } / 5, ";
+
 
     User? currentUser = FirebaseAuth.instance.currentUser;
     String? reviewer = (currentUser != null) ? currentUser.email : "";
@@ -126,17 +120,7 @@ class _ReviewResourceState extends State<ReviewResource> {
   int? culturalRatingIndigenous = 0;
   int? culturalRatingHopi = 0;
   int? experienceRating = 0;
-  int? socialRating = 0;
-  int? productionRating = 0;
-  int? relevanceRating = 0;
-  int? consistencyRating = 0;
-  int? modularityRating = 0;
-  int? authenticityRating = 0;
-  int? moralRating = 0;
-  int? accurateRating = 0;
-  int? trustworthyRating = 0;
   int? currentRating = 0;
-  int? languageRating = 0;
   String? avoidRacism = '/null';
   String? avoidStereotyping = '/null';
   String? avoidAppropriation = '/null';
@@ -145,7 +129,7 @@ class _ReviewResourceState extends State<ReviewResource> {
   String? avoidCond = '/null';
   String? avoidAgeism = '/null';
   String? avoidSexism = '/null';
-  int? sexuality = 0;
+  String? sexuality = '/null';
   int? contentAccurate = 0;
   int? contentTrustworthy = 0;
   int? contentCurrent = 0;
@@ -268,6 +252,50 @@ class _ReviewResourceState extends State<ReviewResource> {
   }*/
 
   // builds the radio button ratings for the preliminary questions
+  Widget buildYesNoRating(rating, Function(String) updateRating, screenSize) {
+
+    double ratingItemWidth;
+
+    if (screenSize.width > 850) {
+      ratingItemWidth = screenSize.width / 10;
+    } else if (screenSize.width > 600) {
+      ratingItemWidth = screenSize.width / 8;
+    } else {
+      ratingItemWidth = screenSize.width / 6;
+    }
+
+    // list of option strings
+    const List<String> ButtonOptions = [
+      'Yes',
+      'No',
+    ];
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: List.generate(2, (index) {
+        final value = ButtonOptions[index];
+        return SizedBox(
+          width: ratingItemWidth,
+          child: Container(
+            child: RadioListTile(
+              dense: true,
+              title: Row(
+                  children: [
+                    Expanded(
+                      child: Text("$value"))]),
+              value: value,
+              groupValue: rating,
+              onChanged: (newValue) {
+                updateRating(newValue as String);
+              },
+            ),
+          ),
+        );
+      }),
+    );
+  }
+
+    // builds the radio button ratings for the preliminary questions
   Widget buildPreliminaryRating(rating, Function(String) updateRating, screenSize) {
 
     double ratingItemWidth;
@@ -503,7 +531,8 @@ class _ReviewResourceState extends State<ReviewResource> {
 
     String userComments = "";
 
-    int totalScore = culturalRatingHopi! + culturalRatingIndigenous! + experienceRating! + sexuality!;
+    int totalScore = culturalRatingHopi! + culturalRatingIndigenous!
+                      + currentRating! + contentAccurate! + contentTrustworthy! + currentRating! + contentCurrent!;
 
     String resourceInfo = 'Name: ${widget.resourceData['name']}\n\n'
         'Description: ${widget.resourceData['description']}\n\n'
@@ -811,7 +840,7 @@ class _ReviewResourceState extends State<ReviewResource> {
                       SizedBox(height: 10.0),
                       // create rating buttons and assign to correct rating
                       SizedBox(
-                          child: buildRating(sexuality, (newValue) {
+                          child: buildYesNoRating(sexuality, (newValue) {
                             setState(() {
                               sexuality = newValue;
                             });
@@ -1042,7 +1071,7 @@ class _ReviewResourceState extends State<ReviewResource> {
             SizedBox(height: 10),
             // display the total score of ratings
             Text(
-                "Total Score: ${totalScore} / 65"),
+                "Total Score: ${totalScore} / 25"),
             SizedBox(height: 20),
             // display box for user comments
             Text('Additional Comments',
@@ -1092,6 +1121,8 @@ class _ReviewResourceState extends State<ReviewResource> {
                                                                     totalScore);
                     submitToInbox( widget.resourceData, "Approved", 
                                                                  userComments );
+                    Navigator.pop(context);
+                    Navigator.pushNamed( context, '/inbox' );
                   },
                   child: Text(
                     'Verify',
@@ -1116,6 +1147,8 @@ class _ReviewResourceState extends State<ReviewResource> {
                   onPressed: () {
                     deleteResource(widget.resourceData);
                     submitToInbox( widget.resourceData, "Denied",userComments );
+                    Navigator.pop(context);
+                    Navigator.pushNamed( context, '/inbox' );
                   },
                   child: Text(
                     'Deny',
