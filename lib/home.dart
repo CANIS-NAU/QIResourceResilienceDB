@@ -12,6 +12,7 @@ import 'package:multi_select_flutter/multi_select_flutter.dart';
 import 'view_resource/resource_summary.dart';
 import 'view_resource/filter.dart';
 import 'package:web_app/pdfDownload.dart';
+import 'package:web_app/util.dart';
 
 /// The home page main widget
 class MyHomePage extends StatefulWidget {
@@ -230,8 +231,18 @@ class _MyHomePageState extends State<MyHomePage> {
                                 // button to download currently filtered resources
                                 child: ElevatedButton(
                                     onPressed: () async {
-                                      // create pdf of resources currently being filtered
-                                      await pdfDownload.generateFilteredResourcesPdf(docs);
+                                      // get only resources that are visible 
+                                      List<QueryDocumentSnapshot> unarchivedDocs = docs.where((doc) => doc['isVisable'] ?? true).toList();
+                                      if(unarchivedDocs.isNotEmpty)
+                                      {
+                                        // create pdf of visible resources currently being filtered
+                                        await pdfDownload.generateFilteredResourcesPdf(unarchivedDocs);
+                                      }
+                                      else
+                                      {
+                                        // show message that there are no visible resources to download
+                                        showAlertDialog(context, "There are no resources available to download");
+                                      }
                                     },
                                     child: Text("Download List")),
                               ),
