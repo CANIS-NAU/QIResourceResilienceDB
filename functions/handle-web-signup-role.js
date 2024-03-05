@@ -16,36 +16,11 @@ app.use(cors());
 // Parse request body as JSON
 app.use(express.json());
 
-// Declare responses
-// TODO: May need to evaluate the different return codes
+// Declare constants
 const SUCCESSFUL_RES = 200;
 const UNSUCCESSFUL_RES = 500;
-
 const MANAGER_STR = 'manager';
 const ADMIN_STR = 'admin';
-
-/**
- * @param {*} token - user token used to get custom claims
- * @returns {object} - Contains user claims and errors that occured
- *                                                       (to be check at caller)
- */ 
-/*
-async function getCustomClaims(token) {
-  let returnError = null;
-  let claims = null;
-  admin.auth(adminApp).verifyIdToken(token).then((decodedToken) => {
-    admin.auth(adminApp).getUser(decodedToken.uid).then((userRecord) => {
-      console.log(userRecord.customClaims)
-      claims = userRecord.customClaims;
-    }).catch((error) => {
-      returnError = error;
-    });
-  }).catch((error) => {
-    returnError = error;
-  });
-  return {'claims':claims, 'error':returnError};
-}
-*/
 
 /**
  * Sets attr for res 
@@ -71,24 +46,19 @@ app.post('/handleWebSignUpRole', async (req, res) => {
   res = setResAttr('*','POST','Content-Type, Authorization');
 
   // Information in the request
-  const reqInfo = {
-    'email': req.body.email,
-    'pass': req.body.password,
-    'role': req.body.role,
-    'token': req.body.token 
-  }
+  const role = req.body.role;
 
   var adminBool = false;
   var managerBool = false;
 
   const createUserWithClaims = async () => {
-    managerBool = reqInfo['role'] === MANAGER_STR;
-    adminBool = reqInfo['role'] === ADMIN_STR;
+    managerBool = role === MANAGER_STR;
+    adminBool = role === ADMIN_STR;
     if(adminBool || managerBool) {
       try {
         const userRecord = await admin.auth().createUser({
-          email: reqInfo['email'],
-          password: reqInfo['pass'],
+          email: req.body.email,
+          password: req.body.password,
         });
     
         const uid = userRecord.uid;
@@ -108,22 +78,14 @@ app.post('/handleWebSignUpRole', async (req, res) => {
     }
   }
 
-  // Check for valid user token
   try {
-    decodedToken = await admin.auth(adminApp).verifyIdToken(reqInfo['token']);
-    try {
-      userRecord = await admin.auth(adminApp).getUser(decodedToken.uid);
-      let claims = userRecord.customClaims;
-      if(claims !== null && claims[ADMIN_STR]) {
-        createUserWithClaims();
-      }
-      else {
-        return res.status(UNSUCCESSFUL_RES).send(
-                                                   {'error': 'User not admin'});
-      }
+    const decodedToken = await admin.auth(adminApp).verifyIdToken(
+                                                                req.body.token);
+    if(decodedToken.admin) {
+      createUserWithClaims();
     }
-    catch(error) {
-      return res.status(UNSUCCESSFUL_RES).send({'error': error}).end();
+    else {
+      return res.status(UNSUCCESSFUL_RES).send({'error': 'User not admin'});
     }
   }
   catch(error) {
@@ -145,10 +107,14 @@ app.post('/getUsers', async (req,res) => {
       listUsersResult = await admin.auth(adminApp).listUsers(
                                                            1000, nextPageToken);
       listUsersResult.users.forEach((userRecord) => {
-        if (userRecord.customClaims && userRecord.customClaims !== null) {
-          if (userRecord.customClaims.hasOwnProperty(MANAGER_STR) || 
-              userRecord.customClaims.hasOwnProperty(ADMIN_STR)) {
-            userList.push(userRecord);
+        if(userRecord.customClaims && userRecord.customClaims !== null) {
+          // Verify RRDB user
+          if(userRecord.customClaims.hasOwnProperty(MANAGER_STR) || 
+             userRecord.customClaims.hasOwnProperty(ADMIN_STR)) {
+            // In current iteration, only send manager accounts
+            if(userRecord.manager) {
+              userList.push(userRecord);
+            }
           }
         }
       });
@@ -164,22 +130,27 @@ app.post('/getUsers', async (req,res) => {
       res.status(UNSUCCESSFUL_RES).send({'error': error}).end();
     }
   };
-  
-  // Check for valid user token
+
+  // Verify sender and check that is an RRDB user
   try {
-    decodedToken = await admin.auth(adminApp).verifyIdToken(req.body.token);
-    try {
-      userRecord = await admin.auth(adminApp).getUser(decodedToken.uid);
-      let claims = userRecord.customClaims;
-      if(claims !== null && (ADMIN_STR in claims && MANAGER_STR in claims)) {
+    const decodedToken = await admin.auth(adminApp).verifyIdToken(
+                                                                req.body.token);
+    // Could also try: typeof(decodedToken.admin) !== 'undefined' if too slow
+    if(decodedToken.hasOwnProperty('admin') && 
+                                       decodedToken.hasOwnProperty('manager')) {
+      // Check that sender is an admin. Otherwise they cannot make the request.
+      // May change if super role involved
+      if(decodedToken.admin) {
         listAllUsers();
       }
       else {
-        return res.status(UNSUCCESSFUL_RES).send({'error': error}).end();
+        return res.status(UNSUCCESSFUL_RES).send(
+                         {'error': "Not an authorized to make request."}).end();
       }
     }
-    catch(error) {
-      return res.status(UNSUCCESSFUL_RES).send({'error': error}).end();
+    else {
+      return res.status(UNSUCCESSFUL_RES).send(
+                                    {'error': "Not an authorized user."}).end();
     }
   }
   catch(error) {
@@ -191,41 +162,23 @@ app.post('/getUsers', async (req,res) => {
 app.post('/updateAccountStatus', async (req,res) => { 
   res = setResAttr(res,'*','POST','Content-Type, application/json');
 
-  // Get info from req
-  const reqInfo = {
-    'body': req.body,
-    'uid': req.body.uid,
-    'token': req.body.adminToken
-  };
-
-  // Set the user disabled status
-  const setDisabled = async (disValue) => {
-    await admin.auth().updateUser(reqInfo['uid'], {
-      disabled: disValue
-    });
-  };
-
   try {
-    decodedToken = await admin.auth(adminApp).verifyIdToken(req.body.token);
-    try {
-      userRecord = await admin.auth(adminApp).getUser(decodedToken.uid);
-      let claims = userRecord.customClaims;
-      if(claims !== null && (ADMIN_STR in claims && MANAGER_STR in claims)) {
-        try {
-          userRecord = await admin.auth().getUser(reqInfo['uid']);
-          setDisabled(!userRecord.disabled);
-        }
-        catch(error) {
-          return res.status(UNSUCCESSFUL_RES).send({'error': error}).end();
-        }
-      }
-      else {
-        return res.status(UNSUCCESSFUL_RES).send(
-                                             {'error': 'Not authorized'}).end();
-      }
+    // Verify the senders token
+    const decodedToken = await admin.auth(adminApp).verifyIdToken(
+                                                                req.body.token);
+    if(decodedToken.admin) {
+      // Get the user whose account we want to update
+      const modUid = req.body.uid;
+      const modUser = await admin.auth().getUser(modUid);
+      // Update the account
+      await admin.auth().updateUser(modUid, {
+        disabled: !modUser.disabled
+      });
+      return res.status(SUCCESSFUL_RES).end()
     }
-    catch(error) {
-      return res.status(UNSUCCESSFUL_RES).send({'error': error}).end();
+    else {
+      return res.status(UNSUCCESSFUL_RES).send({'error': 
+                                            "Not An Authenticated Role"}).end();
     }
   }
   catch(error) {
