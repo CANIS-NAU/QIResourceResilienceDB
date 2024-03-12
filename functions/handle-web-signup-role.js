@@ -32,18 +32,19 @@ const ADMIN_STR = 'admin';
  */
 function setResAttr(res,origins,methods,headers) {
   // TODO: Investigate if built in methods more sufficient. Ex: res.setHeader()
-  res.setHeader('Access-Control-Allow-Origin', origins);
-  res.setHeader('Access-Control-Allow-Methods', methods);
-  res.setHeader('Access-Control-Allow-Headers', headers);
+  res.set('Access-Control-Allow-Origin', origins);
+  res.set('Access-Control-Allow-Methods', methods);
+  res.set('Access-Control-Allow-Headers', headers);
   return res;
 }
 
 app.post('/handleWebSignUpRole', async (req, res) => {
 
-  //res.set('Access-Control-Allow-Origin', '*');
-  //res.set('Access-Control-Allow-Methods', 'POST');
-  //res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res = setResAttr('*','POST','Content-Type, Authorization');
+  // setResAttr does not work here
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'POST');
+  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  //res = setResAttr('*','POST','Content-Type, Authorization');
 
   // Information in the request
   const role = req.body.role;
@@ -51,38 +52,30 @@ app.post('/handleWebSignUpRole', async (req, res) => {
   var adminBool = false;
   var managerBool = false;
 
-  const createUserWithClaims = async () => {
-    managerBool = role === MANAGER_STR;
-    adminBool = role === ADMIN_STR;
-    if(adminBool || managerBool) {
-      try {
+  try {
+    const decodedToken = await admin.auth(adminApp).verifyIdToken(
+                                                           req.body.adminToken);
+    if(decodedToken.admin) {
+      managerBool = role === MANAGER_STR;
+      adminBool = role === ADMIN_STR;
+      if(adminBool || managerBool) {
         const userRecord = await admin.auth().createUser({
           email: req.body.email,
           password: req.body.password,
         });
-    
+
         const uid = userRecord.uid;
+        // For some reason using manager and admin consts here DNW
         await admin.auth().setCustomUserClaims(uid, {
-          MANAGER_STR: managerBool,
-          ADMIN_STR: adminBool,
+          "manager": managerBool,
+          "admin": adminBool,
         });
         return res.status(SUCCESSFUL_RES).send({'data': userRecord}).end();
-      } 
-      catch(error) {
-        return res.status(UNSUCCESSFUL_RES).send({'error': error}).end();
       }
-    }
-    else {
-      return res.status(UNSUCCESSFUL_RES).send(
+      else {
+        return res.status(UNSUCCESSFUL_RES).send(
                                          {'error': "Not a correct role"}).end();
-    }
-  }
-
-  try {
-    const decodedToken = await admin.auth(adminApp).verifyIdToken(
-                                                                req.body.token);
-    if(decodedToken.admin) {
-      createUserWithClaims();
+      } 
     }
     else {
       return res.status(UNSUCCESSFUL_RES).send({'error': 'User not admin'});
@@ -103,31 +96,23 @@ app.post('/getUsers', async (req,res) => {
 
   // Resource Ref: https://firebase.google.com/docs/auth/admin/manage-users
   const listAllUsers = async (nextPageToken) => {
-    try {
-      listUsersResult = await admin.auth(adminApp).listUsers(
-                                                           1000, nextPageToken);
-      listUsersResult.users.forEach((userRecord) => {
-        if(userRecord.customClaims && userRecord.customClaims !== null) {
-          // Verify RRDB user
-          if(userRecord.customClaims.hasOwnProperty(MANAGER_STR) || 
-             userRecord.customClaims.hasOwnProperty(ADMIN_STR)) {
-            // In current iteration, only send manager accounts
-            if(userRecord.manager) {
-              userList.push(userRecord);
-            }
+    listUsersResult = await admin.auth(adminApp).listUsers(
+                                                          1000, nextPageToken);
+    listUsersResult.users.forEach((userRecord) => {
+      if(userRecord.customClaims && userRecord.customClaims !== null) {
+        // Verify RRDB user
+        if(userRecord.customClaims.hasOwnProperty(MANAGER_STR) || 
+            userRecord.customClaims.hasOwnProperty(ADMIN_STR)) {
+          // In current iteration, only send manager accounts
+          if(userRecord.customClaims.manager) {
+            userList.push(userRecord);
           }
         }
-      });
-      // Recurse for next 1000 users
-      if (listUsersResult.pageToken) {
-        listAllUsers(listUsersResult.pageToken);
       }
-      else {
-        res.status(SUCCESSFUL_RES).send({'Users': userList}).end();
-      }
-    }
-    catch(error) {
-      res.status(UNSUCCESSFUL_RES).send({'error': error}).end();
+    });
+    // Recurse for next 1000 users
+    if (listUsersResult.pageToken) {
+      listAllUsers(listUsersResult.pageToken);
     }
   };
 
@@ -141,7 +126,8 @@ app.post('/getUsers', async (req,res) => {
       // Check that sender is an admin. Otherwise they cannot make the request.
       // May change if super role involved
       if(decodedToken.admin) {
-        listAllUsers();
+        await listAllUsers();
+        return res.status(SUCCESSFUL_RES).send({'Users': userList}).end();
       }
       else {
         return res.status(UNSUCCESSFUL_RES).send(
