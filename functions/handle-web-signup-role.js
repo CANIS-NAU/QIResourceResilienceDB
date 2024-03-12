@@ -3,9 +3,6 @@ const admin = require("firebase-admin");
 const express = require("express");
 const cors = require("cors");
 
-// TODO: Test locally: https://firebase.google.com/docs/functions/local-emulator
-//       and possibly use postman
-
 // .end() terimates the response cycle
 // we only really contact client side once per cycle so we end on each response
 
@@ -19,32 +16,11 @@ app.use(cors());
 // Parse request body as JSON
 app.use(express.json());
 
+// Declare constants
 const SUCCESSFUL_RES = 200;
 const UNSUCCESSFUL_RES = 500;
-
-const MANAGER_STR = "manager";
-const ADMIN_STR = "admin";
-
-/**
- * @param {*} token - user token used to get custom claims
- * @returns {object} - Contains user claims and errors that occured
- *                                                       (to be check at caller)
- */ 
-async function getCustomClaims(token) {
-  let returnError = null;
-  let claims = null;
-  admin.auth(adminApp).verifyIdToken(token).then((decodedToken) => {
-    admin.auth(adminApp).getUser(decodedToken.uid).then((userRecord) => {
-      console.log(userRecord.customClaims)
-      claims = userRecord.customClaims;
-    }).catch((error) => {
-      returnError = error;
-    });
-  }).catch((error) => {
-    returnError = error;
-  });
-  return {'claims':claims, 'error':returnError};
-}
+const MANAGER_STR = 'manager';
+const ADMIN_STR = 'admin';
 
 /**
  * Sets attr for res 
@@ -56,168 +32,144 @@ async function getCustomClaims(token) {
  */
 function setResAttr(res,origins,methods,headers) {
   // TODO: Investigate if built in methods more sufficient. Ex: res.setHeader()
-  res.setHeader('Access-Control-Allow-Origin', origins);
-  res.setHeader('Access-Control-Allow-Methods', methods);
-  res.setHeader('Access-Control-Allow-Headers', headers);
+  res.set('Access-Control-Allow-Origin', origins);
+  res.set('Access-Control-Allow-Methods', methods);
+  res.set('Access-Control-Allow-Headers', headers);
   return res;
 }
 
 app.post('/handleWebSignUpRole', async (req, res) => {
 
+  // setResAttr does not work here
   res.set('Access-Control-Allow-Origin', '*');
   res.set('Access-Control-Allow-Methods', 'POST');
   res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  //res = setResAttr('*','POST','Content-Type, Authorization');
 
-  const successfulResponse = 200;
-  const unsucessfulResponse = 500;
+  // Information in the request
+  const role = req.body.role;
 
-  //Global state varibles
-  const reqBody = req.body;
-  const email = reqBody.email;
-  const password = reqBody.password;
-  const role = reqBody.role;
-  const adminToken = reqBody.adminToken;
   var adminBool = false;
   var managerBool = false;
 
-  const createUserWithClaims = async () => {
-    managerBool = role === MANAGER_STR;
-    adminBool = role === ADMIN_STR;
-    if(adminBool || managerBool) {
-      try {
+  try {
+    const decodedToken = await admin.auth(adminApp).verifyIdToken(
+                                                           req.body.adminToken);
+    if(decodedToken.admin) {
+      managerBool = role === MANAGER_STR;
+      adminBool = role === ADMIN_STR;
+      if(adminBool || managerBool) {
         const userRecord = await admin.auth().createUser({
-          email: email,
-          password: password,
+          email: req.body.email,
+          password: req.body.password,
         });
-    
-        const uid = userRecord.uid;
-    
-        await admin.auth().setCustomUserClaims(uid, {
-          'manager': managerBool,
-          'admin': adminBool,
-        });
-        return res.status(successfulResponse).send({'data': userRecord});
-      } 
-      catch(error) {
-        return res.status(unsucessfulResponse).send({'error': error});
-      }
-    }
-    else {
-      return res.status(unsucessfulResponse).send(
-                                               {'error': "Not a correct role"});
-    }
-  }
 
-  admin.auth(adminApp).verifyIdToken(adminToken).then((decodedToken) => {
-    admin.auth(adminApp).getUser(decodedToken.uid).then((userRecord) => {
-      const claims = userRecord.customClaims;
-      if(claims !== null && claims['admin']) {
-        createUserWithClaims();
+        const uid = userRecord.uid;
+        // For some reason using manager and admin consts here DNW
+        await admin.auth().setCustomUserClaims(uid, {
+          "manager": managerBool,
+          "admin": adminBool,
+        });
+        return res.status(SUCCESSFUL_RES).send({'data': userRecord}).end();
       }
       else {
-        return res.status( unsucessfulResponse ).send(
-                                                   {'error': 'User not admin'});
-      }
-    }).catch((error) => {
-      return res.status( unsucessfulResponse ).send({'error': error });
-    });
-  })
-  .catch( (error) => {
-    return res.status(unsucessfulResponse).send({ 'error': error});
-  });
+        return res.status(UNSUCCESSFUL_RES).send(
+                                         {'error': "Not a correct role"}).end();
+      } 
+    }
+    else {
+      return res.status(UNSUCCESSFUL_RES).send({'error': 'User not admin'});
+    }
+  }
+  catch(error) {
+    return res.status(UNSUCCESSFUL_RES).send({'error': error}).end();
+  }
 });
 
 // Gets all users in firebase
 app.post('/getUsers', async (req,res) => {
+  // Set response attributes
   res = setResAttr(res,'*','POST','Content-Type, application/json');
 
   // Global scope, no need to return in arrow func
   var userList = [];
 
-  // https://firebase.google.com/docs/auth/admin/manage-users
-  const listAllUsers = (nextPageToken) => {
-    // Listen to 1000 users at a time
-    admin.auth(adminApp).listUsers(1000, nextPageToken)
-                                                    .then((listUsersResult) => {
-      listUsersResult.users.forEach((userRecord) => {
-        if (userRecord.customClaims && userRecord.customClaims !== null) {
-          if (userRecord.customClaims.hasOwnProperty(MANAGER_STR) || 
-              userRecord.customClaims.hasOwnProperty(ADMIN_STR)) {
+  // Resource Ref: https://firebase.google.com/docs/auth/admin/manage-users
+  const listAllUsers = async (nextPageToken) => {
+    listUsersResult = await admin.auth(adminApp).listUsers(
+                                                          1000, nextPageToken);
+    listUsersResult.users.forEach((userRecord) => {
+      if(userRecord.customClaims && userRecord.customClaims !== null) {
+        // Verify RRDB user
+        if(userRecord.customClaims.hasOwnProperty(MANAGER_STR) || 
+            userRecord.customClaims.hasOwnProperty(ADMIN_STR)) {
+          // In current iteration, only send manager accounts
+          if(userRecord.customClaims.manager) {
             userList.push(userRecord);
           }
         }
-      });
-      // Recurse for next 1000 users
-      if (listUsersResult.pageToken) {
-        listAllUsers(listUsersResult.pageToken);
+      }
+    });
+    // Recurse for next 1000 users
+    if (listUsersResult.pageToken) {
+      listAllUsers(listUsersResult.pageToken);
+    }
+  };
+
+  // Verify sender and check that is an RRDB user
+  try {
+    const decodedToken = await admin.auth(adminApp).verifyIdToken(
+                                                                req.body.token);
+    // Could also try: typeof(decodedToken.admin) !== 'undefined' if too slow
+    if(decodedToken.hasOwnProperty('admin') && 
+                                       decodedToken.hasOwnProperty('manager')) {
+      // Check that sender is an admin. Otherwise they cannot make the request.
+      // May change if super role involved
+      if(decodedToken.admin) {
+        await listAllUsers();
+        return res.status(SUCCESSFUL_RES).send({'Users': userList}).end();
       }
       else {
-        res.status(SUCCESSFUL_RES).send({'Users': userList}).end();
+        return res.status(UNSUCCESSFUL_RES).send(
+                         {'error': "Not an authorized to make request."}).end();
       }
-    }).catch((error) => {
-      res.status(UNSUCCESSFUL_RES).send({'error': error}).end();
-    });
-  };
-  
-
-  // Check for valid user token
-  admin.auth(adminApp).verifyIdToken(req.body.token).then((decodedToken) => {
-    admin.auth(adminApp).getUser(decodedToken.uid).then((userRecord) => {
-      let claims = userRecord.customClaims;
-      if(claims !== null && (ADMIN_STR in claims && MANAGER_STR in claims)) {
-        listAllUsers();
-      }
-    }).catch((error) => {
-      return res.status(UNSUCCESSFUL_RES).send({'error': error}).end();
-    });
-  }).catch((error) => {
+    }
+    else {
+      return res.status(UNSUCCESSFUL_RES).send(
+                                    {'error': "Not an authorized user."}).end();
+    }
+  }
+  catch(error) {
     return res.status(UNSUCCESSFUL_RES).send({'error': error}).end();
-  });
+  }
 });
 
 // Updates an account's disabled/enabled status
 app.post('/updateAccountStatus', async (req,res) => { 
   res = setResAttr(res,'*','POST','Content-Type, application/json');
 
-  // Get info from req
-  const reqInfo = {
-    'body': req.body,
-    'uid': req.body.uid,
-    'token': req.body.adminToken
-  };
-
-  // Set the user disabled status
-  const setDisabled = async (disValue) => {
-    await admin.auth().updateUser(reqInfo['uid'], {
-      disabled: disValue
-    });
-  };
-
-  // Check for valid user token
-  admin.auth(adminApp).verifyIdToken(req.body.token).then((decodedToken) => {
-    admin.auth(adminApp).getUser(decodedToken.uid).then((userRecord) => {
-      let claims = userRecord.customClaims;
-      if(claims !== null && (ADMIN_STR in claims && MANAGER_STR in claims)) {
-        // Get user and set disabled status
-        admin.auth().getUser(reqInfo['uid']).then((userRecord) => {
-          // Set user disabled to opposite of currently set. 
-          setDisabled(!userRecord.disabled);
-        }).catch((error) => {
-          return res.status(UNSUCCESSFUL_RES).send({'error': error}).end();
-        });   
-        return res.status(SUCCESSFUL_RES).send(
-                                   {'Success': "changed account status"}).end();
-      }
-      else {
-        return res.status(UNSUCCESSFUL_RES).send(
-                                             {'error': 'Not authorized'}).end();
-      }
-    }).catch((error) => {
-      return res.status(UNSUCCESSFUL_RES).send({'error': error}).end();
-    });
-  }).catch((error) => {
+  try {
+    // Verify the senders token
+    const decodedToken = await admin.auth(adminApp).verifyIdToken(
+                                                                req.body.token);
+    if(decodedToken.admin) {
+      // Get the user whose account we want to update
+      const modUid = req.body.uid;
+      const modUser = await admin.auth().getUser(modUid);
+      // Update the account
+      await admin.auth().updateUser(modUid, {
+        disabled: !modUser.disabled
+      });
+      return res.status(SUCCESSFUL_RES).end()
+    }
+    else {
+      return res.status(UNSUCCESSFUL_RES).send({'error': 
+                                            "Not An Authenticated Role"}).end();
+    }
+  }
+  catch(error) {
     return res.status(UNSUCCESSFUL_RES).send({'error': error}).end();
-  });
+  }
 });
 
 exports.handleWebSignUpRole = functions.https.onRequest(app);
