@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -11,24 +12,85 @@ class Dashboard extends StatefulWidget {
   _DashboardState createState() => _DashboardState();
 }
 
+class DummyData {
+  static List<FlSpot> generateDummyLineChartDataWithDates(int days) {
+    List<FlSpot> data = [];
+    DateTime currentDate = DateTime.now();
+    for (int i = 0; i < days; i++) {
+      data.add(FlSpot(i.toDouble(), i * 10));
+      currentDate = currentDate.subtract(Duration(days: 1));
+    }
+    return data.reversed.toList();
+  }
+
+  static List<BarChartGroupData> generateDummyBarChartDataWithDates(int days) {
+    List<BarChartGroupData> data = [];
+    DateTime currentDate = DateTime.now();
+    for (int i = 0; i < days; i++) {
+      List<BarChartRodData> rods = [];
+      for (int j = 0; j < 3; j++) {
+        rods.add(BarChartRodData(
+          fromY: i * (10 + j * 5), toY: 100
+        ));
+      }
+      data.add(BarChartGroupData(
+        x: i,
+        barRods: rods,
+      ));
+      currentDate = currentDate.subtract(Duration(days: 1));
+    }
+    return data.reversed.toList();
+  }
+}
+
 class _DashboardState extends State<Dashboard>
 {
-  List<FlSpot> dummyLineChartData = List.generate( 7, (index) {
-    return FlSpot( index.toDouble(), index * 10 );
-  }); // Linear dummy data
+  DateTime? startDate;
+  DateTime? endDate;
 
-  List<BarChartGroupData> dummyBarChartData = List.generate(7, (index) {
-    return BarChartGroupData(x: index, barRods: [BarChartRodData(fromY: index * 10, toY: 100)]);
-  }); // Bar chart dummy data
+  List<FlSpot> dummyLineChartData = DummyData.generateDummyLineChartDataWithDates(7);
+
+  List<BarChartGroupData> dummyBarChartData = DummyData.generateDummyBarChartDataWithDates(7);
 
   final List<String> chartTypes = ['Line', 'Bar', 'Pie'];
   String selectedChartType = "Line";
 
   String selectedExportType = 'PDF';
-  final List<String> exportTypes = ['PDF', 'Image', 'CSV'];
+  final List<String> exportTypes = ['PDF', 'Image'];
 
   String selectedData = 'Total Searches';
   final List<String> dataSources = ['Total Searches', 'Searches per Age Range', 'Searches per Health Focus', 'Searches per Resource Type'];
+
+  // function to show date picker for start date
+  Future<void> selectStartDate(BuildContext context) async {
+    final DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: startDate ?? DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime.now(),
+    );
+    if (pickedDate != null && pickedDate != startDate) {
+      setState(() {
+        startDate = pickedDate;
+        print(startDate);
+      });
+    }
+  }
+
+  // function to show date picker for end date
+  Future<void> selectEndDate(BuildContext context) async {
+    final DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: endDate ?? DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime.now(),
+    );
+    if (pickedDate != null && pickedDate != endDate) {
+      setState(() {
+        endDate = pickedDate;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,13 +112,35 @@ class _DashboardState extends State<Dashboard>
                       "Welcome Back, User!", // ${ username }
                       style: TextStyle(fontSize: 25.0),
                     ),
+                    Row(
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.only(left: 5, top: 10, right: 5, bottom: 0),
+                          child: ElevatedButton(
+                            onPressed: () => selectStartDate(context),
+                            child: Text(startDate != null
+                                ? 'Start Date: ${DateFormat('yyyy-MM-dd').format(startDate!)}'
+                                : 'Select Start Date'),
+                          ),
+                        ),
+                        SizedBox(width: 10),
+                        Padding(
+                          padding: EdgeInsets.only(left: 5, top: 10, right: 5, bottom: 0),
+                          child: ElevatedButton(
+                            onPressed: () => selectEndDate(context),
+                            child: Text(endDate != null
+                                ? 'End Date: ${DateFormat('yyyy-MM-dd').format(endDate!)}'
+                                : 'Select End Date'),
+                          ),
+                        ),
+                      ],
+                    ),
                     SizedBox(height: 20.0),
                     Expanded(
                       child: Padding(
                         padding: EdgeInsets.all(25),
-                        child: _buildChart(selectedChartType),
+                        child: _buildChart(selectedChartType, startDate, endDate),
                       )
-
                     ),
                   ],
                 ),
@@ -129,6 +213,14 @@ class _DashboardState extends State<Dashboard>
                         }).toList(),
                       ),
                     ),
+                    SizedBox(height: 30),
+                    SizedBox(
+                      width: MediaQuery.of(context).size.width * 0.2,
+                      child: ElevatedButton(
+                        onPressed: () {},
+                        child: Text("See Top 10 Searches"),
+                      )
+                    )
                   ],
                 ),
               ),
@@ -139,14 +231,30 @@ class _DashboardState extends State<Dashboard>
     );
   }
 
-  Widget _buildChart(String chartType) {
+  Widget _buildChart(String chartType, DateTime? startDate, DateTime? endDate) {
+    // filter data based on the selected date range
+    List<FlSpot> filteredLineChartData = [];
+    List<BarChartGroupData> filteredBarChartData = [];
+    for (int i = 0; i < dummyLineChartData.length; i++) {
+      if (startDate != null && endDate != null) {
+        if (i >= startDate.weekday - 1 && i <= endDate.weekday - 1) {
+          filteredLineChartData.add(dummyLineChartData[i]);
+          filteredBarChartData.add(dummyBarChartData[i]);
+        }
+      } else {
+        // if no date range is selected, use all data
+        filteredLineChartData = dummyLineChartData;
+        filteredBarChartData = dummyBarChartData;
+        break;
+      }
+    }
     switch (chartType) {
       case 'Line':
         return LineChart(
           LineChartData(
             lineBarsData: [
               LineChartBarData(
-                spots: dummyLineChartData,
+                spots: filteredLineChartData,
                 isCurved: false,
                 dotData: FlDotData(show: true),
                 color: Colors.blue,
@@ -175,8 +283,8 @@ class _DashboardState extends State<Dashboard>
       case 'Bar':
         return BarChart(
           BarChartData(
-            alignment: BarChartAlignment.center,
-            barGroups: dummyBarChartData,
+            alignment: BarChartAlignment.start,
+            barGroups: filteredBarChartData,
             titlesData: FlTitlesData(
               bottomTitles: AxisTitles(
                 sideTitles: _bottomTitles,
@@ -212,36 +320,12 @@ class _DashboardState extends State<Dashboard>
         .withOpacity(1.0);
   }
 
+  // todo: FIX so show correct dates
   SideTitles get _bottomTitles => SideTitles(
-        showTitles: true,
+        showTitles: false,
         getTitlesWidget: (value, meta) {
-          String text = '';
-          switch (value.toInt()) {
-            case 0:
-              text = 'Mon';
-              break;
-            case 1:
-              text = 'Tue';
-              break;
-            case 2:
-              text = 'Wen';
-              break;
-            case 3:
-              text = 'Thu';
-              break;
-            case 4:
-              text = 'Fri';
-              break;
-            case 5:
-              text = 'Sat';
-              break;
-            case 6:
-              text = 'Sun';
-              break;
-            default:
-              return Container();
+          DateTime date = startDate!.add(Duration(days: value.toInt()));
+          return Text(DateFormat('MM-dd').format(date));
           }
-          return Text(text);
-        },
-      );
+  );
 }
