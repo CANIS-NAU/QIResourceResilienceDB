@@ -18,6 +18,7 @@ import './account.dart';
 import './reviewResource.dart';
 import './inbox.dart';
 import './userManagement.dart';
+import './top10resources.dart';
 
 //Main fubction
 void main() async {
@@ -57,6 +58,7 @@ class MyApp extends StatelessWidget {
         '/inbox': ( context ) => Inbox(),
         '/usermanagement': ( context ) => Manage(),
         '/reviewresource' :  ( context ) => ReviewResource(resourceData: ModalRoute.of(context)!.settings.arguments as QueryDocumentSnapshot),
+        '/top10resources': (context) => Top10Resources()
       },
       theme: ThemeData(
         primarySwatch: Colors.blue,

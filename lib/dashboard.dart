@@ -1,3 +1,5 @@
+import 'dart:js_interop';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'firebase_options.dart';
@@ -6,6 +8,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'dart:math' as Math;
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:image/image.dart' as img;
+import 'dart:typed_data';
+import 'dart:io';
+import 'package:flutter/material.dart';
 
 class Dashboard extends StatefulWidget {
   @override
@@ -30,7 +38,8 @@ class DummyData {
       List<BarChartRodData> rods = [];
       for (int j = 0; j < 3; j++) {
         rods.add(BarChartRodData(
-          fromY: i * (10 + j * 5), toY: 100
+          fromY: 0,
+          toY: i * (10 + j * 5),
         ));
       }
       data.add(BarChartGroupData(
@@ -41,6 +50,17 @@ class DummyData {
     }
     return data.reversed.toList();
   }
+
+  static List<ScatterSpot> generateDummyScatterPlotDataWithDates(int days) {
+    List<ScatterSpot> data = [];
+    for (int i = 0; i < days; i++) {
+      // Generate random coordinates for each day
+      double x = i.toDouble(); // X-coordinate
+      double y = Math.Random().nextDouble() * 100; // Y-coordinate (random value between 0 and 100)
+      data.add(ScatterSpot(x, y));
+    }
+    return data;
+  }
 }
 
 class _DashboardState extends State<Dashboard>
@@ -48,18 +68,43 @@ class _DashboardState extends State<Dashboard>
   DateTime? startDate;
   DateTime? endDate;
 
+  Widget? graphWidget;
+
   List<FlSpot> dummyLineChartData = DummyData.generateDummyLineChartDataWithDates(7);
 
   List<BarChartGroupData> dummyBarChartData = DummyData.generateDummyBarChartDataWithDates(7);
 
-  final List<String> chartTypes = ['Line', 'Bar', 'Pie'];
+  List<ScatterSpot> dummyScatterPlotData = DummyData.generateDummyScatterPlotDataWithDates(7);
+
+  final List<String> chartTypes = ['Line', 'Bar', 'Scatter Plot'];
   String selectedChartType = "Line";
 
   String selectedExportType = 'PDF';
   final List<String> exportTypes = ['PDF', 'Image'];
 
-  String selectedData = 'Total Searches';
-  final List<String> dataSources = ['Total Searches', 'Searches per Age Range', 'Searches per Health Focus', 'Searches per Resource Type'];
+  String selectedData = 'Total Site Visits';
+  final List<String> dataSources = ['Total Site Visits', 'Clicks to Offsite Links',
+    'Searches per Age Range', 'Searches per Health Focus', 'Searches per Resource Type'];
+
+  // map to store x and y labels for each data source
+  // TODO: group by type (color code for each type of age range, health focus, resource type)
+  final Map<String, Map<String, String>> dataSourceLabels = {
+    'Total Site Visits': {'xLabel': 'Day', 'yLabel': 'Number Of Visits'},
+    'Clicks to Offsite Links': {'xLabel': 'Day', 'yLabel': 'Number Of Clicks'},
+    'Searches per Age Range': {'xLabel': 'Day', 'yLabel': 'Number Of Searches'},
+    'Searches per Health Focus': {'xLabel': 'Day', 'yLabel': 'Number Of Searches'},
+    'Searches per Resource Type': {'xLabel': 'Day', 'yLabel': 'Number Of Searches'},
+  };
+
+  // Function to get x label based on selected data source
+  String getXLabel(String selectedData) {
+    return dataSourceLabels[selectedData]!['xLabel']!;
+  }
+
+  // Function to get y label based on selected data source
+  String getYLabel(String selectedData) {
+    return dataSourceLabels[selectedData]!['yLabel']!;
+  }
 
   // function to show date picker for start date
   Future<void> selectStartDate(BuildContext context) async {
@@ -89,6 +134,34 @@ class _DashboardState extends State<Dashboard>
       setState(() {
         endDate = pickedDate;
       });
+    }
+  }
+
+  // function that depending on the selected export type, exports the graph as PNG or PDF
+  Future<void> exportGraph(BuildContext context) async {
+    if (selectedExportType == 'PDF') {
+      // // export the graph as PDF
+      // final pdf = pw.Document();
+      // pdf.addPage(pw.Page(
+      //   build: (pw.Context context) {
+      //     return pw.Center(
+      //       child:pw.Container(
+      //         width: 500,
+      //         height: 300,
+      //         child: graphWidget,
+      //       ),
+      //     );
+      //   },
+      // ),
+      // );
+      // // Save the PDF file
+      // final output = await File('graph.pdf').writeAsBytes(await pdf.save());
+
+      print('Exporting graph as PDF...');
+    } else if (selectedExportType == 'Image') {
+      // export the graph as PNG
+
+      print('Exporting graph as PNG...');
     }
   }
 
@@ -139,7 +212,7 @@ class _DashboardState extends State<Dashboard>
                     Expanded(
                       child: Padding(
                         padding: EdgeInsets.all(25),
-                        child: _buildChart(selectedChartType, startDate, endDate),
+                        child: graphWidget = _buildChart(selectedChartType, startDate, endDate),
                       )
                     ),
                   ],
@@ -174,27 +247,6 @@ class _DashboardState extends State<Dashboard>
                     SizedBox(height: 20),
                     SizedBox(width: MediaQuery.of(context).size.width * 0.2,
                       child: DropdownButtonFormField<String>(
-                        decoration: InputDecoration(labelText: 'Export Type'),
-                        value: selectedExportType,
-                        onChanged: (String? newValue) {
-                          if (newValue != null) {
-                            setState(() {
-                              selectedExportType = newValue;
-                            });
-                          }
-                        },
-                        items: exportTypes
-                            .map<DropdownMenuItem<String>>((String value) {
-                          return DropdownMenuItem<String>(
-                            value: value,
-                            child: Text(value),
-                          );
-                        }).toList(),
-                      ),
-                    ),
-                    SizedBox(height: 20),
-                    SizedBox(width: MediaQuery.of(context).size.width * 0.2,
-                      child: DropdownButtonFormField<String>(
                         decoration: InputDecoration(labelText: 'Data Source'),
                         value: selectedData,
                         onChanged: (String? newValue) {
@@ -213,12 +265,45 @@ class _DashboardState extends State<Dashboard>
                         }).toList(),
                       ),
                     ),
+                    SizedBox(height: 20),
+                    SizedBox(width: MediaQuery.of(context).size.width * 0.2,
+                      child: DropdownButtonFormField<String>(
+                        decoration: InputDecoration(labelText: 'Export Type'),
+                        value: selectedExportType,
+                        onChanged: (String? newValue) {
+                          if (newValue != null) {
+                            setState(() {
+                              selectedExportType = newValue;
+                            });
+                          }
+                        },
+                        items: exportTypes
+                            .map<DropdownMenuItem<String>>((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(value),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.all(12),
+                      child: SizedBox(
+                        width: MediaQuery.of(context).size.width * 0.1,
+                        child: ElevatedButton(
+                          onPressed: () => exportGraph(context),
+                          child: Text("Export"),
+                        ),
+                      ),
+                    ),
                     SizedBox(height: 30),
                     SizedBox(
                       width: MediaQuery.of(context).size.width * 0.2,
                       child: ElevatedButton(
-                        onPressed: () {},
-                        child: Text("See Top 10 Searches"),
+                        onPressed: () {
+                          Navigator.pushNamed(context, '/top10resources');
+                        },
+                        child: Text("See Top 10 Resources"),
                       )
                     )
                   ],
@@ -235,19 +320,25 @@ class _DashboardState extends State<Dashboard>
     // filter data based on the selected date range
     List<FlSpot> filteredLineChartData = [];
     List<BarChartGroupData> filteredBarChartData = [];
+    List<ScatterSpot> filteredScatterData = [];
     for (int i = 0; i < dummyLineChartData.length; i++) {
       if (startDate != null && endDate != null) {
         if (i >= startDate.weekday - 1 && i <= endDate.weekday - 1) {
           filteredLineChartData.add(dummyLineChartData[i]);
           filteredBarChartData.add(dummyBarChartData[i]);
+          filteredScatterData.add(dummyScatterPlotData[i]);
         }
       } else {
         // if no date range is selected, use all data
         filteredLineChartData = dummyLineChartData;
         filteredBarChartData = dummyBarChartData;
+        filteredScatterData = dummyScatterPlotData;
         break;
       }
     }
+    String xLabel = getXLabel(selectedData);
+    String yLabel = getYLabel(selectedData);
+
     switch (chartType) {
       case 'Line':
         return LineChart(
@@ -264,15 +355,15 @@ class _DashboardState extends State<Dashboard>
             titlesData: FlTitlesData(
               bottomTitles: AxisTitles(
                 sideTitles: _bottomTitles,
-                axisNameWidget: Text('Day'),
+                axisNameWidget: Text(xLabel),
               ),
               leftTitles: AxisTitles(
                   sideTitles: SideTitles(showTitles: false),
-                  axisNameWidget: Text('Number Of Searches')),
+                  axisNameWidget: Text(yLabel)),
               //${ leftLabelText }
               topTitles: AxisTitles(
                   sideTitles: SideTitles(showTitles: false),
-                  axisNameWidget: Text('Number Of Searches Per Day')),
+                  axisNameWidget: Text('$yLabel Per Day')),
               rightTitles:
                   AxisTitles(sideTitles: SideTitles(showTitles: false)),
             ),
@@ -283,41 +374,49 @@ class _DashboardState extends State<Dashboard>
       case 'Bar':
         return BarChart(
           BarChartData(
-            alignment: BarChartAlignment.start,
+            alignment: BarChartAlignment.spaceBetween,
             barGroups: filteredBarChartData,
             titlesData: FlTitlesData(
               bottomTitles: AxisTitles(
                 sideTitles: _bottomTitles,
-                axisNameWidget: Text('Day'),
+                axisNameWidget: Text(xLabel),
               ),
               leftTitles: AxisTitles(
                   sideTitles: SideTitles(showTitles: false),
-                  axisNameWidget: Text('Number Of Searches')),
+                  axisNameWidget: Text(yLabel)),
               //${ leftLabelText }
               topTitles: AxisTitles(
                   sideTitles: SideTitles(showTitles: false),
-                  axisNameWidget: Text('Number Of Searches Per Day')),
+                  axisNameWidget: Text('$yLabel Per Day')),
               rightTitles:
                   AxisTitles(sideTitles: SideTitles(showTitles: false)),
             ),
           ),
         );
-      case 'Pie':
-        return PieChart(
-          PieChartData(
-            sections: List.generate(4, (index) {
-              return PieChartSectionData(value: 25, color: _getRandomColor());
-            }),
+      case 'Scatter Plot':
+        return ScatterChart(
+          ScatterChartData(
+            scatterSpots: filteredScatterData,
+            titlesData: FlTitlesData(
+              bottomTitles: AxisTitles(
+                sideTitles: _bottomTitles,
+                axisNameWidget: Text(xLabel),
+              ),
+              leftTitles: AxisTitles(
+                sideTitles: SideTitles(showTitles: false),
+                axisNameWidget: Text(yLabel),
+              ),
+              topTitles: AxisTitles(
+                sideTitles: SideTitles(showTitles: false),
+                axisNameWidget: Text('$yLabel Per Day'),
+              ),
+              rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            ),
           ),
         );
       default:
         return Container();
     }
-  }
-
-  Color _getRandomColor() {
-    return Color((Math.Random().nextDouble() * 0xFFFFFF).toInt() << 0)
-        .withOpacity(1.0);
   }
 
   // todo: FIX so show correct dates
