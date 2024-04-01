@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:web_app/events/schedule.dart';
 import 'package:web_app/util.dart';
+import 'package:web_app/view_resource/filter.dart';
 import 'package:web_app/view_resource/resource_detail.dart';
 
 final typeIcon = const {
@@ -18,10 +19,12 @@ final typeIcon = const {
 /// in a scrolling list of resources.
 class ResourceSummary extends StatelessWidget {
   ResourceSummary(
-      {super.key, required this.resource, required this.isSmallScreen});
+      {super.key, required this.resource, required this.isSmallScreen,
+                                                      required this.analytics});
 
   final QueryDocumentSnapshot resource;
   final bool isSmallScreen;
+  final HomeAnalytics analytics;
 
   @override
   Widget build(BuildContext context) {
@@ -121,6 +124,7 @@ class ResourceSummary extends StatelessWidget {
               color: Colors.black,
             ),
             onTap: () {
+              analytics.submitClickedResource(resource["name"]);
               showDialog(
                 context: context,
                 builder: (context) => ResourceDetail(resource: resource),

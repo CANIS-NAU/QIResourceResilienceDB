@@ -74,3 +74,9 @@ String? filterJoin(List<String?> items,
   final filtered = items.where((x) => x != null && x.isNotEmpty).toList();
   return filtered.isNotEmpty ? filtered.join(separator) : emptyValue;
 }
+
+
+// Get the current date
+DateTime getCurrentTime() {
+  return DateTime.now();
+}

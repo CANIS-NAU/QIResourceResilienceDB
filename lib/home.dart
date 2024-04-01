@@ -34,6 +34,8 @@ class _MyHomePageState extends State<MyHomePage> {
   final searchFieldController = TextEditingController();
   ResourceFilter filter = ResourceFilter.empty();
 
+  HomeAnalytics analytics = HomeAnalytics();
+
   void onFilterChange() {
     // TODO: only change the query if filter *actually* changed.
     searchFieldController.text = filter.textual ?? "";
@@ -116,6 +118,9 @@ class _MyHomePageState extends State<MyHomePage> {
                         onSubmitted: (text) {
                           setState(() {
                             final t = text.isNotEmpty ? text : null;
+                            if(t != null) {
+                              analytics.submitTextSearch(t);
+                            }
                             filter.setTextSearch(t);
                             onFilterChange();
                           });
@@ -144,6 +149,8 @@ class _MyHomePageState extends State<MyHomePage> {
                                     onFilterChange();
                                   }),
                                 ),
+                              ).then((value) => 
+                                analytics.submitFilterSearch(filter.categorical)
                               );
                             },
                           ),
@@ -220,6 +227,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                 return ResourceSummary(
                                   resource: docs[index],
                                   isSmallScreen: isSmallScreen,
+                                  analytics: analytics,
                                 );
                               }
                             )

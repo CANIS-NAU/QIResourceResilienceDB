@@ -14,6 +14,8 @@ import 'package:web_app/events/schedule.dart';
 import 'package:web_app/time.dart';
 import 'package:web_app/util.dart';
 
+import './adminAnalytics.dart';
+
 class ReviewResource extends StatefulWidget {
   final QueryDocumentSnapshot resourceData;
 
@@ -31,6 +33,8 @@ class _ReviewResourceState extends State<ReviewResource> {
 
   final CollectionReference inboxRef = FirebaseFirestore.instance
       .collection('rrdbInbox');
+
+  AdminReview adminReview = AdminReview(FirebaseAuth.instance.currentUser);
 
   // function to verify a resource
   Future<void> verifyResource(name) {
@@ -70,6 +74,9 @@ class _ReviewResourceState extends State<ReviewResource> {
       'contentTrustworthy' : contentTrustworthy,
       'contentCurrent' : contentCurrent,
     };
+
+    // Add admin review of a resource
+    adminReview.submittedResource(rubric);
 
   //update the resource with rubric information
     return resourceCollection.doc(resource.id).update({'rubric': rubric}).then(
