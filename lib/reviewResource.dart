@@ -34,7 +34,11 @@ class _ReviewResourceState extends State<ReviewResource> {
   final CollectionReference inboxRef = FirebaseFirestore.instance
       .collection('rrdbInbox');
 
-  AdminReview adminReview = AdminReview(FirebaseAuth.instance.currentUser);
+  // Declare as static to pass to constructor
+  static User? currentUser = FirebaseAuth.instance.currentUser;   
+  // If the current user is not null then initalize the class
+  AdminReview? adminReview = currentUser != null ? 
+                                                AdminReview(currentUser) : null;
 
   // function to verify a resource
   Future<void> verifyResource(name) {
@@ -76,7 +80,9 @@ class _ReviewResourceState extends State<ReviewResource> {
     };
 
     // Add admin review of a resource
-    adminReview.submittedResource(rubric);
+    if(adminReview != null) {
+      adminReview?.submittedResource(rubric);
+    }
 
   //update the resource with rubric information
     return resourceCollection.doc(resource.id).update({'rubric': rubric}).then(

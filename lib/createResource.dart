@@ -12,6 +12,7 @@ import 'package:web_app/events/schedule.dart';
 import 'package:web_app/events/schedule_form.dart';
 import 'package:web_app/file_attachments.dart';
 import 'package:web_app/util.dart';
+import './adminAnalytics.dart';
 
 //List of ages for dropdown
 const List<String> ageItems = [
@@ -104,6 +105,12 @@ class _CreateResourceState extends State<CreateResource> {
   // Form submission status/progress.
   var _isSubmitted = false;
   var _uploadProgress = 0.0;
+
+  // Get the current user
+  static User? currentUser = FirebaseAuth.instance.currentUser;   
+  // If the current user is not null then initalize the class
+  AdminResourceSubmission? adminSubmission = currentUser != null ? 
+                                    AdminResourceSubmission(currentUser) : null;
 
   // Submit to DB
   void trySubmitResource() async {
@@ -207,6 +214,11 @@ class _CreateResourceState extends State<CreateResource> {
         'createdBy': user.email,
         'createdTime': FieldValue.serverTimestamp(),
       };
+
+      // Submit to admin submission if object not null
+      if(adminSubmission != null) {
+        adminSubmission?.submittedResource(resourceName, resourceType);
+      }
 
       // Set the data of the document.
       await resourceRef.set(resource);

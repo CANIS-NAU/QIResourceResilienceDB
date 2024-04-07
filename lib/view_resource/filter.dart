@@ -148,13 +148,12 @@ class HomeAnalytics {
   
   // Submit the user filtered search
   Future<void> submitFilterSearch(Set<FilterItem> filter) {
-    Map<String,String> submissionFilter = {};
+    Map<String,dynamic> submissionFilter = {};
     for(var filterItem in filter) {
       submissionFilter[filterItem.category] = filterItem.value;
     }
 
-    // TODO: Might want to think of a different approach for consistincy in DB
-    submissionFilter["timestamp"] = getCurrentTime().toString();
+    submissionFilter["timestamp"] = getCurrentTime();
 
     return this.filterRef.add(submissionFilter).then((value) => 
       print("User filter submitted")).catchError((onError) => 

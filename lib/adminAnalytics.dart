@@ -1,5 +1,4 @@
 import 'package:web_app/common.dart';
-import 'dart:collection';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -8,11 +7,11 @@ class AdminResourceSubmission {
   final CollectionReference submissionRef = FirebaseFirestore.instance
   .collection('RRDBAdminResourceSubmission');
 
-  final User currentUser;
+  final User? currentUser;
 
   Future<void> submittedResource(String resourceName, String resourceType) {
     final resourceRecord = {
-      "user": this.currentUser.email,
+      "user": this.currentUser?.uid,
       "resourceName": resourceName,
       "resourceType": resourceType,
       "timestamp": getCurrentTime(), 
@@ -31,10 +30,9 @@ class AdminReview {
 
   final User? currentUser;
 
-  Future<void> submittedResource(final rubricScores) {
-    String email = this.currentUser?.email ?? "null_user";  
+  Future<void> submittedResource(final rubricScores) {  
     final resourceRecord = {
-      "user": email,
+      "user": this.currentUser?.uid,
       "rubricScores": rubricScores,
       "timestamp": getCurrentTime(), 
     };
