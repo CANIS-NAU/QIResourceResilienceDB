@@ -14,7 +14,7 @@ import 'package:web_app/events/schedule.dart';
 import 'package:web_app/time.dart';
 import 'package:web_app/util.dart';
 
-import './adminAnalytics.dart';
+import 'UserAnalytics.dart';
 
 class ReviewResource extends StatefulWidget {
   final QueryDocumentSnapshot resourceData;
@@ -37,8 +37,8 @@ class _ReviewResourceState extends State<ReviewResource> {
   // Declare as static to pass to constructor
   static User? currentUser = FirebaseAuth.instance.currentUser;   
   // If the current user is not null then initalize the class
-  AdminReview? adminReview = currentUser != null ? 
-                                                AdminReview(currentUser) : null;
+  UserReview? userReview = currentUser != null ? 
+                                                UserReview(currentUser) : null;
 
   // function to verify a resource
   Future<void> verifyResource(name) {
@@ -80,8 +80,8 @@ class _ReviewResourceState extends State<ReviewResource> {
     };
 
     // Add admin review of a resource
-    if(adminReview != null) {
-      adminReview?.submittedResource(rubric);
+    if(userReview != null) {
+      userReview?.submittedResource(rubric);
     }
 
   //update the resource with rubric information

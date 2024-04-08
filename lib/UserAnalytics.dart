@@ -2,10 +2,11 @@ import 'package:web_app/common.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-class AdminResourceSubmission {
-  AdminResourceSubmission(this.currentUser);
+// Sends users resource submission to db
+class UserResourceSubmission {
+  UserResourceSubmission(this.currentUser);
   final CollectionReference submissionRef = FirebaseFirestore.instance
-  .collection('RRDBAdminResourceSubmission');
+  .collection('RRDBUserResourceSubmission');
 
   final User? currentUser;
 
@@ -18,15 +19,16 @@ class AdminResourceSubmission {
     };
 
     return this.submissionRef.add(resourceRecord).then((value) => 
-      print("Admin submission submission successful")).catchError((onError) => 
-      print("Error submitting admin resource submission"));
+      print("User resource submission successful")).catchError((onError) => 
+      print("Error submitting user resource submission"));
   }
 }
 
-class AdminReview {
-  AdminReview(this.currentUser);
+// Sends user review to db when user reviews a resource
+class UserReview {
+  UserReview(this.currentUser);
   final CollectionReference reviewRef = FirebaseFirestore.instance
-  .collection('RRDBAdminReview');
+  .collection('RRDBUserReview');
 
   final User? currentUser;
 
@@ -38,7 +40,7 @@ class AdminReview {
     };
 
     return this.reviewRef.add(resourceRecord).then((value) => 
-      print("Admin review sucessfully uploaded")).catchError((onError) => 
-      print("Error submitting admin review"));
+      print("User review sucessfully uploaded")).catchError((onError) => 
+      print("Error submitting user review"));
   }
 }
