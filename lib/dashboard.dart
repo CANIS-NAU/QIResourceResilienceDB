@@ -1,19 +1,11 @@
-import 'dart:js_interop';
-
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:intl/intl.dart';
-import 'firebase_options.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:multi_select_flutter/multi_select_flutter.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'dart:math' as Math;
-import 'package:pdf/pdf.dart';
-import 'package:pdf/widgets.dart' as pw;
-import 'package:image/image.dart' as img;
 import 'dart:typed_data';
-import 'dart:io';
-import 'package:flutter/material.dart';
+import 'dart:ui' as ui;
+import 'dart:html' as html;
 
 class Dashboard extends StatefulWidget {
   @override
@@ -61,12 +53,61 @@ class DummyData {
     }
     return data;
   }
+
+  // searches per day by resource type, age range, health focus
+  static List<Map<String, dynamic>> generateDummySearchData() {
+    return [
+      {
+        'Age Range': "18-24",
+        'Cultural Responsiveness': "Low Cultural Responsiveness",
+        'Event happening in the next': "Month",
+        'Privacy': "Anonymous",
+        'Type': "Online",
+        'timestamp': DateTime(2024, 4, 1, 8, 8, 34),
+      },
+      {
+        'Privacy': "Anonymous",
+        'Type': "Online",
+        'timestamp': DateTime(2024, 4, 2, 8, 8, 34),
+      },
+      {
+        'Privacy': "Anonymous",
+        'Type': "In-Person",
+        'timestamp': DateTime(2024, 3, 31, 7, 8, 34),
+      },
+    ];
+  }
+
+  static Map<DateTime, Map<String, int>> generateDummySearchesPerResourceTypeData() {
+    // Initialize a map to store searches per resource type per day
+    Map<DateTime, Map<String, int>> searchDataPerDay = {};
+
+    // Dummy search data
+    List<Map<String, dynamic>> dummySearchData = generateDummySearchData();
+
+    // Process the dummy search data
+    for (var searchData in dummySearchData) {
+      DateTime timestamp = searchData['timestamp'];
+      // Extract resource type from the search data
+      String type = searchData['Type'];
+
+      // Initialize the count for the resource type if it doesn't exist for the current day
+      searchDataPerDay.putIfAbsent(timestamp, () => {});
+
+      // Increment the count for the resource type for the current day
+      searchDataPerDay[timestamp]!.update(type, (value) => value + 1, ifAbsent: () => 1);
+    }
+
+    return searchDataPerDay;
+  }
 }
 
 class _DashboardState extends State<Dashboard>
 {
   DateTime? startDate;
   DateTime? endDate;
+
+  final GlobalKey graphToExport = GlobalKey();
 
   Widget? graphWidget;
 
@@ -96,12 +137,12 @@ class _DashboardState extends State<Dashboard>
     'Searches per Resource Type': {'xLabel': 'Day', 'yLabel': 'Number Of Searches'},
   };
 
-  // Function to get x label based on selected data source
+  // function to get x label based on selected data source
   String getXLabel(String selectedData) {
     return dataSourceLabels[selectedData]!['xLabel']!;
   }
 
-  // Function to get y label based on selected data source
+  // function to get y label based on selected data source
   String getYLabel(String selectedData) {
     return dataSourceLabels[selectedData]!['yLabel']!;
   }
@@ -138,29 +179,29 @@ class _DashboardState extends State<Dashboard>
   }
 
   // function that depending on the selected export type, exports the graph as PNG or PDF
-  Future<void> exportGraph(BuildContext context) async {
+  Future<Uint8List?> exportGraph(BuildContext context) async {
     if (selectedExportType == 'PDF') {
-      // // export the graph as PDF
-      // final pdf = pw.Document();
-      // pdf.addPage(pw.Page(
-      //   build: (pw.Context context) {
-      //     return pw.Center(
-      //       child:pw.Container(
-      //         width: 500,
-      //         height: 300,
-      //         child: graphWidget,
-      //       ),
-      //     );
-      //   },
-      // ),
-      // );
-      // // Save the PDF file
-      // final output = await File('graph.pdf').writeAsBytes(await pdf.save());
-
+      // TODO
       print('Exporting graph as PDF...');
-    } else if (selectedExportType == 'Image') {
+    }
+    else if (selectedExportType == 'Image') {
       // export the graph as PNG
-
+      try {
+        RenderRepaintBoundary renderer = graphToExport.currentContext!.findRenderObject() as RenderRepaintBoundary;
+        ui.Image image = await renderer.toImage();
+        ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+        Uint8List png = byteData!.buffer.asUint8List();
+        final blob = html.Blob([png]);
+        final url = html.Url.createObjectUrlFromBlob(blob);
+        final anchor = html.AnchorElement(href: url)
+          ..setAttribute("download", "graph.png")
+          ..click();
+        
+        html.Url.revokeObjectUrl(url);
+      }
+      catch (e) {
+        return Uint8List(0);
+      }
       print('Exporting graph as PNG...');
     }
   }
@@ -212,7 +253,10 @@ class _DashboardState extends State<Dashboard>
                     Expanded(
                       child: Padding(
                         padding: EdgeInsets.all(25),
-                        child: graphWidget = _buildChart(selectedChartType, startDate, endDate),
+                        child: RepaintBoundary(
+                          key: graphToExport,
+                          child: graphWidget = _buildChart(selectedChartType, startDate, endDate),
+                        )
                       )
                     ),
                   ],
@@ -343,6 +387,7 @@ class _DashboardState extends State<Dashboard>
       case 'Line':
         return LineChart(
           LineChartData(
+            backgroundColor: Colors.white,
             lineBarsData: [
               LineChartBarData(
                 spots: filteredLineChartData,
@@ -374,6 +419,7 @@ class _DashboardState extends State<Dashboard>
       case 'Bar':
         return BarChart(
           BarChartData(
+            backgroundColor: Colors.white,
             alignment: BarChartAlignment.spaceBetween,
             barGroups: filteredBarChartData,
             titlesData: FlTitlesData(
@@ -396,6 +442,7 @@ class _DashboardState extends State<Dashboard>
       case 'Scatter Plot':
         return ScatterChart(
           ScatterChartData(
+            backgroundColor: Colors.white,
             scatterSpots: filteredScatterData,
             titlesData: FlTitlesData(
               bottomTitles: AxisTitles(
