@@ -8,18 +8,18 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:timezone/browser.dart' as tz;
 
 //Screen or class imports
-import './home.dart';
-import './verify.dart';
-import './createResource.dart';
-import './loginpage.dart';
-import './dashboard.dart';
-import './register.dart';
-import './account.dart';
-import './reviewResource.dart';
-import './inbox.dart';
-import './userManagement.dart';
+import 'package:web_app/home.dart';
+import 'package:web_app/verify.dart';
+import 'package:web_app/createResource.dart';
+import 'package:web_app/loginpage.dart';
+import 'package:web_app/dashboard.dart';
+import 'package:web_app/register.dart';
+import 'package:web_app/account.dart';
+import 'package:web_app/reviewResource.dart';
+import 'package:web_app/inbox.dart';
+import 'package:web_app/userManagement.dart';
 
-//Main fubction
+//Main function
 void main() async {
   await dotenv.load(fileName: "env");
   debugPrint("Loaded environment: ${dotenv.get('APP_ENV_NAME')}.");

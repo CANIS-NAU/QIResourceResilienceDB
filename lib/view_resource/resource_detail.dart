@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:web_app/Analytics.dart';
 import 'package:web_app/common.dart';
 import 'package:web_app/events/schedule.dart';
 import 'package:web_app/events/schedule_view.dart';
@@ -7,45 +8,42 @@ import 'package:web_app/file_attachments.dart';
 import 'package:web_app/pdfDownload.dart';
 import 'package:web_app/util.dart';
 
-class AddressLink extends StatelessWidget {
-  AddressLink({super.key, required this.fullAddress});
 
-  final String fullAddress;
-
-  @override
-  Widget build(BuildContext context) {
-    return Link(
-      text: fullAddress,
-      uri: Uri.parse(Uri.encodeFull('https://maps.google.com/?q=$fullAddress')),
-    );
-  }
-}
-
-class PhoneLink extends StatelessWidget {
-  PhoneLink({super.key, required this.phoneNumber});
-
-  final String phoneNumber;
-
-  @override
-  Widget build(BuildContext context) {
-    return Link(
-      text: phoneNumber,
-      uri: Uri.parse("tel:$phoneNumber"),
-    );
-  }
-}
-
-class UrlLink extends StatelessWidget {
-  UrlLink({super.key, required this.text, required this.url});
-
+class DetailLink extends StatelessWidget {
+  DetailLink({super.key, required this.analytics, required this.type,
+                                    required this.text, required this.uriText});
+  final HomeAnalytics analytics;
+  final String type;
   final String text;
-  final Uri url;
+  final String uriText;
+
+  Uri parseUriText() {
+    // Default to URL
+    Uri uri = Uri.parse(this.uriText);
+    switch(this.type) {
+      case "address":
+        String address = this.uriText;
+        uri = Uri.parse(Uri.encodeFull('https://maps.google.com/?q=$address'));
+        break;
+      case "phone":
+        String number = this.uriText;
+        uri = Uri.parse("tel:$number"); 
+        break;
+    }
+    return uri;
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Link(text: text, uri: url);
+    return Link(
+      analytics: analytics,
+      type: type,
+      text: text,
+      uri: parseUriText(),
+    );
   }
 }
+
 
 const fieldPadding = EdgeInsets.symmetric(vertical: 8.0);
 
@@ -125,6 +123,7 @@ class ResourceDetail extends StatelessWidget {
         fieldDefined('location') ? Uri.parse(fieldString('location')!) : null;
 
     PdfDownload pdfDownload = PdfDownload();
+    HomeAnalytics analytics = HomeAnalytics();
 
     return SimpleDialog(
       key: ObjectKey(resource.id),
@@ -168,17 +167,23 @@ class ResourceDetail extends StatelessWidget {
                 if (fieldDefined('cost')) //
                   field('Cost', Text(resource['cost'])),
                 if (fullAddress != null)
-                  field('Address', AddressLink(fullAddress: fullAddress)),
+                  field('Address', DetailLink(analytics: analytics,
+                                              type: "address", 
+                                              text: fullAddress,
+                                              uriText: fullAddress)),
                 if (fieldDefined('phoneNumber'))
                   field(
-                    'Phone Number',
-                    PhoneLink(phoneNumber: fieldString('phoneNumber')!),
-                  ),
+                    'Phone Number', DetailLink(analytics: analytics,
+                                              type: "phone", 
+                                              text: fieldString('phoneNumber')!,
+                                              uriText: 
+                                                  fieldString('phoneNumber')!)),
                 if (url != null)
                   field(
-                    'URL',
-                    UrlLink(text: 'link to website here', url: url),
-                  ),
+                    'URL', DetailLink(analytics: analytics,
+                                              type: "url", 
+                                              text: 'link to website here',
+                                              uriText: url.toString())),
                 if (attachments.length > 0)
                   Padding(
                     padding: fieldPadding,
@@ -186,7 +191,8 @@ class ResourceDetail extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('Attachments: '),
-                        AttachmentsList(attachments: attachments),
+                        AttachmentsList(analytics: analytics,
+                                                      attachments: attachments),
                       ],
                     ),
                   ),

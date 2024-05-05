@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:web_app/events/schedule.dart';
 
 // Time
-import '../common.dart';
+import 'package:web_app/common.dart';
 
 /// A single item in a filter selection. The pair of category and value.
 class FilterItem {
@@ -122,53 +122,6 @@ class ResourceFilter {
   void clear() {
     this.textual = null;
     this.categorical.clear();
-  }
-}
-
-// Resonsible for uploading searches and filter options
-class HomeAnalytics {
-  // Declare data collection references
-  final CollectionReference searchRef = FirebaseFirestore.instance
-    .collection('RRDBSearches');
-  final CollectionReference filterRef = FirebaseFirestore.instance
-    .collection('RRDBFilters');
-  final CollectionReference clickedRef = FirebaseFirestore.instance 
-    .collection("RRDBClickedResources");
-
-  // Submit the user text search
-  Future<void> submitTextSearch(String textSearch) {
-    final search = {
-      "search": textSearch,
-      "timestamp": getCurrentTime()
-    };
-    return this.searchRef.add(search).then((value) => 
-      print("User search submitted")).catchError((onError) => 
-      print("Error submitting user search"));
-  }
-  
-  // Submit the user filtered search
-  Future<void> submitFilterSearch(Set<FilterItem> filter) {
-    Map<String,dynamic> submissionFilter = {};
-    for(var filterItem in filter) {
-      submissionFilter[filterItem.category] = filterItem.value;
-    }
-
-    submissionFilter["timestamp"] = getCurrentTime();
-
-    return this.filterRef.add(submissionFilter).then((value) => 
-      print("User filter submitted")).catchError((onError) => 
-      print("Error submitting user filter"));
-  }
-
-  // Submit the resource the user clicked
-  Future<void> submitClickedResource(String resource) {
-    final clicked = {
-      "resource": resource,
-      "timestamp": getCurrentTime()
-    };
-    return this.clickedRef.add(clicked).then((value) => 
-      print("User click submitted")).catchError((onError) => 
-      print("Error submitting user click"));
   }
 }
 

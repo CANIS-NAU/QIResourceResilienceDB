@@ -12,7 +12,7 @@ import 'package:web_app/events/schedule.dart';
 import 'package:web_app/events/schedule_form.dart';
 import 'package:web_app/file_attachments.dart';
 import 'package:web_app/util.dart';
-import 'UserAnalytics.dart';
+import 'package:web_app/Analytics.dart';
 
 //List of ages for dropdown
 const List<String> ageItems = [

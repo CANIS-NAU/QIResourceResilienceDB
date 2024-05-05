@@ -9,10 +9,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
-import 'view_resource/resource_summary.dart';
-import 'view_resource/filter.dart';
+import 'package:web_app/view_resource/resource_summary.dart';
+import 'package:web_app/view_resource/filter.dart';
 import 'package:web_app/pdfDownload.dart';
 import 'package:web_app/util.dart';
+import 'package:web_app/Analytics.dart';
 
 /// The home page main widget
 class MyHomePage extends StatefulWidget {

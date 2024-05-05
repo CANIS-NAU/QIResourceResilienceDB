@@ -5,6 +5,7 @@ import 'package:web_app/events/schedule.dart';
 import 'package:web_app/util.dart';
 import 'package:web_app/view_resource/filter.dart';
 import 'package:web_app/view_resource/resource_detail.dart';
+import 'package:web_app/Analytics.dart';
 
 final typeIcon = const {
   'Online': Icons.wifi,
@@ -124,7 +125,7 @@ class ResourceSummary extends StatelessWidget {
               color: Colors.black,
             ),
             onTap: () {
-              analytics.submitClickedResource(resource["name"]);
+              analytics.submitClickedResource(resource.id);
               showDialog(
                 context: context,
                 builder: (context) => ResourceDetail(resource: resource),

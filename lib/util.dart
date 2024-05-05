@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:web_app/Analytics.dart';
 
 void showAlertDialog(BuildContext context, String statement) {
   // set up the button
@@ -50,8 +51,11 @@ Future<void> showMessageDialog(BuildContext context,
 }
 
 class Link extends StatelessWidget {
-  Link({super.key, required this.text, required this.uri});
+  Link({super.key, required this.analytics, required this.type, 
+                                        required this.text, required this.uri});
 
+  final HomeAnalytics analytics;
+  final String type;
   final String text;
   final Uri uri;
 
@@ -75,6 +79,7 @@ class Link extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () async {
+        analytics.submitClickedkLink(type,uri);
         if (await canLaunchUrl(uri)) {
           launchUrl(uri);
         } else {

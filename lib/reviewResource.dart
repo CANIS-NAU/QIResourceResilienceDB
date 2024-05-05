@@ -13,8 +13,7 @@ import 'package:url_launcher/url_launcher_string.dart';
 import 'package:web_app/events/schedule.dart';
 import 'package:web_app/time.dart';
 import 'package:web_app/util.dart';
-
-import 'UserAnalytics.dart';
+import 'package:web_app/Analytics.dart';
 
 class ReviewResource extends StatefulWidget {
   final QueryDocumentSnapshot resourceData;

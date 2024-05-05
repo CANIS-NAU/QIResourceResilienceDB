@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:timezone/timezone.dart' as tz;
-
-import '../common.dart';
-import '../time.dart';
+import 'package:web_app/common.dart';
+import 'package:web_app/time.dart';
 import 'schedule.dart';
 
 /// Implements form fields for entering Schedule data.
