@@ -216,9 +216,7 @@ class _CreateResourceState extends State<CreateResource> {
       };
 
       // Submit to admin submission if object not null
-      if(userSubmission != null) {
-        userSubmission?.submittedResource(resourceName, resourceType);
-      }
+      userSubmission?.submittedResource(resourceName, resourceType);
 
       // Set the data of the document.
       await resourceRef.set(resource);
