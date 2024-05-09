@@ -1,9 +1,7 @@
 // Schedule data model.
-
 import 'package:flutter/material.dart';
-
-import '../common.dart';
-import '../time.dart';
+import 'package:web_app/common.dart';
+import 'package:web_app/time.dart';
 
 abstract class Schedule {
   DateTime? getNextDate({DateTime? after = null});

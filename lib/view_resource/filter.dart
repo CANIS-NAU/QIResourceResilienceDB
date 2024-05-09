@@ -5,6 +5,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:web_app/events/schedule.dart';
 
+// Time
+import 'package:web_app/common.dart';
+
 /// A single item in a filter selection. The pair of category and value.
 class FilterItem {
   FilterItem(this.category, this.value);

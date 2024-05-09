@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 import 'package:intl/intl.dart';
 
-import './common.dart';
+import 'package:web_app/common.dart';
 
 final DateFormat longDateFormat = DateFormat.yMMMMd('en_US');
 

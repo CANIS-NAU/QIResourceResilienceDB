@@ -13,6 +13,7 @@ import 'package:url_launcher/url_launcher_string.dart';
 import 'package:web_app/events/schedule.dart';
 import 'package:web_app/time.dart';
 import 'package:web_app/util.dart';
+import 'package:web_app/Analytics.dart';
 
 class ReviewResource extends StatefulWidget {
   final QueryDocumentSnapshot resourceData;
@@ -31,6 +32,12 @@ class _ReviewResourceState extends State<ReviewResource> {
 
   final CollectionReference inboxRef = FirebaseFirestore.instance
       .collection('rrdbInbox');
+
+  // Declare as static to pass to constructor
+  static User? currentUser = FirebaseAuth.instance.currentUser;   
+  // If the current user is not null then initalize the class
+  UserReview? userReview = currentUser != null ? 
+                                                UserReview(currentUser) : null;
 
   // function to verify a resource
   Future<void> verifyResource(name) {
@@ -70,6 +77,11 @@ class _ReviewResourceState extends State<ReviewResource> {
       'contentTrustworthy' : contentTrustworthy,
       'contentCurrent' : contentCurrent,
     };
+
+    // Add admin review of a resource
+    if(userReview != null) {
+      userReview?.submittedResource(rubric);
+    }
 
   //update the resource with rubric information
     return resourceCollection.doc(resource.id).update({'rubric': rubric}).then(

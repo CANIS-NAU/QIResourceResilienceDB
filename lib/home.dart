@@ -9,10 +9,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
-import 'view_resource/resource_summary.dart';
-import 'view_resource/filter.dart';
+import 'package:web_app/view_resource/resource_summary.dart';
+import 'package:web_app/view_resource/filter.dart';
 import 'package:web_app/pdfDownload.dart';
 import 'package:web_app/util.dart';
+import 'package:web_app/Analytics.dart';
 
 /// The home page main widget
 class MyHomePage extends StatefulWidget {
@@ -33,6 +34,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
   final searchFieldController = TextEditingController();
   ResourceFilter filter = ResourceFilter.empty();
+
+  HomeAnalytics analytics = HomeAnalytics();
 
   void onFilterChange() {
     // TODO: only change the query if filter *actually* changed.
@@ -116,6 +119,9 @@ class _MyHomePageState extends State<MyHomePage> {
                         onSubmitted: (text) {
                           setState(() {
                             final t = text.isNotEmpty ? text : null;
+                            if(t != null) {
+                              analytics.submitTextSearch(t);
+                            }
                             filter.setTextSearch(t);
                             onFilterChange();
                           });
@@ -144,6 +150,8 @@ class _MyHomePageState extends State<MyHomePage> {
                                     onFilterChange();
                                   }),
                                 ),
+                              ).then((value) => 
+                                analytics.submitFilterSearch(filter.categorical)
                               );
                             },
                           ),
@@ -220,6 +228,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                 return ResourceSummary(
                                   resource: docs[index],
                                   isSmallScreen: isSmallScreen,
+                                  analytics: analytics,
                                 );
                               }
                             )
