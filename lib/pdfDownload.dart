@@ -4,10 +4,12 @@ import 'dart:html' as html;
 import 'dart:ui';
 import 'package:share_plus/share_plus.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
+import 'package:web_app/Analytics.dart';
 import 'package:web_app/view_resource/resource_detail.dart';
 
 class PdfDownload {
-
+  PdfDownload({required this.analytics});
+  final HomeAnalytics analytics;
   // function that takes in a list of resources
   // that are currently being filtered for and
   // creates and downloads a pdf with the resource info
@@ -34,7 +36,8 @@ class PdfDownload {
         if(resource['resourceType'] == "In Person")
           {
             // get the full address using addressString()
-            final ResourceDetail resourceDetail = ResourceDetail(resource: resource);
+            final ResourceDetail resourceDetail = ResourceDetail(
+                                      analytics: analytics, resource: resource);
             final String? fullAddress = resourceDetail.addressString();
 
             // add full address to pdf

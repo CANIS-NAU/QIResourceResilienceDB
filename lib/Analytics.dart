@@ -4,8 +4,75 @@ import 'package:firebase_auth/firebase_auth.dart';
 // Time
 import 'package:web_app/common.dart';
 
+// Cookies
+import 'dart:html';
+
+class EventLog {
+  // Identifying session id 
+  String uuid = "";
+
+  // Reference the event log document. Do with cookies later on.
+  final CollectionReference eventRef = FirebaseFirestore.instance
+    .collection('RRDBEventLog');
+
+  Future<void> uploadRecord(String event) {
+
+    if(this.uuid == "") {
+      this.uuid = this.generatedUUID(this.getCookie());
+    }
+
+    final eventObj = {
+      "uuid": this.uuid,
+      "event": event,
+      "timestamp": getCurrentTime()
+    };
+
+    return this.eventRef.add(eventObj).then((value) => 
+      print("User event submitted")).catchError((onError) => 
+      print("Error submitting event"));
+  }
+
+  String generateNewUUID() {
+    final now = DateTime.now();
+    return now.microsecondsSinceEpoch.toString();
+  }
+
+  Map getCookie() {
+    // Get the cookie attached to document
+    final cookie = document.cookie!;
+
+    // Create a map from the cookie structure
+    final entity = cookie.split("; ").map((item) {
+      final split = item.split("=");
+      return MapEntry(split[0], split[1]);
+    });
+
+    // return the cookie map
+    return Map.fromEntries(entity);
+  }
+
+  bool checkUUIDNotNull(Map cookieMap) {
+    return cookieMap.containsKey("uuid");
+  }
+
+  String generatedUUID(Map cookieMap) {
+    String uuid = "";
+    if(this.checkUUIDNotNull(cookieMap)) {
+      uuid = cookieMap["uuid"];
+    }
+    else {
+      uuid = this.generateNewUUID();
+      document.cookie = "uuid=$uuid";
+    }
+    return uuid;
+  }
+}
+
 // Resonsible for uploading searches and filter options
 class HomeAnalytics {
+
+  EventLog eventLog = EventLog();
+
   // Declare data collection references
   final CollectionReference searchRef = FirebaseFirestore.instance
     .collection('RRDBSearches');
@@ -22,6 +89,9 @@ class HomeAnalytics {
       "search": textSearch,
       "timestamp": getCurrentTime()
     };
+
+    eventLog.uploadRecord("text-search");
+
     return this.searchRef.add(search).then((value) => 
       print("User search submitted")).catchError((onError) => 
       print("Error submitting user search"));
@@ -47,6 +117,9 @@ class HomeAnalytics {
       "resource": resource,
       "timestamp": getCurrentTime()
     };
+    
+    eventLog.uploadRecord("clicked-resource");
+
     return this.clickedRef.add(clicked).then((value) => 
       print("User click submitted")).catchError((onError) => 
       print("Error submitting user click"));
@@ -58,12 +131,14 @@ class HomeAnalytics {
       "link": link.toString(),
       "time": getCurrentTime()
     };
+
+    eventLog.uploadRecord("clicked-link");
+
     return this.clickedLinkRef.add(linkClicked).then((value) => 
       print("User clicked link submitted")).catchError((onError) => 
       print("Error submitting user clicked link"));
   }
 }
-
 
 class UserResourceSubmission {
   UserResourceSubmission(this.currentUser);
