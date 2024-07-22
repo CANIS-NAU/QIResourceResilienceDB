@@ -40,7 +40,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: "Resource Web Page",
+      title: "Resilience Resource Database",
 
       //Initial Route to home
       initialRoute: '/',
