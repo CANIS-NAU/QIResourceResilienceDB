@@ -56,27 +56,30 @@ class ResourceSummary extends StatelessWidget {
 
     Widget managerButton(bool vis) {
       String visStatus = vis ? "Archive" : "Un-archive";
-      return Focus(
-        child: TextButton(
-          style: ButtonStyle(
-            foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
-            backgroundColor: MaterialStateProperty.all<Color>(Theme.of(context).primaryColor),
-            shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(18.0),
-              side: BorderSide(color: Theme.of(context).primaryColor),
-            )),
-          ),
-          onPressed: () {
-            setVisabilityStatus(!vis).then((bool status) {
-              String stringStatus = status
-                  ? "You have successfully ${visStatus.toLowerCase()}d this resource."
-                  : "There was a problem updating the resource.";
-              showAlertDialog(context, stringStatus);
-            });
-          },
-          child: Text(visStatus),
+      return TextButton(
+        style: ButtonStyle(
+          foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
+          backgroundColor: MaterialStateProperty.resolveWith<Color>((Set<MaterialState> states) {
+            if (states.contains(MaterialState.focused)) {
+              return Theme.of(context).primaryColor.withOpacity(0.7);
+            }
+            return Theme.of(context).primaryColor;
+          }),
+          shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+              RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18.0),
+            side: BorderSide(color: Theme.of(context).primaryColor),
+          )),
         ),
+        onPressed: () {
+          setVisabilityStatus(!vis).then((bool status) {
+            String stringStatus = status
+                ? "You have successfully ${visStatus.toLowerCase()}d this resource."
+                : "There was a problem updating the resource.";
+            showAlertDialog(context, stringStatus);
+          });
+        },
+        child: Text(visStatus),
       );
     }
 

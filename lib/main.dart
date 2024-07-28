@@ -59,18 +59,18 @@ class MyApp extends StatelessWidget {
         '/reviewresource' :  ( context ) => ReviewResource(resourceData: ModalRoute.of(context)!.settings.arguments as QueryDocumentSnapshot),
       },
       theme: ThemeData(
-        primaryColor: Color(0xFF0073e6),
+        primaryColor: Color(0xFF0060BE),
         focusColor: Color(0xFF0CCCCCC),
         // hintColor: Color(0xFF0b1b1b1),
         hoverColor: Color(0xFF0CCCCCC),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ButtonStyle(
-            backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF0073e6)),
+            backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF0060BE)),
           ),
         ),
         textButtonTheme: TextButtonThemeData(
           style: ButtonStyle(
-          foregroundColor: MaterialStateProperty.all<Color>(Color(0xFF0073e6)),
+          foregroundColor: MaterialStateProperty.all<Color>(Color(0xFF0060BE)),
           ),
         ),
       ),
