@@ -28,11 +28,17 @@ Know that we use two separate Firebase Projects for RRDB -- one to host a develo
 
 Environment files contain secret values the app uses to communicate with the server back-end. Because they're supposed to be secret, it's bad practice to commit them to git! So you'll have to download these files yourself and put them in the right spot with the right name.
 
-Open the [SUNRISE Google Drive, in the RRDB Secrets folder](https://drive.google.com/drive/folders/1FZ4E5xWmeBb3uxIzHn8gFQy_Qw24IMOq). You should be developing against the dev environment, so download the `dev.env` file. Place it in the project, then rename it `env` -- careful: no dot!
+Open the [SUNRISE Google Drive, in the RRDB Secrets folder](https://drive.google.com/drive/folders/1FZ4E5xWmeBb3uxIzHn8gFQy_Qw24IMOq). You should be developing against the dev environment, so download the `dev.env` file. Place it in the project, then rename it `env` -- careful: no dot.
 
-`prod.env` contains keys used by the production server, which is why there are two files, but you won't need that file for normal development. We configured git to ignore env files, but take care never to commit them accidentally!
+`prod.env` contains keys used by the production server, which is why there are two files, but you won't need that file for normal development. We configured git to ignore env files, but take care never to commit them accidentally.
 
-## Run Web App
+### Site Deployment
+
+The firebase CLI provides commands for deploying project components. This can include the web site, Cloud Functions, file storage buckets, and so on -- any component that is configured in firebase.json. (For example, here's [the web hosting config documentation](https://firebase.google.com/docs/hosting/full-config).) For right now though, let's just focus on the web site (front-end) itself.
+
+First double check that you have updated git to the code you want to deploy, are "use"-ing the correct Firebase project, and that you configured your environment file. Then, all you need to do is `firebase deploy --only hosting`. ("hosting" refers to the web hosting component of Firebase.) If all goes well, this will build the flutter site and then deploy the contents. (You may need to do a complete refresh in your browser to see the changes.)
+
+## Run Web App Locally
 > Once the installation is complete:
 > 1) Clone or download the repository.
 > 2) Change into the web directory within the cloned or downloaded repository.
