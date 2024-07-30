@@ -156,29 +156,49 @@ class CategoryFilterDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return SimpleDialog(
       contentPadding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-      children: categories.map((category) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Padding(
-              padding: EdgeInsets.fromLTRB(0, 12, 0, 3),
-              child: Text(
-                category.name,
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
+            Text(
+              'Filter Categories',
+              // You can change this to a dynamic title if needed
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-            Padding(
-              padding: EdgeInsets.fromLTRB(0, 3, 0, 12),
-              child: Wrap(
-                alignment: WrapAlignment.center,
-                spacing: 8,
-                runSpacing: 8,
-                children: category.items.map(buildFilterChip).toList(),
-              ),
+            IconButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              icon: Icon(Icons.close),
+              iconSize: 20,
+              splashRadius: 20,
             ),
           ],
-        );
-      }).toList(),
+        ),
+        ...categories.map((category) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Padding(
+                padding: EdgeInsets.fromLTRB(0, 12, 0, 3),
+                child: Text(
+                  category.name,
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.fromLTRB(0, 3, 0, 12),
+                child: Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: category.items.map(buildFilterChip).toList(),
+                ),
+              ),
+            ],
+          );
+        }).toList(),
+      ],
     );
   }
 }
@@ -211,7 +231,9 @@ class _CustomFilterChipState extends State<CustomFilterChip> {
   @override
   Widget build(BuildContext context) {
     return FilterChip(
-      label: Text(widget.label),
+      label: Text(widget.label,
+        style: TextStyle(
+        color: _isSelected ? Colors.white : Colors.black ),),
       selected: _isSelected,
       onSelected: (bool selected) {
         setState(() {
@@ -219,9 +241,17 @@ class _CustomFilterChipState extends State<CustomFilterChip> {
         });
         widget.onSelected(selected);
       },
-      // if the filter is selected, change to blue
-      backgroundColor: _isSelected ? Colors.blue : Colors.grey,
-      selectedColor: Colors.blue,
+      backgroundColor: _isSelected ? Theme.of(context).primaryColor : Colors.grey,
+      selectedColor: Theme.of(context).primaryColor,
+      iconTheme: IconThemeData(
+        color: _isSelected ? Colors.white : Colors.transparent
+      ),
+      side: MaterialStateBorderSide.resolveWith((Set<MaterialState> states) {
+        if (states.contains(MaterialState.focused)) {
+          return BorderSide(color: Colors.grey[700]!, width: 2);
+        }
+        return BorderSide.none;
+      }),
     );
   }
 }

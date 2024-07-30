@@ -35,15 +35,31 @@ class DetailLink extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Link(
-      analytics: analytics,
-      type: type,
-      text: text,
-      uri: parseUriText(),
+    return Focus(
+      child: Builder(
+        builder: (context) {
+          final bool hasFocus = Focus.of(context).hasFocus;
+          return Container(
+            decoration: BoxDecoration(
+              border: hasFocus
+                  ? Border.all(
+                      color: Theme.of(context).primaryColor,
+                      style: BorderStyle.solid,
+                    )
+                  : null,
+            ),
+            child: Link(
+              analytics: analytics,
+              type: type,
+              text: text,
+              uri: parseUriText(),
+            ),
+          );
+        },
+      ),
     );
   }
 }
-
 
 const fieldPadding = EdgeInsets.symmetric(vertical: 8.0);
 
@@ -129,9 +145,20 @@ class ResourceDetail extends StatelessWidget {
       key: ObjectKey(resource.id),
       titlePadding: EdgeInsets.fromLTRB(16, 16, 16, 0),
       contentPadding: EdgeInsets.all(16),
-      title: Text(
-        '${resource['name']}',
-        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+      title: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              '${resource['name']}',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            IconButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                icon: Icon(Icons.close),
+                splashRadius: 20,
+            )
+        ]
       ),
       children: [
         Container(

@@ -59,11 +59,16 @@ class ResourceSummary extends StatelessWidget {
       return TextButton(
         style: ButtonStyle(
           foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
-          backgroundColor: MaterialStateProperty.all<Color>(Colors.blue),
+          backgroundColor: MaterialStateProperty.resolveWith<Color>((Set<MaterialState> states) {
+            if (states.contains(MaterialState.focused)) {
+              return Theme.of(context).primaryColor.withOpacity(0.7);
+            }
+            return Theme.of(context).primaryColor;
+          }),
           shape: MaterialStateProperty.all<RoundedRectangleBorder>(
               RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(18.0),
-            side: BorderSide(color: Colors.blue),
+            side: BorderSide(color: Theme.of(context).primaryColor),
           )),
         ),
         onPressed: () {
