@@ -75,25 +75,25 @@ class Link extends StatelessWidget {
     );
   }
 
+  void _handleTap(BuildContext context) async {
+    analytics.submitClickedkLink(type, uri);
+    if (await canLaunchUrl(uri)) {
+      launchUrl(uri);
+    } else {
+      onError(context);
+    }
+  }
+
+  // replaced GestureDetector with inkwell because it is focusable and handles keyboard taps
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () async {
-        analytics.submitClickedkLink(type,uri);
-        if (await canLaunchUrl(uri)) {
-          launchUrl(uri);
-        } else {
-          onError(context);
-        }
-      },
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
-        child: Text(
-          this.text,
-          style: TextStyle(
-            color: Colors.blue,
-            decoration: TextDecoration.underline,
-          ),
+    return InkWell(
+      onTap: () => _handleTap(context),
+      child: Text(
+        this.text,
+        style: TextStyle(
+          color: Theme.of(context).primaryColor,
+          decoration: TextDecoration.underline,
         ),
       ),
     );

@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:web_app/Analytics.dart';
 import 'package:web_app/common.dart';
 import 'package:web_app/events/schedule.dart';
@@ -35,28 +36,11 @@ class DetailLink extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Focus(
-      child: Builder(
-        builder: (context) {
-          final bool hasFocus = Focus.of(context).hasFocus;
-          return Container(
-            decoration: BoxDecoration(
-              border: hasFocus
-                  ? Border.all(
-                      color: Theme.of(context).primaryColor,
-                      style: BorderStyle.solid,
-                    )
-                  : null,
-            ),
-            child: Link(
-              analytics: analytics,
-              type: type,
-              text: text,
-              uri: parseUriText(),
-            ),
-          );
-        },
-      ),
+    return Link(
+      analytics: analytics,
+      type: type,
+      text: text,
+      uri: parseUriText(),
     );
   }
 }

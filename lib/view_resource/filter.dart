@@ -241,16 +241,11 @@ class _CustomFilterChipState extends State<CustomFilterChip> {
         });
         widget.onSelected(selected);
       },
-      backgroundColor: _isSelected ? Theme.of(context).primaryColor : Colors.grey,
-      selectedColor: Theme.of(context).primaryColor,
-      iconTheme: IconThemeData(
-        color: _isSelected ? Colors.white : Colors.transparent
-      ),
       side: MaterialStateBorderSide.resolveWith((Set<MaterialState> states) {
-        if (states.contains(MaterialState.focused)) {
-          return BorderSide(color: Colors.grey[700]!, width: 2);
-        }
-        return BorderSide.none;
+      if (states.contains(MaterialState.focused)) {
+        return BorderSide(color: Colors.grey[700]!, width: 2);
+      }
+      return BorderSide.none;
       }),
     );
   }

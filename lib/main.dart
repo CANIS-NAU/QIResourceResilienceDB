@@ -60,12 +60,22 @@ class MyApp extends StatelessWidget {
       },
       theme: ThemeData(
         primaryColor: Color(0xFF0060BE),
+        primaryColorDark: Color(0xFF0052a2),
+        primaryColorLight: Color(0xFF006edb),
         focusColor: Color(0xFF0CCCCCC),
-        // hintColor: Color(0xFF0b1b1b1),
         hoverColor: Color(0xFF0CCCCCC),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ButtonStyle(
-            backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF0060BE)),
+            backgroundColor: MaterialStateProperty.resolveWith<Color>((Set<MaterialState> states) {
+              if (states.contains(MaterialState.pressed)) {
+                return Color(0xFF0052a2);
+              } else if (states.contains(MaterialState.hovered)) {
+                return Color(0xFF0052a2);
+              } else if (states.contains(MaterialState.focused)) {
+                return Color(0xFF0052a2);
+              }
+              return Color(0xFF0060BE); // Default color
+            }),
           ),
         ),
         textButtonTheme: TextButtonThemeData(
@@ -73,6 +83,12 @@ class MyApp extends StatelessWidget {
           foregroundColor: MaterialStateProperty.all<Color>(Color(0xFF0060BE)),
           ),
         ),
+        chipTheme: ChipThemeData(
+          backgroundColor: Colors.grey,
+          selectedColor: Color(0xFF0060BE),
+          showCheckmark: true,
+          checkmarkColor: Colors.white
+        )
       ),
       home: const MyHomePage(),
     );

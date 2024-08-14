@@ -167,9 +167,6 @@ class _MyHomePageState extends State<MyHomePage> {
                                 analytics.submitFilterSearch(filter.categorical)
                               );
                             },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Theme.of(context).primaryColor
-                            ),
                           ),
                         ),
                         SizedBox(width: 10),
@@ -182,8 +179,6 @@ class _MyHomePageState extends State<MyHomePage> {
                               });
                             },
                             child: Text("Reset Filters"),
-                            style: ElevatedButton.styleFrom(
-                                backgroundColor: Theme.of(context).primaryColor)
                           ),
                         ),
                       ],
