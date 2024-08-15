@@ -59,7 +59,36 @@ class MyApp extends StatelessWidget {
         '/reviewresource' :  ( context ) => ReviewResource(resourceData: ModalRoute.of(context)!.settings.arguments as QueryDocumentSnapshot),
       },
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        primaryColor: Color(0xFF0060BE),
+        primaryColorDark: Color(0xFF0052a2),
+        primaryColorLight: Color(0xFF006edb),
+        focusColor: Color(0xFF0CCCCCC),
+        hoverColor: Color(0xFF0CCCCCC),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ButtonStyle(
+            backgroundColor: MaterialStateProperty.resolveWith<Color>((Set<MaterialState> states) {
+              if (states.contains(MaterialState.pressed)) {
+                return Color(0xFF0052a2);
+              } else if (states.contains(MaterialState.hovered)) {
+                return Color(0xFF0052a2);
+              } else if (states.contains(MaterialState.focused)) {
+                return Color(0xFF0052a2);
+              }
+              return Color(0xFF0060BE); // Default color
+            }),
+          ),
+        ),
+        textButtonTheme: TextButtonThemeData(
+          style: ButtonStyle(
+          foregroundColor: MaterialStateProperty.all<Color>(Color(0xFF0060BE)),
+          ),
+        ),
+        chipTheme: ChipThemeData(
+          backgroundColor: Colors.grey,
+          selectedColor: Color(0xFF0060BE),
+          showCheckmark: true,
+          checkmarkColor: Colors.white
+        )
       ),
       home: const MyHomePage(),
     );

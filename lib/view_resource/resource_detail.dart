@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:web_app/Analytics.dart';
 import 'package:web_app/common.dart';
 import 'package:web_app/events/schedule.dart';
@@ -43,7 +44,6 @@ class DetailLink extends StatelessWidget {
     );
   }
 }
-
 
 const fieldPadding = EdgeInsets.symmetric(vertical: 8.0);
 
@@ -129,9 +129,20 @@ class ResourceDetail extends StatelessWidget {
       key: ObjectKey(resource.id),
       titlePadding: EdgeInsets.fromLTRB(16, 16, 16, 0),
       contentPadding: EdgeInsets.all(16),
-      title: Text(
-        '${resource['name']}',
-        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+      title: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              '${resource['name']}',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            IconButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                icon: Icon(Icons.close),
+                splashRadius: 20,
+            )
+        ]
       ),
       children: [
         Container(

@@ -64,7 +64,7 @@ class _MyHomePageState extends State<MyHomePage> {
         leading: isLargeScreen
             ? null
             : IconButton(
-          color: Colors.blue,
+           color: Theme.of(context).primaryColor,
           icon: const Icon(Icons.menu),
           onPressed: () => _scaffoldKey.currentState?.openDrawer(),
         ),
@@ -73,10 +73,23 @@ class _MyHomePageState extends State<MyHomePage> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Image.asset(
-                'assets/rrdb_logo.png',
-                height: 55,
-              ),
+              Focus(child: Builder(builder: (context) {
+                final bool hasFocus = Focus.of(context).hasFocus;
+                return Container(
+                  decoration: BoxDecoration(
+                    border: hasFocus
+                        ? Border.all(
+                            // color: Colors.black,
+                        style: BorderStyle.solid)
+                        : null,
+                  ),
+                  child: Image.asset(
+                    'assets/rrdb_logo.png',
+                    height: 55,
+                    semanticLabel: "Resilience Resource Database Logo",
+                  ),
+                );
+              })),
               if (isLargeScreen) Expanded(child: _navBarItems())
             ],
           ),
@@ -220,17 +233,20 @@ class _MyHomePageState extends State<MyHomePage> {
                           children: [
                             Container(
                             height: 500,
-                            child: ListView.builder(
-                              scrollDirection: Axis.vertical,
-                              shrinkWrap: true,
-                              itemCount: docs.length,
-                              itemBuilder: (context, index) {
-                                return ResourceSummary(
-                                  resource: docs[index],
-                                  isSmallScreen: isSmallScreen,
-                                  analytics: analytics,
-                                );
-                              }
+                            child: FocusTraversalGroup(
+                              policy: OrderedTraversalPolicy(),
+                              child: ListView.builder(
+                                scrollDirection: Axis.vertical,
+                                shrinkWrap: true,
+                                itemCount: docs.length,
+                                itemBuilder: (context, index) {
+                                  return ResourceSummary(
+                                    resource: docs[index],
+                                    isSmallScreen: isSmallScreen,
+                                    analytics: analytics,
+                                  );
+                                }
+                              ),
                             )
                           ),
                             Padding(
@@ -414,7 +430,7 @@ class ProfileIcon extends StatelessWidget {
             if( claims['admin'] ) 
             {
               return PopupMenuButton<Menu>(
-                  icon: const Icon(Icons.person),
+                  icon: Icon(Icons.person),
                   offset: const Offset(0, 40),
                   onSelected: (Menu item) {
                     if(item == Menu.itemOne)
@@ -465,7 +481,7 @@ class ProfileIcon extends StatelessWidget {
             else if( claims['manager'] ) 
             {
               return PopupMenuButton<Menu>(
-                  icon: const Icon(Icons.person),
+                  icon: Icon(Icons.person),
                   offset: const Offset(0, 40),
                   onSelected: (Menu item) {
                     if(item == Menu.itemOne)
@@ -511,7 +527,7 @@ class ProfileIcon extends StatelessWidget {
 
         // build default menu for non-authenticated users
         return PopupMenuButton<Menu>(
-            icon: const Icon(Icons.person),
+            icon: Icon(Icons.person),
             offset: const Offset(0, 40),
             onSelected: (Menu item) { Navigator.pushNamed( context, '/login' );},
             itemBuilder: (BuildContext context) => <PopupMenuEntry<Menu>>[
