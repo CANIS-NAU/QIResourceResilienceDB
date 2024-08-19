@@ -20,9 +20,11 @@ Follow the instructions provided by the following link: https://docs.flutter.dev
 
 ### Firebase CLI
 
-The Firebase CLI will help you interact with Firebase features, testing Cloud Functions locally, deploying application components, etc. If you will be doing this sort of work, you can follow [Firebase CLI's installation instructions](https://firebase.google.com/docs/cli) for your platform. We've already configured the project, so once you've done `firebase login` you have completed the setup.
+The Firebase CLI will help you interact with Firebase features, testing Cloud Functions locally, deploying application components, etc. If you will be doing this sort of work, you can follow [Firebase CLI's installation instructions](https://firebase.google.com/docs/cli) for your platform. We've already configured the project, so once you've done `firebase login` you completed the necessary steps from that document.
 
-Know that we use two separate Firebase Projects for RRDB -- one to host a development environment (for us to use as developers) and the other for production (for real users to interact with). When using the Firebase CLI, you'll want to be sure your currently active project is the correct one. If you enter command `firebase use`, it should list the configured projects and indicate which is currently active. (It should use the "default"/"development" project by default.) If you need to switch, for instance to the development project, you can enter the command `firebase use development`. Any subsequent Firebase CLI command will affect that project (unless you override that).
+You should also run `firebase experiments:enable webframeworks` to enable Flutter integration.
+
+Know that we use two separate Firebase Projects for RRDB -- one to host a development environment (for us to use as developers) and the other for production (for real users to interact with). When using the Firebase CLI, you'll want to be sure your currently active project is the correct one. If you enter command `firebase use`, it should list the configured projects and indicate which is currently active. (It should use the "default"/"development" project by default.) If you need to switch, for instance to the development project, you can enter the command `firebase use development`. Any subsequent Firebase CLI command will affect that project (unless you specify an override for the command).
 
 ### Environment Files
 
