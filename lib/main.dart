@@ -64,6 +64,10 @@ class MyApp extends StatelessWidget {
         primaryColorLight: Color(0xFF006edb),
         focusColor: Color(0xFF0CCCCCC),
         hoverColor: Color(0xFF0CCCCCC),
+        appBarTheme: AppBarTheme(
+          color: Color(0xFF0060BE),
+          iconTheme: IconThemeData(color: Colors.white),
+        ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ButtonStyle(
             backgroundColor: MaterialStateProperty.resolveWith<Color>((Set<MaterialState> states) {
@@ -74,7 +78,7 @@ class MyApp extends StatelessWidget {
               } else if (states.contains(MaterialState.focused)) {
                 return Color(0xFF0052a2);
               }
-              return Color(0xFF0060BE); // Default color
+              return Color(0xFF0060BE);
             }),
           ),
         ),

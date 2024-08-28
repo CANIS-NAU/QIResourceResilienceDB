@@ -197,6 +197,14 @@ class Login extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Login'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          splashRadius: 20.0,
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
+
       ),
       body: LayoutBuilder(builder: (context, windowSize) {
         return Align(
@@ -211,7 +219,14 @@ class Login extends StatelessWidget {
                   child: TextField(
                     obscureText: false,
                     decoration: InputDecoration(
-                        border: OutlineInputBorder(), labelText: 'Email'),
+                        border: OutlineInputBorder(),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(
+                            color: Theme.of(context).primaryColor,
+                            width: 2
+                          )
+                        ),
+                        labelText: 'Email'),
                     onChanged: (text) {
                       email = text;
                     },
@@ -222,7 +237,14 @@ class Login extends StatelessWidget {
                   child: TextField(
                     obscureText: true,
                     decoration: InputDecoration(
-                        border: OutlineInputBorder(), labelText: 'Password'),
+                        border: OutlineInputBorder(),
+                        focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                                color: Theme.of(context).primaryColor,
+                                width: 2
+                            )
+                        ),
+                        labelText: 'Password'),
                     onChanged: (text) {
                       password = text;
                     },
@@ -237,14 +259,10 @@ class Login extends StatelessWidget {
                       padding: MaterialStateProperty.all(
                         EdgeInsets.symmetric(vertical: 15.0, horizontal: 48.0),
                       ),
-                        foregroundColor:
-                            MaterialStateProperty.all<Color>(Colors.white),
-                        backgroundColor:
-                            MaterialStateProperty.all<Color>(Colors.blue),
                         shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                             RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(18.0),
-                                side: BorderSide(color: Colors.blue)))),
+                                ))),
                     onPressed: () {
                       login(email, password, context);
                     },
@@ -254,14 +272,18 @@ class Login extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Center(
-                    child: RichText(
-                      text: TextSpan(
-                          style: TextStyle(color: Colors.blue),
-                          text: "Forgot Password",
-                          recognizer: TapGestureRecognizer()
-                            ..onTap = () {
-                              sendResetPasswordEmail(email, context);
-                            }),
+                    child: Focus(
+                      child: InkWell(
+                        onTap: () {
+                          sendResetPasswordEmail(email, context);
+                        },
+                        child: RichText(
+                          text: TextSpan(
+                            style: TextStyle(color: Theme.of(context).primaryColor),
+                            text: "Forgot Password",
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
