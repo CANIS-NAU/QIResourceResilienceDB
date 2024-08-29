@@ -220,12 +220,6 @@ class Login extends StatelessWidget {
                     obscureText: false,
                     decoration: InputDecoration(
                         border: OutlineInputBorder(),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(
-                            color: Theme.of(context).primaryColor,
-                            width: 2
-                          )
-                        ),
                         labelText: 'Email'),
                     onChanged: (text) {
                       email = text;
@@ -238,12 +232,6 @@ class Login extends StatelessWidget {
                     obscureText: true,
                     decoration: InputDecoration(
                         border: OutlineInputBorder(),
-                        focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(
-                                color: Theme.of(context).primaryColor,
-                                width: 2
-                            )
-                        ),
                         labelText: 'Password'),
                     onChanged: (text) {
                       password = text;

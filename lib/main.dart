@@ -92,7 +92,34 @@ class MyApp extends StatelessWidget {
           selectedColor: Color(0xFF0060BE),
           showCheckmark: true,
           checkmarkColor: Colors.white
-        )
+        ),
+        radioTheme: RadioThemeData(
+          fillColor: MaterialStateProperty.resolveWith<Color>((Set<MaterialState> states) {
+            if (states.contains(MaterialState.selected)) {
+              return Color(0xFF0060BE);
+            }
+            return Colors.grey;
+          }),
+        ),
+        checkboxTheme: CheckboxThemeData(
+          fillColor: MaterialStateProperty.resolveWith<Color>((Set<MaterialState> states) {
+            if (states.contains(MaterialState.selected)) {
+              return Color(0xFF0060BE);
+            }
+            return Colors.grey;
+          }),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          border: OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.grey),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: Color(0xFF0060BE), width: 2),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.grey),
+          ),
+        ),
       ),
       home: const MyHomePage(),
     );
