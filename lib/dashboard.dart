@@ -1,185 +1,579 @@
 import 'package:flutter/material.dart';
-import 'firebase_options.dart';
-import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/rendering.dart';
+import 'package:intl/intl.dart';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
+import 'dart:html' as html;
+import 'package:pdf/widgets.dart' as pw;
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:multi_select_flutter/multi_select_flutter.dart';
-import 'package:fl_chart/fl_chart.dart';
 
-class Dashboard extends StatelessWidget
+class Dashboard extends StatefulWidget {
+  @override
+  _DashboardState createState() => _DashboardState();
+}
+class _DashboardState extends State<Dashboard>
 {
-  List<FlSpot> dummyData = List.generate( 7, (index) {
-    return FlSpot( index.toDouble(), index * 10 );
-  }); // Linear dummy data
+  DateTime? startDate = DateTime.now().subtract(Duration(days: 30));
+  DateTime? endDate = DateTime.now();
 
-  //change values on health focus or age bracket
+  final GlobalKey graphToExport = GlobalKey();
+  Widget? graphWidget;
+
+  final List<String> chartTypes = ['Line', 'Bar', 'Scatter Plot'];
+  String selectedChartType = "Line";
+
+  String selectedExportType = 'PDF';
+  final List<String> exportTypes = ['PDF', 'Image'];
+
+  String selectedData = 'Total Site Visits';
+  final List<String> dataSources = ['Total Site Visits', 'Clicks to Offsite Links',
+    'Age Range Searches', 'Health Focus Searches', 'Resource Type Searches'];
+
+  // map to store x and y labels for each data source
+  // TODO: group by type (color code for each type of age range, health focus, resource type)
+  final Map<String, Map<String, String>> dataSourceLabels = {
+    'Total Site Visits': {'xLabel': 'Date', 'yLabel': 'Number Of Visits'},
+    'Clicks to Offsite Links': {'xLabel': 'Date', 'yLabel': 'Number Of Clicks'},
+    'Searches per Age Range': {'xLabel': 'Date', 'yLabel': 'Number Of Searches'},
+    'Searches per Health Focus': {'xLabel': 'Date', 'yLabel': 'Number Of Searches'},
+    'Searches per Resource Type': {'xLabel': 'Date', 'yLabel': 'Number Of Searches'},
+  };
+  // create a set to keep track of used colors
+  final Set<Color> usedColors = {};
+  // create a predefined list of distinct colors for graphs
+  final List<Color> predefinedColors = [
+    Colors.blue,
+    Colors.red,
+    Colors.green,
+    Colors.orange,
+    Colors.purple,
+    Colors.yellow,
+    Colors.teal,
+    Colors.pink,
+    Colors.indigo,
+    // add more colors as needed
+  ];
+
+  // function that exports the graph as PNG or PDF
+  // TODO: is this similar to pdfDownload.dart, can it be incorporated?
+  Future<void> exportGraph(BuildContext context) async {
+    Uint8List? pngBytes;
+    try {
+      // capture the graph as an image
+      RenderRepaintBoundary renderer = graphToExport.currentContext!.findRenderObject() as RenderRepaintBoundary;
+      ui.Image image = await renderer.toImage();
+      ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      pngBytes = byteData!.buffer.asUint8List();
+    } catch (e) {
+      print('Error capturing graph image: $e');
+      return;
+    }
+
+    // export the graph based on the selected export type
+    if (selectedExportType == 'PDF') {
+      await exportAsPDF(pngBytes);
+    } else if (selectedExportType == 'Image') {
+      await exportAsImage(pngBytes);
+    }
+  }
+
+  Future<void> exportAsPDF(Uint8List? pngBytes) async {
+    try {
+      final pdf = pw.Document();
+      final imageProvider = pw.MemoryImage(pngBytes!);
+      pdf.addPage(
+        pw.Page(
+          build: (pw.Context context) {
+            return pw.Container(
+              alignment: pw.Alignment.topCenter,
+              child: pw.Image(imageProvider),
+            );
+          },
+        ),
+      );
+      final pdfBytes = await pdf.save();
+      final blob = html.Blob([pdfBytes], 'application/pdf');
+      final url = html.Url.createObjectUrlFromBlob(blob);
+      final anchor = html.AnchorElement(href: url)
+        ..setAttribute("download", "graph.pdf")
+        ..click();
+      html.Url.revokeObjectUrl(url);
+    } catch (e) {
+      print('Error exporting graph as PDF: $e');
+    }
+  }
+
+  Future<void> exportAsImage(Uint8List? pngBytes) async {
+    try {
+      final blob = html.Blob([pngBytes]);
+      final url = html.Url.createObjectUrlFromBlob(blob);
+      final anchor = html.AnchorElement(href: url)
+        ..setAttribute("download", "graph.png")
+        ..click();
+      html.Url.revokeObjectUrl(url);
+    } catch (e) {
+      print('Error exporting graph as PNG: $e');
+    }
+  }
+
+  // function to fetch data from RRDBFilters
+  // TODO: only done AGE RANGE & RESOURCE TYPE
+  Future<List<Map<String, dynamic>>> fetchData() async {
+    try {
+      if (selectedData == 'Resource Type Searches' ||
+          selectedData == 'Age Range Searches') {
+        QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+            .collection('RRDBEventLog')
+            .where('timestamp', isGreaterThanOrEqualTo: startDate)
+            .where('timestamp', isLessThanOrEqualTo: endDate)
+            .where('event', isEqualTo: 'filter')
+            .get();
+        print("collected data");
+
+        List<Map<String, dynamic>> data = [];
+
+        querySnapshot.docs.forEach((doc) {
+          Map<String, dynamic> docData = doc.data() as Map<String, dynamic>;
+
+          if (selectedData == 'Resource Type Searches') {
+            if (docData['payload'] != null &&
+                docData['payload'].containsKey('Type')) {
+              Map<String, dynamic> validDocData = {
+                'timestamp': doc['timestamp'].toDate(),
+                'Type': docData['payload']['Type']
+              };
+              data.add(validDocData);
+            }
+          }
+          if (selectedData == 'Age Range Searches') {
+            if (docData['payload'] != null &&
+                docData['payload'].containsKey('Age Range')) {
+              Map<String, dynamic> validDocData = {
+                'timestamp': doc['timestamp'].toDate(),
+                'Age Range': docData['payload']['Age Range']
+              };
+              data.add(validDocData);
+            }
+          }
+        });
+        print(data);
+        return data;
+      } else {
+        return [];
+      }
+    }
+    catch (e) {
+      print("error: $e");
+    }
+    return [];
+  }
+
+// function to count number of types per day
+  Map<DateTime, Map<String, int>> countTypesPerDay(List<Map<String, dynamic>> data) {
+    Map<DateTime, Map<String, int>> typeCounts = {};
+
+    // loop each entry in the data list
+    for (var entry in data) {
+      // get the date and type
+      DateTime date = DateTime(entry['timestamp'].year, entry['timestamp'].month, entry['timestamp'].day);
+      String type = entry['Type'];
+
+      // if the date is not already in the list, add it
+      if (!typeCounts.containsKey(date)) {
+        typeCounts[date] = {};
+      }
+
+      // if the type is not in the list, add it
+      if (!typeCounts[date]!.containsKey(type)) {
+        typeCounts[date]![type] = 0;
+      }
+
+      // increment the count for this type on this day
+      typeCounts[date]![type] = typeCounts[date]![type]! + 1;
+    }
+    return typeCounts;
+  }
+
+  // count the number of searches per age range per day
+  Map<DateTime, Map<String, int>> countAgeRangeCountsPerDay(List<Map<String, dynamic>> data) {
+    Map<DateTime, Map<String, int>> ageRangeCounts = {};
+
+    for (var entry in data) {
+      DateTime date = DateTime(entry['timestamp'].year, entry['timestamp'].month, entry['timestamp'].day);
+      String ageRange = entry['Age Range'];
+
+      if (!ageRangeCounts.containsKey(date)) {
+        ageRangeCounts[date] = {};
+      }
+
+      if (!ageRangeCounts[date]!.containsKey(ageRange)) {
+        ageRangeCounts[date]![ageRange] = 0;
+      }
+
+      ageRangeCounts[date]![ageRange] = ageRangeCounts[date]![ageRange]! + 1;
+    }
+    return ageRangeCounts;
+  }
+
+  // TODO: keep these! use to label axis when making graph
+  // function to get x label based on selected data source
+  String getXLabel(String selectedData) {
+    return dataSourceLabels[selectedData]!['xLabel']!;
+  }
+
+  // function to get y label based on selected data source
+  String getYLabel(String selectedData) {
+    return dataSourceLabels[selectedData]!['yLabel']!;
+  }
+
+  // TODO: make smaller pop-up
+  Future<void> selectDateRange(BuildContext context) async {
+    final DateTimeRange? pickedDateRange = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2000),
+      lastDate: DateTime.now(),
+      initialDateRange: DateTimeRange(
+        start: startDate ?? DateTime.now(),
+        end: endDate ?? DateTime.now(),
+      ),
+      builder: (BuildContext context, Widget? child) {
+        return Dialog(
+          child: child,
+        );
+      },
+    );
+    if (pickedDateRange != null) {
+      setState(() {
+        startDate = pickedDateRange.start;
+        endDate = pickedDateRange.end;
+      });
+    }
+  }
+
+  // function that creates a pop-up for adjusting graphing settings
+  // date range, chart type, data source
+  void showSettingsPopup() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        final screenWidth = MediaQuery.of(context).size.width;
+        final isSmallScreen = screenWidth < 600;
+
+        return AlertDialog(
+          title: Text('Chart Settings'),
+          content: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: isSmallScreen ? screenWidth * 0.9 : screenWidth * 0.8,
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ElevatedButton(
+                    onPressed: () => selectDateRange(context),
+                    child: Text(
+                      (startDate != null && endDate != null)
+                          ? 'Selected Date Range: ${DateFormat('yyyy-MM-dd').format(startDate!)} - ${DateFormat('yyyy-MM-dd').format(endDate!)}'
+                          : 'Select Date Range',
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16.0),
+                    child: isSmallScreen
+                        ? Column(
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 16.0),
+                                child: DropdownButtonFormField<String>(
+                                  decoration:
+                                      InputDecoration(labelText: 'Chart Type'),
+                                  value: selectedChartType,
+                                  onChanged: (String? newValue) {
+                                    if (newValue != null) {
+                                      setState(() {
+                                        selectedChartType = newValue;
+                                      });
+                                    }
+                                  },
+                                  items: chartTypes
+                                      .map<DropdownMenuItem<String>>(
+                                          (String value) {
+                                    return DropdownMenuItem<String>(
+                                      value: value,
+                                      child: Text(value),
+                                    );
+                                  }).toList(),
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 16.0),
+                                child: DropdownButtonFormField<String>(
+                                  decoration:
+                                      InputDecoration(labelText: 'Data Source'),
+                                  value: selectedData,
+                                  onChanged: (String? newValue) {
+                                    if (newValue != null) {
+                                      setState(() {
+                                        selectedData = newValue;
+                                      });
+                                    }
+                                  },
+                                  items: dataSources
+                                      .map<DropdownMenuItem<String>>(
+                                          (String value) {
+                                    return DropdownMenuItem<String>(
+                                      value: value,
+                                      child: Text(value),
+                                    );
+                                  }).toList(),
+                                ),
+                              ),
+                            ],
+                          )
+                        : Row(
+                            children: [
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.only(right: 16.0),
+                                  child: DropdownButtonFormField<String>(
+                                    decoration: InputDecoration(
+                                        labelText: 'Chart Type'),
+                                    value: selectedChartType,
+                                    onChanged: (String? newValue) {
+                                      if (newValue != null) {
+                                        setState(() {
+                                          selectedChartType = newValue;
+                                        });
+                                      }
+                                    },
+                                    items: chartTypes
+                                        .map<DropdownMenuItem<String>>(
+                                            (String value) {
+                                      return DropdownMenuItem<String>(
+                                        value: value,
+                                        child: Text(value),
+                                      );
+                                    }).toList(),
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                child: DropdownButtonFormField<String>(
+                                  decoration:
+                                      InputDecoration(labelText: 'Data Source'),
+                                  value: selectedData,
+                                  onChanged: (String? newValue) {
+                                    if (newValue != null) {
+                                      setState(() {
+                                        selectedData = newValue;
+                                      });
+                                    }
+                                  },
+                                  items: dataSources
+                                      .map<DropdownMenuItem<String>>(
+                                          (String value) {
+                                    return DropdownMenuItem<String>(
+                                      value: value,
+                                      child: Text(value),
+                                    );
+                                  }).toList(),
+                                ),
+                              ),
+                            ],
+                          ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
-  Widget build(BuildContext context) 
-  {
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Dashboard'),
       ),
-      body: LayoutBuilder( builder: ( context, windowSize ) {
-        return Container(
-          child: new Stack(
-            children: [
-              Text(
-                "Welcome Back, User!", // ${ username }
-                style: TextStyle( fontSize: 30.0 ),
-              ),
-              Container(
-                height: windowSize.maxHeight / 2.5,
-                width: windowSize.maxWidth / 3,
-                padding: EdgeInsets.only( top: windowSize.maxHeight / 10, left: windowSize.maxWidth / 70 ),
-                child:
-                LineChart(
-                  LineChartData(
-                    lineBarsData: [
-                      LineChartBarData(
-                        belowBarData: BarAreaData(show: true),
-                        spots: dummyData,
-                        isCurved: false,
-                        dotData: FlDotData(
-                          show: true,
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ElevatedButton(
+                        onPressed: showSettingsPopup,
+                        child: Text('Chart Settings'),
+                      ),
+                      SizedBox(height: 10),
+                      // TODO: smaller drop down
+                      FractionallySizedBox(
+                        widthFactor: 0.35,
+                        child: DropdownButtonFormField<String>(
+                          decoration: InputDecoration(labelText: 'Export Type'),
+                          value: selectedExportType,
+                          onChanged: (String? newValue) {
+                            setState(() {
+                              selectedExportType = newValue!;
+                            });
+                          },
+                          items: exportTypes
+                              .map<DropdownMenuItem<String>>((String value) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value),
+                            );
+                          }).toList(),
                         ),
-                        color: Colors.blue,
+                      ),
+                      SizedBox(height: 10),
+                      ElevatedButton(
+                        onPressed: () => exportGraph(context),
+                        child: Text("Export"),
                       ),
                     ],
-                    gridData: FlGridData( show: false ),
-                    titlesData: FlTitlesData(
-                      bottomTitles: AxisTitles( sideTitles: _bottomTitles, axisNameWidget:Text('Day'), ),
-                      leftTitles: AxisTitles( sideTitles: SideTitles( showTitles: false ), axisNameWidget: Text('Number Of Searches') ), //${ leftLabelText }
-                      topTitles: AxisTitles( sideTitles: SideTitles( showTitles: false ), axisNameWidget: Text('Number Of Searches Per Day') ), 
-                      rightTitles: AxisTitles( sideTitles: SideTitles( showTitles: false ) ),
-                    ),
                   ),
-                  swapAnimationDuration: Duration( milliseconds: 150 ),
-                  swapAnimationCurve: Curves.linear,
+                ),
+              ],
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(30),
+                child: FutureBuilder<List<Map<String, dynamic>>>(
+                  future: fetchData(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return Center(child: CircularProgressIndicator());
+                    } else if (snapshot.hasError) {
+                      return Text('Error: ${snapshot.error}');
+                    } else {
+                      return RepaintBoundary(
+                        key: graphToExport,
+                        child: buildChart(selectedChartType, snapshot.data!),
+                      );
+                    }
+                  },
                 ),
               ),
-              Container(
-                padding: EdgeInsets.only( top: windowSize.maxHeight / 2.5, left: windowSize.maxWidth / 75 ),
-                width: windowSize.maxWidth / 3,
-                child:
-                  Row(
-                    children: [
-                      Expanded(
-                        child:
-                          Container(
-                            padding: EdgeInsets.only( right: windowSize.maxWidth / 100, left: 0 ),
-                            //margin: EdgeInsets.only(right: 0, left: 1200),
-                            width: windowSize.maxWidth / 1000,
-                            child: 
-                              TextButton(
-                                style: ButtonStyle(
-                                  foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
-                                  backgroundColor: MaterialStateProperty.all<Color>(Colors.blue),
-                                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                                    RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(18.0),
-                                      side: BorderSide(color: Colors.blue)
-                                    )
-                                  )
-                                ),
-                                onPressed: () { 
-                                
-                                },
-                                child: Text('Searches Per Day'),
-                              ),
-                        ),
-                      ),
-                      Expanded(
-                        child:
-                        Container(
-                            padding: EdgeInsets.only( right: windowSize.maxWidth / 100, left: 0 ),
-                            //margin: EdgeInsets.only(right: 0, left: 1200),
-                            width: windowSize.maxWidth / 1000,
-                            child: 
-                              TextButton(
-                                style: ButtonStyle(
-                                  foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
-                                  backgroundColor: MaterialStateProperty.all<Color>(Colors.blue),
-                                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                                    RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(18.0),
-                                      side: BorderSide(color: Colors.blue)
-                                    )
-                                  )
-                                ),
-                                onPressed: () { 
-                                
-                                },
-                                child: Text('Searches Per Health Focus Per Day'),
-                              ),
-                        ),
-                      ),
-                      Expanded(
-                        child:
-                        Container(
-                            padding: EdgeInsets.only( right: windowSize.maxWidth / 100, left: 0 ),
-                            //margin: EdgeInsets.only(right: 0, left: 1200),
-                            width: windowSize.maxWidth / 1000,
-                            child: 
-                              TextButton(
-                                style: ButtonStyle(
-                                  foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
-                                  backgroundColor: MaterialStateProperty.all<Color>(Colors.blue),
-                                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                                    RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(18.0),
-                                      side: BorderSide(color: Colors.blue)
-                                    )
-                                  )
-                                ),
-                                onPressed: () { 
-                                
-                                },
-                                child: Text('Searches Per Age Range Per Day'),
-                              ),
-                        ),
-                      ),
-                    ],
-                  ),
+            ),
+            Align(
+              alignment: Alignment.bottomRight,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pushNamed(context, '/top10resources');
+                },
+                child: Text("See Top 10 Resources"),
               ),
-            ],
-          ),
-        );
-       }
-      )
+            ),
+          ],
+        ),
+      ),
     );
   }
 
-  SideTitles get _bottomTitles => SideTitles(
-      showTitles: true,
-      getTitlesWidget: (value, meta) {
-        String text = '';
-        switch (value.toInt()) {
-          case 0:
-            text = 'Mon';
-            break;
-          case 1:
-            text = 'Tue';
-            break;
-          case 2:
-            text = 'Wen';
-            break;
-          case 3:
-            text = 'Thu';
-            break;
-          case 4:
-            text = 'Fri';
-            break;
-          case 5:
-            text = 'Sat';
-            break;
-          case 6:
-            text = 'Sun';
-            break;
-          default:
-            return Container();
-        }
-        return Text( text );
-      },
+  // function to count the data per day, and get the formated date
+  List<GraphDataPoint> processData(List<Map<String, dynamic>> data) {
+    Map<DateTime, Map<String, int>> countsPerDay = {};
+
+    data.forEach((entry) {
+      DateTime date = DateTime(entry['timestamp'].year,
+          entry['timestamp'].month, entry['timestamp'].day);
+      String group = selectedData == 'Resource Type Searches'
+          ? entry['Type']
+          : entry['Age Range'];
+      if (!countsPerDay.containsKey(date)) {
+        countsPerDay[date] = {};
+      }
+      countsPerDay[date]![group] = (countsPerDay[date]![group] ?? 0) + 1;
+    });
+
+    List<GraphDataPoint> processedData = [];
+    countsPerDay.forEach((date, typeCounts) {
+      typeCounts.forEach((group, count) {
+        DateTime roundedDate = DateTime(date.year, date.month, date.day);
+        processedData.add(
+            GraphDataPoint(x: roundedDate, y: count.toDouble(), group: group));
+      });
+    });
+    return processedData;
+  }
+
+  Widget buildChart(String chartType, List<Map<String, dynamic>> data) {
+    if (selectedData != 'Age Range Searches' &&
+        selectedData != 'Resource Type Searches') {
+      return Center(
+        child: Text(
+          "No data available for '${selectedData}' at this time",
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+      );
+    }
+
+    List<GraphDataPoint> processedData = processData(data);
+    switch (chartType) {
+      case 'Line':
+        return buildLineChart(processedData);
+      case 'Bar':
+        return buildBarChart(processedData);
+      case 'Scatter Plot':
+        return buildScatterPlot(processedData);
+      default:
+        return Container();
+    }
+  }
+
+  // build a line chart widget using GraphDataPoints
+  Widget buildLineChart(List<GraphDataPoint> data) {
+    // print the data to the console
+    data.forEach((point) {
+      print('Date: ${point.x}, Value: ${point.y}, Group: ${point.group}');
+    });
+
+    // return a container with printed data for debugging: TODO: will fix
+    return Container(
+      child: Text(
+        data
+            .map((point) => '(${point.x}, ${point.y}, ${point.group})')
+            .join('\n'),
+        style: TextStyle(fontSize: 16),
+      ),
     );
+  }
+
+  // TODO: implement bar chart
+  Widget buildBarChart(List<GraphDataPoint> data) {
+    return Container(child: Text('Bar chart under development'));
+  }
+
+  // TODO: fl_chart does not support scatter, only pie
+  Widget buildScatterPlot(List<GraphDataPoint> data) {
+    return Container(child: Text('Scatter plot under development'));
+  }
+}
+
+// class representing a data point for a graph
+class GraphDataPoint {
+  // x,y coordinates of data point and the group that the point belongs to
+  final DateTime x;
+  final double y;
+  final String group;
+
+  // initialize GraphDataPoint instance
+  GraphDataPoint({required this.x, required this.y, required this.group});
 }
