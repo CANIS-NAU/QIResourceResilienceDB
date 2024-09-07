@@ -56,6 +56,7 @@ class _DashboardState extends State<Dashboard>
 
   // function that exports the graph as PNG or PDF
   // TODO: is this similar to pdfDownload.dart, can it be incorporated?
+  // TODO: export data to csv
   Future<void> exportGraph(BuildContext context) async {
     Uint8List? pngBytes;
     try {
@@ -117,7 +118,7 @@ class _DashboardState extends State<Dashboard>
   }
 
   // function to fetch data from RRDBFilters
-  // TODO: only done AGE RANGE & RESOURCE TYPE
+  // TODO: only done AGE RANGE, RESOURCE TYPE, CLICKS OFFSITE LINKS
   Future<List<Map<String, dynamic>>> fetchData() async {
     try {
       if (selectedData == 'Resource Type Searches' ||
@@ -158,7 +159,35 @@ class _DashboardState extends State<Dashboard>
         });
         print(data);
         return data;
-      } else {
+      }
+      else if(selectedData == 'Clicks to Offsite Links')
+        {
+          QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+              .collection('RRDBEventLog')
+              .where('timestamp', isGreaterThanOrEqualTo: startDate)
+              .where('timestamp', isLessThanOrEqualTo: endDate)
+              .where('event', isEqualTo: 'clicked-link')
+              .get();
+          print("collected data");
+
+          List<Map<String, dynamic>> data = [];
+
+          querySnapshot.docs.forEach((doc) {
+            Map<String, dynamic> docData = doc.data() as Map<String, dynamic>;
+              if (docData['payload'] != null &&
+                  docData['payload'].containsKey('link')) {
+                Map<String, dynamic> validDocData = {
+                  'timestamp': doc['timestamp'].toDate(),
+                  'type': docData['payload']['type'],
+                  'link': docData['payload']['link']
+                };
+                data.add(validDocData);
+              }
+          });
+          print(data);
+          return data;
+        }
+      else {
         return [];
       }
     }
@@ -168,51 +197,28 @@ class _DashboardState extends State<Dashboard>
     return [];
   }
 
-// function to count number of types per day
-  Map<DateTime, Map<String, int>> countTypesPerDay(List<Map<String, dynamic>> data) {
-    Map<DateTime, Map<String, int>> typeCounts = {};
-
+// TODO: function to count number of items per group per day
+  // 'type' for offsite, 'Type' for types of resources, and 'Age Range'
+  Map<DateTime, Map<String, int>> countsPerDay(List<Map<String, dynamic>> data, String metricStr) {
+    Map<DateTime, Map<String, int>> groupCounts = {};
     // loop each entry in the data list
     for (var entry in data) {
       // get the date and type
       DateTime date = DateTime(entry['timestamp'].year, entry['timestamp'].month, entry['timestamp'].day);
-      String type = entry['Type'];
+      String group = entry[metricStr];
 
       // if the date is not already in the list, add it
-      if (!typeCounts.containsKey(date)) {
-        typeCounts[date] = {};
+      if (!groupCounts.containsKey(date)) {
+        groupCounts[date] = {};
       }
-
-      // if the type is not in the list, add it
-      if (!typeCounts[date]!.containsKey(type)) {
-        typeCounts[date]![type] = 0;
+      // if the group is not in the list, add it
+      if (!groupCounts[date]!.containsKey(group)) {
+        groupCounts[date]![group] = 0;
       }
-
-      // increment the count for this type on this day
-      typeCounts[date]![type] = typeCounts[date]![type]! + 1;
+      // increment the count for this group on this day
+      groupCounts[date]![group] = groupCounts[date]![group]! + 1;
     }
-    return typeCounts;
-  }
-
-  // count the number of searches per age range per day
-  Map<DateTime, Map<String, int>> countAgeRangeCountsPerDay(List<Map<String, dynamic>> data) {
-    Map<DateTime, Map<String, int>> ageRangeCounts = {};
-
-    for (var entry in data) {
-      DateTime date = DateTime(entry['timestamp'].year, entry['timestamp'].month, entry['timestamp'].day);
-      String ageRange = entry['Age Range'];
-
-      if (!ageRangeCounts.containsKey(date)) {
-        ageRangeCounts[date] = {};
-      }
-
-      if (!ageRangeCounts[date]!.containsKey(ageRange)) {
-        ageRangeCounts[date]![ageRange] = 0;
-      }
-
-      ageRangeCounts[date]![ageRange] = ageRangeCounts[date]![ageRange]! + 1;
-    }
-    return ageRangeCounts;
+    return groupCounts;
   }
 
   // TODO: keep these! use to label axis when making graph
@@ -237,8 +243,16 @@ class _DashboardState extends State<Dashboard>
         end: endDate ?? DateTime.now(),
       ),
       builder: (BuildContext context, Widget? child) {
-        return Dialog(
-          child: child,
+        return LayoutBuilder(
+          builder: (BuildContext context, BoxConstraints constraints) {
+            return Dialog(
+              child: Container(
+                width: constraints.maxWidth * 0.5,
+                height: constraints.maxHeight * 0.7,
+                child: child,
+              ),
+            );
+          },
         );
       },
     );
@@ -250,15 +264,80 @@ class _DashboardState extends State<Dashboard>
     }
   }
 
-  // function that creates a pop-up for adjusting graphing settings
-  // date range, chart type, data source
-  void showSettingsPopup() {
+  void showExportDialog() {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         final screenWidth = MediaQuery.of(context).size.width;
         final isSmallScreen = screenWidth < 600;
+        return AlertDialog(
+          title: Text('Export Settings'),
+          content: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: isSmallScreen ? screenWidth * 0.9 : screenWidth * 0.8,
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // TODO: put choice chips here for exporting graph or data(csv)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16.0),
+                    child: Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 16.0),
+                          child: DropdownButton<String>(
+                            value: selectedExportType,
+                            onChanged: (String? newValue) {
+                              setState(() {
+                                selectedExportType = newValue!;
+                              });
+                            },
+                            items: exportTypes
+                                .map<DropdownMenuItem<String>>((String value) {
+                              return DropdownMenuItem<String>(
+                                value: value,
+                                child: Text(value),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                exportGraph(context);
+                Navigator.of(context).pop();
+              },
+              child: Text('Export'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
+  // function that creates a pop-up for adjusting graphing settings
+  // date range, chart type, data source
+  void showSettingsDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        final screenWidth = MediaQuery.of(context).size.width;
+        final isSmallScreen = screenWidth < 600;
         return AlertDialog(
           title: Text('Chart Settings'),
           content: ConstrainedBox(
@@ -418,33 +497,12 @@ class _DashboardState extends State<Dashboard>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       ElevatedButton(
-                        onPressed: showSettingsPopup,
+                        onPressed: showSettingsDialog,
                         child: Text('Chart Settings'),
                       ),
                       SizedBox(height: 10),
-                      // TODO: smaller drop down
-                      FractionallySizedBox(
-                        widthFactor: 0.35,
-                        child: DropdownButtonFormField<String>(
-                          decoration: InputDecoration(labelText: 'Export Type'),
-                          value: selectedExportType,
-                          onChanged: (String? newValue) {
-                            setState(() {
-                              selectedExportType = newValue!;
-                            });
-                          },
-                          items: exportTypes
-                              .map<DropdownMenuItem<String>>((String value) {
-                            return DropdownMenuItem<String>(
-                              value: value,
-                              child: Text(value),
-                            );
-                          }).toList(),
-                        ),
-                      ),
-                      SizedBox(height: 10),
                       ElevatedButton(
-                        onPressed: () => exportGraph(context),
+                        onPressed: showExportDialog,
                         child: Text("Export"),
                       ),
                     ],
@@ -486,17 +544,27 @@ class _DashboardState extends State<Dashboard>
       ),
     );
   }
-
-  // function to count the data per day, and get the formated date
+  // function to count the data per day, and get the formatted date
   List<GraphDataPoint> processData(List<Map<String, dynamic>> data) {
     Map<DateTime, Map<String, int>> countsPerDay = {};
 
     data.forEach((entry) {
       DateTime date = DateTime(entry['timestamp'].year,
           entry['timestamp'].month, entry['timestamp'].day);
-      String group = selectedData == 'Resource Type Searches'
-          ? entry['Type']
-          : entry['Age Range'];
+      String group ='';
+      if(selectedData == 'Resource Type Searches')
+        {
+          group = entry['Type'];
+        }
+      else if (selectedData == "Age Range Searches")
+        {
+         group = entry['Age Range'];
+        }
+      else {
+       group = entry['type'];
+       print(entry['type']);
+      }
+
       if (!countsPerDay.containsKey(date)) {
         countsPerDay[date] = {};
       }
@@ -516,7 +584,8 @@ class _DashboardState extends State<Dashboard>
 
   Widget buildChart(String chartType, List<Map<String, dynamic>> data) {
     if (selectedData != 'Age Range Searches' &&
-        selectedData != 'Resource Type Searches') {
+        selectedData != 'Resource Type Searches' &&
+        selectedData != 'Clicks to Offsite Links') {
       return Center(
         child: Text(
           "No data available for '${selectedData}' at this time",
