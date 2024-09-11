@@ -71,6 +71,13 @@ class Verify extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Verify Resource'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          splashRadius: 20.0,
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
       ),
       body:
           new Container(
@@ -183,7 +190,7 @@ class Verify extends StatelessWidget {
                                                     shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                                                       RoundedRectangleBorder(
                                                         borderRadius: BorderRadius.circular(18.0),
-                                                        side: BorderSide(color: Colors.blue),
+                                                        side: BorderSide(color: Theme.of(context).primaryColor),
                                                       ),
                                                     ),
                                                     foregroundColor: MaterialStateProperty.all<Color>(Colors.black),
@@ -198,7 +205,7 @@ class Verify extends StatelessWidget {
                                                   child: Text(
                                                     'Review',
                                                     style: TextStyle(
-                                                      color: Colors.blue,
+                                                      color: Theme.of(context).primaryColor,
                                                       fontWeight: FontWeight.bold,
                                                     ),
                                                   ),
@@ -214,7 +221,7 @@ class Verify extends StatelessWidget {
                                                                     .circular(18.0),
                                                             side: BorderSide(
                                                                 color:
-                                                                    Colors.blue))),
+                                                                Theme.of(context).primaryColor))),
                                                     foregroundColor:
                                                         MaterialStateProperty.all<
                                                             Color>(Colors.black),
@@ -227,7 +234,7 @@ class Verify extends StatelessWidget {
                                                   },
                                                   child: Icon(
                                                     Icons.delete_outlined,
-                                                    color: Colors.blue,
+                                                    color: Theme.of(context).primaryColor,
                                                     size: 18.0,
                                                   ),
                                                 ),
