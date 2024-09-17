@@ -300,6 +300,7 @@ class _ReviewResourceState extends State<ReviewResource> {
               onChanged: (newValue) {
                 updateRating(newValue as String);
               },
+              focusNode: FocusNode(skipTraversal: true),
             ),
           ),
         );
@@ -351,6 +352,7 @@ class _ReviewResourceState extends State<ReviewResource> {
                     //submitToInbox( widget.resourceData, "Denied", userComments);
                 }
               },
+              focusNode: FocusNode(skipTraversal: true),
             ),
           ),
         );
@@ -389,6 +391,7 @@ class _ReviewResourceState extends State<ReviewResource> {
               onChanged: (newValue) {
                 updateRating(newValue as int);
               },
+              focusNode: FocusNode(skipTraversal: true),
             ),
           ),
         );
@@ -848,6 +851,7 @@ class _ReviewResourceState extends State<ReviewResource> {
                                                 ListTileControlAffinity.leading,
                                             contentPadding: EdgeInsets.zero,
                                             dense: true,
+                                        focusNode: FocusNode(skipTraversal: true),
                                           )),
                                 ),
                               ),
@@ -916,6 +920,7 @@ class _ReviewResourceState extends State<ReviewResource> {
                                                         .leading,
                                                 contentPadding: EdgeInsets.zero,
                                                 dense: true,
+                                            focusNode: FocusNode(skipTraversal: true),
                                               )))),
                               SizedBox(height: 15),
                     // life experience standard
@@ -968,6 +973,7 @@ class _ReviewResourceState extends State<ReviewResource> {
                                                       .leading,
                                               contentPadding: EdgeInsets.zero,
                                               dense: true,
+                                          focusNode: FocusNode(skipTraversal: true),
                                             )))),
                             SizedBox(height: 15),
                     // accessibility standard
@@ -1020,6 +1026,7 @@ class _ReviewResourceState extends State<ReviewResource> {
                                                 .leading,
                                         contentPadding: EdgeInsets.zero,
                                         dense: true,
+                                    focusNode: FocusNode(skipTraversal: true),
                                       )))),
                       SizedBox(height: 15),
                   ],

@@ -180,6 +180,13 @@ class _RegisterState extends State<Register> {
       return Scaffold(
         appBar: AppBar(
             title: const Text('Register'),
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              splashRadius: 20.0,
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
         ),
         body: LayoutBuilder( builder: ( context, windowSize ) {
             return Container(
@@ -255,30 +262,23 @@ class _RegisterState extends State<Register> {
                     ],
                   )
                     ),
-                    new Container(
-                        height: windowSize.maxHeight / 10,
-                        width: windowSize.maxWidth / 5,
-                        padding: const EdgeInsets.symmetric( vertical: 20 ),
-                        margin: EdgeInsets.only( top: 350, right: windowSize.maxWidth / 2.5, left: windowSize.maxWidth / 2.5 ),
-                        child:
-                            TextButton(
-                                style: ButtonStyle(
-                                    foregroundColor: MaterialStateProperty.all<Color>( Colors.white ),
-                                    backgroundColor: MaterialStateProperty.all<Color>( Colors.blue ),
-                                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                                        RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular( 18.0 ),
-                                        side: BorderSide( color: Colors.blue )
-                                    )
-                                )
-                                ), 
-                                onPressed: () { 
-                                    registerUser( email, password, role, context );
-                                },
-                                child: Text('Register'),
-                        )
-                    ),
-                ],
+                  new Container(
+                      padding: EdgeInsets.all(8.0),
+                      alignment: Alignment.center,
+                      child: ElevatedButton(
+                        child: Padding(padding: const EdgeInsets.all(12),
+                            child: Text('Register', style: TextStyle(fontSize: 14),)),
+                        style: ButtonStyle(
+                            shape:
+                                MaterialStateProperty.all<RoundedRectangleBorder>(
+                                    RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18.0),
+                        ))),
+                        onPressed: () {
+                          registerUser(email, password, role, context);
+                        },
+                      )),
+            ],
             ),
         );
         }
