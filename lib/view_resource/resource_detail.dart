@@ -48,9 +48,10 @@ class DetailLink extends StatelessWidget {
 const fieldPadding = EdgeInsets.symmetric(vertical: 8.0);
 
 class ResourceDetail extends StatelessWidget {
-  const ResourceDetail({required this.resource});
+  const ResourceDetail({required this.analytics, required this.resource});
 
   final DocumentSnapshot resource;
+  final HomeAnalytics analytics;
 
   String? addressString() {
     try {
@@ -122,8 +123,7 @@ class ResourceDetail extends StatelessWidget {
     Uri? url =
         fieldDefined('location') ? Uri.parse(fieldString('location')!) : null;
 
-    PdfDownload pdfDownload = PdfDownload();
-    HomeAnalytics analytics = HomeAnalytics();
+    PdfDownload pdfDownload = PdfDownload(analytics: analytics);
 
     return SimpleDialog(
       key: ObjectKey(resource.id),

@@ -36,6 +36,8 @@ class _MyHomePageState extends State<MyHomePage> {
   ResourceFilter filter = ResourceFilter.empty();
 
   HomeAnalytics analytics = HomeAnalytics();
+  //UniqueUserManager uuManager = UniqueUserManager();
+  
 
   void onFilterChange() {
     // TODO: only change the query if filter *actually* changed.
@@ -50,7 +52,7 @@ class _MyHomePageState extends State<MyHomePage> {
     final bool isLargeScreen = screenSize.width > 800;
     final bool isSmallScreen = !isLargeScreen;
     _menuItems = menuItems(isSmallScreen);
-    PdfDownload pdfDownload = PdfDownload();
+    PdfDownload pdfDownload = PdfDownload(analytics: analytics);
 
     bool Function(QueryDocumentSnapshot) filterFunction =
         clientSideFilter(filter);
