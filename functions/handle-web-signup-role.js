@@ -144,6 +144,20 @@ app.post('/getUsers', async (req,res) => {
   }
 });
 
+
+// TODO: Creating a cookie and send it off the the client. 
+// Note: This sends back to the server in form of a response, we need it to 
+// attach to the document.cookie object. It gets tricky with setting cookies
+// using google cloud functions.
+/*
+app.get("/createCookie", async (req,res) => {
+  //let newUuid = uuidv4();
+  //const options = {domain: "", httpOnly: true, secure: true };
+  res.cookie('__session', "test", {});
+  res.send();
+});
+*/
+
 // Updates an account's disabled/enabled status
 app.post('/updateAccountStatus', async (req,res) => { 
   res = setResAttr(res,'*','POST','Content-Type, application/json');
@@ -172,6 +186,7 @@ app.post('/updateAccountStatus', async (req,res) => {
   }
 });
 
+//exports.createCookie        = functions.https.onRequest(app);
 exports.handleWebSignUpRole = functions.https.onRequest(app);
 exports.getUsers            = functions.https.onRequest(app);
 exports.updateAccountStatus = functions.https.onRequest(app);

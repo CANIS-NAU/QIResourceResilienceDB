@@ -4,4 +4,5 @@ const archiveEvents = require("./archive-events");
 exports.handleWebSignUpRole = handleWebSignUpRole.handleWebSignUpRole;
 exports.getUsers = handleWebSignUpRole.getUsers;
 exports.updateAccountStatus = handleWebSignUpRole.updateAccountStatus;
+//exports.createCookie = handleWebSignUpRole.createCookie;
 exports.archiveEvents = archiveEvents.archiveEvents;
