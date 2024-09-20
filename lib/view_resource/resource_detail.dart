@@ -9,10 +9,13 @@ import 'package:web_app/file_attachments.dart';
 import 'package:web_app/pdfDownload.dart';
 import 'package:web_app/util.dart';
 
-
 class DetailLink extends StatelessWidget {
-  DetailLink({super.key, required this.analytics, required this.type,
-                                    required this.text, required this.uriText});
+  DetailLink(
+      {super.key,
+      required this.analytics,
+      required this.type,
+      required this.text,
+      required this.uriText});
   final HomeAnalytics analytics;
   final String type;
   final String text;
@@ -21,14 +24,14 @@ class DetailLink extends StatelessWidget {
   Uri parseUriText() {
     // Default to URL
     Uri uri = Uri.parse(this.uriText);
-    switch(this.type) {
+    switch (this.type) {
       case "address":
         String address = this.uriText;
         uri = Uri.parse(Uri.encodeFull('https://maps.google.com/?q=$address'));
         break;
       case "phone":
         String number = this.uriText;
-        uri = Uri.parse("tel:$number"); 
+        uri = Uri.parse("tel:$number");
         break;
     }
     return uri;
@@ -46,6 +49,22 @@ class DetailLink extends StatelessWidget {
 }
 
 const fieldPadding = EdgeInsets.symmetric(vertical: 8.0);
+
+/// Given a document for a resource that contains address information,
+/// format that address as a single string.
+String? formatResourceAddress(DocumentSnapshot resource) {
+  try {
+    return filterJoin([
+      resource['address'],
+      resource['building'],
+      resource['city'],
+      resource['state'],
+      resource['zipcode'],
+    ], emptyValue: null);
+  } on StateError {
+    return null;
+  }
+}
 
 class ResourceDetail extends StatelessWidget {
   const ResourceDetail({required this.analytics, required this.resource});
@@ -119,31 +138,29 @@ class ResourceDetail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     List<Attachment> attachments = getAttachmentsFromResource(resource);
-    String? fullAddress = addressString();
+    String? fullAddress = formatResourceAddress(resource);
     Uri? url =
         fieldDefined('location') ? Uri.parse(fieldString('location')!) : null;
 
-    PdfDownload pdfDownload = PdfDownload(analytics: analytics);
+    PdfDownload pdfDownload = PdfDownload();
 
     return SimpleDialog(
       key: ObjectKey(resource.id),
       titlePadding: EdgeInsets.fromLTRB(16, 16, 16, 0),
       contentPadding: EdgeInsets.all(16),
-      title: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              '${resource['name']}',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            IconButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                icon: Icon(Icons.close),
-                splashRadius: 20,
-            )
-        ]
-      ),
+      title: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+        Text(
+          '${resource['name']}',
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        ),
+        IconButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+          icon: Icon(Icons.close),
+          splashRadius: 20,
+        )
+      ]),
       children: [
         Container(
           constraints: const BoxConstraints(maxWidth: 800),
@@ -178,23 +195,29 @@ class ResourceDetail extends StatelessWidget {
                 if (fieldDefined('cost')) //
                   field('Cost', Text(resource['cost'])),
                 if (fullAddress != null)
-                  field('Address', DetailLink(analytics: analytics,
-                                              type: "address", 
-                                              text: fullAddress,
-                                              uriText: fullAddress)),
+                  field(
+                      'Address',
+                      DetailLink(
+                          analytics: analytics,
+                          type: "address",
+                          text: fullAddress,
+                          uriText: fullAddress)),
                 if (fieldDefined('phoneNumber'))
                   field(
-                    'Phone Number', DetailLink(analytics: analytics,
-                                              type: "phone", 
-                                              text: fieldString('phoneNumber')!,
-                                              uriText: 
-                                                  fieldString('phoneNumber')!)),
+                      'Phone Number',
+                      DetailLink(
+                          analytics: analytics,
+                          type: "phone",
+                          text: fieldString('phoneNumber')!,
+                          uriText: fieldString('phoneNumber')!)),
                 if (url != null)
                   field(
-                    'URL', DetailLink(analytics: analytics,
-                                              type: "url", 
-                                              text: 'link to website here',
-                                              uriText: url.toString())),
+                      'URL',
+                      DetailLink(
+                          analytics: analytics,
+                          type: "url",
+                          text: 'link to website here',
+                          uriText: url.toString())),
                 if (attachments.length > 0)
                   Padding(
                     padding: fieldPadding,
@@ -202,8 +225,8 @@ class ResourceDetail extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('Attachments: '),
-                        AttachmentsList(analytics: analytics,
-                                                      attachments: attachments),
+                        AttachmentsList(
+                            analytics: analytics, attachments: attachments),
                       ],
                     ),
                   ),
@@ -213,15 +236,16 @@ class ResourceDetail extends StatelessWidget {
                   child: ElevatedButton(
                     onPressed: () async {
                       // generate PDF
-                      List<int> pdfBytes = await pdfDownload.generateResourcePdf(
-                        resource['name'],
-                        resource['description'],
-                        resource['resourceType'],
-                        resource['privacy'],
-                        resource['culturalResponsivness'],
-                        fullAddress,
-                        fieldString('phoneNumber'),
-                        url);
+                      List<int> pdfBytes =
+                          await pdfDownload.generateResourcePdf(
+                              resource['name'],
+                              resource['description'],
+                              resource['resourceType'],
+                              resource['privacy'],
+                              resource['culturalResponsivness'],
+                              fullAddress,
+                              fieldString('phoneNumber'),
+                              url);
 
                       // download PDF
                       pdfDownload.downloadPdf(pdfBytes, resource['name']);
@@ -229,19 +253,20 @@ class ResourceDetail extends StatelessWidget {
                     child: Text('Download PDF'),
                   ),
                 ),
-                 if(url!= null)
-                     Padding(
-                       padding: fieldPadding,
-                       // button to share resource
-                       child: ElevatedButton(
-                         onPressed: () {
-                           pdfDownload.shareResourceLink(
-                             resource['name'],
-                             url,);
-                         },
-                         child: Text('Share'),
-                       ),
-                     )
+                if (url != null)
+                  Padding(
+                    padding: fieldPadding,
+                    // button to share resource
+                    child: ElevatedButton(
+                      onPressed: () {
+                        pdfDownload.shareResourceLink(
+                          resource['name'],
+                          url,
+                        );
+                      },
+                      child: Text('Share'),
+                    ),
+                  )
               ],
             ),
           ),
