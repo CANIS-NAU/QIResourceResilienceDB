@@ -4,27 +4,86 @@ import 'package:firebase_auth/firebase_auth.dart';
 // Time
 import 'package:web_app/common.dart';
 
+// Cookies
+import 'dart:html';
+
+class EventLog {
+  // Identifying session id 
+  String uuid = "";
+
+  // Reference the event log document. Do with cookies later on.
+  final CollectionReference eventRef = FirebaseFirestore.instance
+    .collection('RRDBEventLog');
+
+  // Upload an event to the log
+  Future<void> uploadRecord(String event, final payload) {
+
+    if(this.uuid == "") {
+      this.uuid = this.generatedUUID(this.getCookie());
+    }
+
+    final eventObj = {
+      "uuid": this.uuid,
+      "event": event,
+      "payload": payload,
+      "timestamp": getCurrentTime()
+    };
+
+    return this.eventRef.add(eventObj).then((value) => 
+      print("User event submitted")).catchError((onError) => 
+      print("Error submitting event"));
+  }
+
+  String generateNewUUID() {
+    final now = DateTime.now();
+    return now.microsecondsSinceEpoch.toString();
+  }
+
+  Map getCookie() {
+    // Get the cookie attached to document
+    final cookie = document.cookie!;
+
+    // Create a map from the cookie structure
+    final entity = cookie.split("; ").map((item) {
+      final split = item.split("=");
+      return MapEntry(split[0], split[1]);
+    });
+
+    // return the cookie map
+    return Map.fromEntries(entity);
+  }
+
+  // Check if the cookie contains a uuid
+  bool checkUUIDNotNull(Map cookieMap) {
+    return cookieMap.containsKey("uuid");
+  }
+
+  // Generate a new uuid if one is not present
+  String generatedUUID(Map cookieMap) {
+    String uuid = "";
+    if(this.checkUUIDNotNull(cookieMap)) {
+      uuid = cookieMap["uuid"];
+    }
+    else {
+      uuid = this.generateNewUUID();
+      document.cookie = "uuid=$uuid";
+    }
+    return uuid;
+  }
+}
+
 // Resonsible for uploading searches and filter options
 class HomeAnalytics {
-  // Declare data collection references
-  final CollectionReference searchRef = FirebaseFirestore.instance
-    .collection('RRDBSearches');
-  final CollectionReference filterRef = FirebaseFirestore.instance
-    .collection('RRDBFilters');
-  final CollectionReference clickedRef = FirebaseFirestore.instance 
-    .collection("RRDBClickedResources");
-  final CollectionReference clickedLinkRef = FirebaseFirestore.instance 
-    .collection("RRDBClickedLinks");
+
+  EventLog eventLog = EventLog();
 
   // Submit the user text search
   Future<void> submitTextSearch(String textSearch) {
     final search = {
       "search": textSearch,
-      "timestamp": getCurrentTime()
     };
-    return this.searchRef.add(search).then((value) => 
-      print("User search submitted")).catchError((onError) => 
-      print("Error submitting user search"));
+
+    return eventLog.uploadRecord("text-search",search);
   }
   
   // Submit the user filtered search
@@ -33,38 +92,29 @@ class HomeAnalytics {
     for(var filterItem in filter) {
       submissionFilter[filterItem.category] = filterItem.value;
     }
-
-    submissionFilter["timestamp"] = getCurrentTime();
-
-    return this.filterRef.add(submissionFilter).then((value) => 
-      print("User filter submitted")).catchError((onError) => 
-      print("Error submitting user filter"));
+    return eventLog.uploadRecord("filter", submissionFilter);
   }
 
-  // Submit the resource the user clicked
+  // Submit the resource clicked event
   Future<void> submitClickedResource(String resource) {
-    final clicked = {
-      "resource": resource,
-      "timestamp": getCurrentTime()
-    };
-    return this.clickedRef.add(clicked).then((value) => 
-      print("User click submitted")).catchError((onError) => 
-      print("Error submitting user click"));
+    return eventLog.uploadRecord("clicked-resource",{"resource": resource});
   }
 
+  // Submit the link the user submitted
   Future<void> submitClickedkLink(String type,Uri link) {
     final linkClicked = {
       "type": type,
       "link": link.toString(),
-      "time": getCurrentTime()
     };
-    return this.clickedLinkRef.add(linkClicked).then((value) => 
-      print("User clicked link submitted")).catchError((onError) => 
-      print("Error submitting user clicked link"));
+
+    return eventLog.uploadRecord("clicked-link", linkClicked);
   }
 }
 
-
+/*
+  TODO: Maybe put these in the event log as well. Might be helpful to tag these
+  as admin events.
+*/
 class UserResourceSubmission {
   UserResourceSubmission(this.currentUser);
   final CollectionReference submissionRef = FirebaseFirestore.instance

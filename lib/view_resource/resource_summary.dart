@@ -133,7 +133,8 @@ class ResourceSummary extends StatelessWidget {
               analytics.submitClickedResource(resource.id);
               showDialog(
                 context: context,
-                builder: (context) => ResourceDetail(resource: resource),
+                builder: (context) => ResourceDetail(analytics:analytics,
+                                                            resource: resource),
               );
             },
           ),
