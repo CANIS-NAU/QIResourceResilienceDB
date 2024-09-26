@@ -17,6 +17,15 @@
         { "fieldPath": "tagline", "order": "ASCENDING" },
         { "fieldPath": "__name__", "order": "ASCENDING" }
       ]     
+    },
+    {
+      "collectionGroup": "RRDBEventLog",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "timestamp", "order": "ASCENDING"},
+        { "fieldPath": "event", "order": "ASCENDING" },
+        { "fieldPath": "__name__", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

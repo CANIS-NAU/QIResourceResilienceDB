@@ -1,11 +1,16 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:intl/intl.dart';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'dart:html' as html;
+import 'dart:io';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:csv/csv.dart' as csv;
+import 'package:path_provider/path_provider.dart';
 
 class Dashboard extends StatefulWidget {
   @override
@@ -54,9 +59,10 @@ class _DashboardState extends State<Dashboard>
     // add more colors as needed
   ];
 
+  List<Map<String, dynamic>>? data;
+
   // function that exports the graph as PNG or PDF
   // TODO: is this similar to pdfDownload.dart, can it be incorporated?
-  // TODO: export data to csv
   Future<void> exportGraph(BuildContext context) async {
     Uint8List? pngBytes;
     try {
@@ -115,6 +121,60 @@ class _DashboardState extends State<Dashboard>
     } catch (e) {
       print('Error exporting graph as PNG: $e');
     }
+  }
+
+  Future<void> exportCSVData(BuildContext context, List<Map<String, dynamic>>? data) async {
+    try {
+      final csvData = convertDataToCsv(data!);
+      // create a blob with the CSV data
+      final bytes = utf8.encode(csvData);
+      final blob = html.Blob([Uint8List.fromList(bytes)], 'text/csv');
+      final url = html.Url.createObjectUrlFromBlob(blob);
+
+      // create an anchor element and simulate a click to download the file
+      final anchor = html.AnchorElement(href: url)
+        ..setAttribute("download", "data_export.csv")
+        ..click();
+
+      // revoke the object URL to free up memory
+      html.Url.revokeObjectUrl(url);
+    } catch (e) {
+      print('Error exporting CSV file: $e');
+    }
+  }
+
+  // convert data to CSV format
+  // TODO: get uuid with data?
+  // TODO: Format time with timezone indicator
+  String convertDataToCsv(List<Map<String, dynamic>> data) {
+    List<List<dynamic>> rows = [];
+
+    // add headers conditionally based on selected data source
+    if (selectedData == 'Clicks to Offsite Links') {
+      rows.add(['Timestamp', 'Group', 'Link']);
+
+    } else {
+      rows.add(['Timestamp', 'Group']); // no link header for other data sources
+    }
+
+    for (var item in data) {
+      // format timestamp as ISO8601
+      String formattedTimestamp = item['timestamp'] != null
+          ? (item['timestamp'] is DateTime
+          ? item['timestamp'].toIso8601String()
+          : DateTime.parse(item['timestamp'].toString()).toIso8601String())
+          : '';
+      List<dynamic> row = [
+        formattedTimestamp,
+        item.containsKey('Age Range') ? item['Age Range'] :
+        item.containsKey('Type') ? item['Type'] :
+        item.containsKey('type') ? item['type'] : 'Unknown',
+        item.containsKey('link') ? item['link'] : '',
+      ];
+      rows.add(row);
+    }
+    // convert rows to CSV format
+    return csv.ListToCsvConverter().convert(rows);
   }
 
   // function to fetch data from RRDBFilters
@@ -265,70 +325,131 @@ class _DashboardState extends State<Dashboard>
   }
 
   void showExportDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        final screenWidth = MediaQuery.of(context).size.width;
-        final isSmallScreen = screenWidth < 600;
-        return AlertDialog(
-          title: Text('Export Settings'),
-          content: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: isSmallScreen ? screenWidth * 0.9 : screenWidth * 0.8,
-            ),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // TODO: put choice chips here for exporting graph or data(csv)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 16.0),
+    if(data != null && data!.isNotEmpty) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          final screenWidth = MediaQuery
+              .of(context)
+              .size
+              .width;
+          final isSmallScreen = screenWidth < 600;
+          // variables to manage selection and export type
+          String? selectedOption = 'Graph'; // Default selected option
+          String? selectedExportType = exportTypes.isNotEmpty ? exportTypes
+              .first : null;
+
+          return StatefulBuilder(
+            builder: (BuildContext context, StateSetter setState) {
+              return AlertDialog(
+                title: Text('Export Settings'),
+                content: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: isSmallScreen ? screenWidth * 0.9 : screenWidth *
+                        0.8,
+                  ),
+                  child: SingleChildScrollView(
                     child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 16.0),
-                          child: DropdownButton<String>(
-                            value: selectedExportType,
-                            onChanged: (String? newValue) {
-                              setState(() {
-                                selectedExportType = newValue!;
-                              });
-                            },
-                            items: exportTypes
-                                .map<DropdownMenuItem<String>>((String value) {
-                              return DropdownMenuItem<String>(
-                                value: value,
-                                child: Text(value),
-                              );
-                            }).toList(),
-                          ),
+                        // Chips for selecting between Graph and Data
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            FilterChip(
+                              label: Text('Graph',
+                                  style: TextStyle(
+                                      color: selectedOption == 'Graph' ? Colors
+                                          .white : Colors.black)),
+                              selected: selectedOption == 'Graph',
+                              onSelected: (bool selected) {
+                                setState(() {
+                                  selectedOption = 'Graph';
+                                });
+                              },
+                            ),
+                            SizedBox(width: 8),
+                            FilterChip(
+                              label: Text('Data (CSV)',
+                                  style: TextStyle(
+                                      color: selectedOption == 'Data (CSV)'
+                                          ? Colors.white
+                                          : Colors.black)),
+                              selected: selectedOption == 'Data (CSV)',
+                              onSelected: (bool selected) {
+                                setState(() {
+                                  selectedOption = 'Data (CSV)';
+                                });
+                              },
+                            ),
+                          ],
                         ),
+                        SizedBox(height: 16.0),
+                        // Conditional content based on selected option
+                        if (selectedOption == 'Graph')
+                          Padding(
+                            padding: const EdgeInsets.only(top: 16.0),
+                            child: Column(
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 16.0),
+                                  child: DropdownButton<String>(
+                                    value: selectedExportType,
+                                    onChanged: (String? newValue) {
+                                      setState(() {
+                                        selectedExportType = newValue;
+                                      });
+                                    },
+                                    items: exportTypes
+                                        .map<DropdownMenuItem<String>>((
+                                        String value) {
+                                      return DropdownMenuItem<String>(
+                                        value: value,
+                                        child: Text(value),
+                                      );
+                                    }).toList(),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                       ],
                     ),
                   ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: Text('Cancel'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      if (selectedOption == 'Graph') {
+                        exportGraph(context);
+                      } else {
+                        exportCSVData(context, data);
+                      }
+                      Navigator.of(context).pop();
+                    },
+                    child: Text('Export'),
+                  ),
                 ],
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                exportGraph(context);
-                Navigator.of(context).pop();
-              },
-              child: Text('Export'),
-            ),
-          ],
-        );
-      },
-    );
+              );
+            },
+          );
+        },
+      );
+    }
+    else {
+      // Show a message if no data is available
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No data available to export')),
+      );
+    }
   }
+
 
   // function that creates a pop-up for adjusting graphing settings
   // date range, chart type, data source
@@ -521,9 +642,10 @@ class _DashboardState extends State<Dashboard>
                     } else if (snapshot.hasError) {
                       return Text('Error: ${snapshot.error}');
                     } else {
+                      data = snapshot.data;
                       return RepaintBoundary(
                         key: graphToExport,
-                        child: buildChart(selectedChartType, snapshot.data!),
+                        child: buildChart(selectedChartType, data!),
                       );
                     }
                   },

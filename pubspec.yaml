@@ -53,6 +53,7 @@ dependencies:
   mime: ^1.0.4
   firebase_storage: ^11.6.0
   firebase_analytics_web: ^0.5.5+12
+  csv: ^6.0.0
 
 dev_dependencies:
   flutter_test:
