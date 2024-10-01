@@ -159,11 +159,18 @@ class _DashboardState extends State<Dashboard>
 
     for (var item in data) {
       // format timestamp as ISO8601
-      String formattedTimestamp = item['timestamp'] != null
-          ? (item['timestamp'] is DateTime
-          ? item['timestamp'].toIso8601String()
-          : DateTime.parse(item['timestamp'].toString()).toIso8601String())
-          : '';
+      // check if timestamp exists and format it with a timezone indicator
+      String formattedTimestamp = '';
+      if (item['timestamp'] != null) {
+        if (item['timestamp'] is DateTime) {
+          // add timezone offset to ISO 8601 format
+          DateTime timestamp = item['timestamp'];
+          formattedTimestamp = timestamp.toUtc().toIso8601String();
+        } else {
+          DateTime timestamp = DateTime.parse(item['timestamp'].toString());
+          formattedTimestamp = timestamp.toUtc().toIso8601String();
+        }
+      }
       List<dynamic> row = [
         formattedTimestamp,
         item.containsKey('Age Range') ? item['Age Range'] :
