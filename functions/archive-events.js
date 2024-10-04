@@ -1,7 +1,5 @@
-const functions = require("firebase-functions");
-const { Firestore } = require('@google-cloud/firestore');
-
-const firestore = new Firestore();
+const { onSchedule } = require("firebase-functions/v2/scheduler");
+const { getFirestore } = require("firebase-admin/firestore");
 
 /**
  * The main Cloud Functions handler for archiveEvents.
@@ -9,46 +7,47 @@ const firestore = new Firestore();
  * check to see if their final date is in the past, and if so, archive them.
  */
 async function handle() {
-    try {
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      console.log(`Archiving events prior to ${yesterday}`);
+  try {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    console.log(`Archiving events prior to ${yesterday}`);
 
-      // Query for events that are not yet archived.
-      const events = await firestore.collection('resources')
-        .where('resourceType', '==', 'Event')
-        .where('isVisable', '!=', false)
-        .select('name', 'schedule')
-        .get();
+    // Query for events that are not yet archived.
+    const events = await getFirestore()
+      .collection("resources")
+      .where("resourceType", "==", "Event")
+      .where("isVisable", "!=", false)
+      .select("name", "schedule")
+      .get();
 
-      // Check each one to see if they're ready to be archived.
-      // If any are, add the update promise to this array.
-      const updates = [];
-      events.forEach((doc) => {
-        const data = doc.data();
-        const final = getFinalDate(data.schedule);
-        if (final !== null && final < yesterday) {
-          // Archive it!
-          console.log(`"${data.name}" (id: ${doc.id}) is due to be archived...`);
-          const promise = doc.ref.update({ isVisable: false });
-          updates.push(promise);
-        }
-      });
-      
-      await Promise.all(updates);
-      console.log(`Success. Archived ${updates.length} events.`);
-    } catch (error) {
-      console.error('Error while checking events:', error);
-      throw error;
-    }
+    // Check each one to see if they're ready to be archived.
+    // If any are, add the update promise to this array.
+    const updates = [];
+    events.forEach((doc) => {
+      const data = doc.data();
+      const final = getFinalDate(data.schedule);
+      if (final !== null && final < yesterday) {
+        // Archive it!
+        console.log(`"${data.name}" (id: ${doc.id}) is due to be archived...`);
+        const promise = doc.ref.update({ isVisable: false });
+        updates.push(promise);
+      }
+    });
+
+    await Promise.all(updates);
+    console.log(`Success. Archived ${updates.length} events.`);
+  } catch (error) {
+    console.error("Error while checking events:", error);
+    throw error;
+  }
 }
 
 // Schedule this to run daily via Pub/Sub schedule.
-exports.archiveEvents = functions
-  .runWith({ timeoutSeconds: 300 })
-  .pubsub
-  .schedule("3 7 * * *") // 7:03 AM UTC every day -- should be just after midnight in AZ
-  .onRun(handle);
+// 7:03 AM UTC every day -- should be just after midnight in AZ
+exports.archiveEvents = onSchedule(
+  { timeoutSeconds: 300, schedule: "3 7 * * *" },
+  handle
+);
 
 // This version is handy to keep around for local emulator debugging.
 // Just make sure to comment it out before deploying.
@@ -69,15 +68,16 @@ exports.archiveEvents = functions
  * @returns {Date | null} the final date of the event or null if there isn't one.
  */
 function getFinalDate(schedule) {
-  const first = schedule.time !== null ?
-    new Date(`${schedule.date}${schedule.time}Z`) :
-    new Date(`${schedule.date}T00:00:00Z`);
+  const first =
+    schedule.time !== null
+      ? new Date(`${schedule.date}${schedule.time}Z`)
+      : new Date(`${schedule.date}T00:00:00Z`);
 
   switch (schedule.type) {
-    case 'once':
+    case "once":
       return first;
 
-    case 'recurring':
+    case "recurring":
       if (schedule.until === null) {
         // If there's no 'until' date, there is no final date.
         return null;
@@ -125,7 +125,8 @@ function incrementMonth(firstDate, date) {
   // date, but will use the latest available day in the correct month
   // if it has to. In other words, 'Jan 31st, 2023' becomes 'Feb 28th, 2023'
   // and then 'Mar 31st, 2023' after that. Leap year accounted for.
-  const year = date.getMonth() == 11 ? date.getFullYear() + 1 : date.getFullYear();
+  const year =
+    date.getMonth() == 11 ? date.getFullYear() + 1 : date.getFullYear();
   const month = (date.getMonth() + 1) % 12; // in JS, months are in range: [0,11]
   const day = Math.min(firstDate.getDate(), daysInMonth(year, month));
   const d = new Date(firstDate);
@@ -164,13 +165,13 @@ function incrementDay(firstDate, date) {
  */
 function getIncrement(frequency) {
   switch (frequency) {
-    case 'annually':
+    case "annually":
       return incrementYear;
-    case 'monthly':
+    case "monthly":
       return incrementMonth;
-    case 'weekly':
+    case "weekly":
       return incrementWeek;
-    case 'daily':
+    case "daily":
       return incrementDay;
     default:
       throw new Error(`Unsupported frequency value: ${frequency}`);

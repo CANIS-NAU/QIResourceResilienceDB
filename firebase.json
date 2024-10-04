@@ -12,9 +12,6 @@
         ".git",
         "firebase-debug.log",
         "firebase-debug.*.log"
-      ],
-      "predeploy": [
-        "npm --prefix \"$RESOURCE_DIR\" run lint"
       ]
     }
   ],
@@ -27,7 +24,14 @@
     ],
     "frameworksBackend": {
       "region": "us-west1"
-    }
+    },
+    "rewrites": [{
+      "source": "/api",
+      "function": {
+        "functionId": "rrdbApi",
+        "pinTag": true
+      }
+    }]
   },
   "storage": [{
     "bucket": "rrdb-production--attachments",
