@@ -300,6 +300,7 @@ class _ReviewResourceState extends State<ReviewResource> {
               onChanged: (newValue) {
                 updateRating(newValue as String);
               },
+              focusNode: FocusNode(skipTraversal: true),
             ),
           ),
         );
@@ -351,6 +352,7 @@ class _ReviewResourceState extends State<ReviewResource> {
                     //submitToInbox( widget.resourceData, "Denied", userComments);
                 }
               },
+              focusNode: FocusNode(skipTraversal: true),
             ),
           ),
         );
@@ -389,6 +391,7 @@ class _ReviewResourceState extends State<ReviewResource> {
               onChanged: (newValue) {
                 updateRating(newValue as int);
               },
+              focusNode: FocusNode(skipTraversal: true),
             ),
           ),
         );
@@ -429,7 +432,7 @@ class _ReviewResourceState extends State<ReviewResource> {
                       TextSpan(
                           text: '$phoneNumStr\n',
                           style: TextStyle(
-                            color: Colors.blue,
+                            color: Theme.of(context).primaryColor,
                             fontSize: 14,
                             decoration: TextDecoration.underline,
                           ))
@@ -477,7 +480,7 @@ class _ReviewResourceState extends State<ReviewResource> {
                       TextSpan(
                           text: '$fullAddress\n',
                           style: TextStyle(
-                            color: Colors.blue,
+                            color: Theme.of(context).primaryColor,
                             fontSize: 14,
                             decoration: TextDecoration.underline,
                           ))
@@ -526,7 +529,7 @@ class _ReviewResourceState extends State<ReviewResource> {
                       TextSpan(
                           text: 'here',
                           style: TextStyle(
-                            color: Colors.blue,
+                            color: Theme.of(context).primaryColor,
                             fontSize: 14,
                             decoration:
                             TextDecoration.underline,
@@ -608,6 +611,13 @@ class _ReviewResourceState extends State<ReviewResource> {
     return Scaffold(
         appBar: AppBar(
           title: const Text('Review Resource'),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            splashRadius: 20.0,
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
         ),
         body: SafeArea(
             child: SingleChildScrollView(
@@ -841,6 +851,7 @@ class _ReviewResourceState extends State<ReviewResource> {
                                                 ListTileControlAffinity.leading,
                                             contentPadding: EdgeInsets.zero,
                                             dense: true,
+                                        focusNode: FocusNode(skipTraversal: true),
                                           )),
                                 ),
                               ),
@@ -909,6 +920,7 @@ class _ReviewResourceState extends State<ReviewResource> {
                                                         .leading,
                                                 contentPadding: EdgeInsets.zero,
                                                 dense: true,
+                                            focusNode: FocusNode(skipTraversal: true),
                                               )))),
                               SizedBox(height: 15),
                     // life experience standard
@@ -961,6 +973,7 @@ class _ReviewResourceState extends State<ReviewResource> {
                                                       .leading,
                                               contentPadding: EdgeInsets.zero,
                                               dense: true,
+                                          focusNode: FocusNode(skipTraversal: true),
                                             )))),
                             SizedBox(height: 15),
                     // accessibility standard
@@ -1013,6 +1026,7 @@ class _ReviewResourceState extends State<ReviewResource> {
                                                 .leading,
                                         contentPadding: EdgeInsets.zero,
                                         dense: true,
+                                    focusNode: FocusNode(skipTraversal: true),
                                       )))),
                       SizedBox(height: 15),
                   ],
@@ -1123,7 +1137,7 @@ class _ReviewResourceState extends State<ReviewResource> {
                         RoundedRectangleBorder>(
                         RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(18.0),
-                            side: BorderSide(color: Colors.blue))),
+                            side: BorderSide(color: Theme.of(context).primaryColor))),
                     foregroundColor:
                     MaterialStateProperty.all<Color>(Colors.black),
                   ),
@@ -1139,7 +1153,7 @@ class _ReviewResourceState extends State<ReviewResource> {
                   child: Text(
                     'Verify',
                     style: TextStyle(
-                      color: Colors.blue,
+                      color: Theme.of(context).primaryColor,
                       fontWeight: FontWeight.bold,
                     ),
                   ),

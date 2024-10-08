@@ -289,6 +289,13 @@ class _CreateResourceState extends State<CreateResource> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Submit Resource'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          splashRadius: 20.0,
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
       ),
       body: Center(
         child: Container(
@@ -321,6 +328,8 @@ class _CreateResourceState extends State<CreateResource> {
                       }),
                       controlAffinity: ListTileControlAffinity.leading,
                       dense: true,
+                      // focus only on the radio buttons within the list tile, not the entire tile
+                      focusNode: FocusNode(skipTraversal: true),
                     );
                   }).toList(),
                 ),
@@ -422,8 +431,21 @@ class _CreateResourceState extends State<CreateResource> {
                               padding: EdgeInsets.symmetric(
                                   horizontal: 4.0, vertical: 20.0),
                               child: InputChip(
-                                label: Text(tag),
-                                backgroundColor: Colors.blue[200],
+                                label: Text(
+                                  tag,
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                deleteIconColor: Colors.white,
+                                backgroundColor: Theme.of(context).primaryColor,
+                                side: MaterialStateBorderSide.resolveWith((Set<MaterialState> states) {
+                                  if (states.contains(MaterialState.focused)) {
+                                    return BorderSide(
+                                        color: Colors.grey[700]!, width: 2);
+                                  }
+                                  return BorderSide.none;
+                                }),
                                 onDeleted: () {
                                   setState(() {
                                     selectedTags.remove(tag);
@@ -472,6 +494,8 @@ class _CreateResourceState extends State<CreateResource> {
                       }),
                       controlAffinity: ListTileControlAffinity.leading,
                       dense: true,
+                      // focus only on the radio buttons within the list tile, not the entire tile
+                      focusNode: FocusNode(skipTraversal: true),
                     ),
                   ),
                 ),
@@ -491,6 +515,8 @@ class _CreateResourceState extends State<CreateResource> {
                       }),
                       controlAffinity: ListTileControlAffinity.leading,
                       dense: true,
+                      // focus only on the radio buttons within the list tile, not the entire tile
+                      focusNode: FocusNode(skipTraversal: true),
                     );
                   }).toList(),
                 ),
@@ -502,7 +528,10 @@ class _CreateResourceState extends State<CreateResource> {
                         children: [
                           SliderTheme(
                             data: SliderTheme.of(context).copyWith(
-                              valueIndicatorColor: Colors.blue,
+                              activeTrackColor: Theme.of(context).primaryColor,
+                              thumbColor: Theme.of(context).primaryColor,
+                              overlayColor: Theme.of(context).primaryColor.withOpacity(0.2),
+                              valueIndicatorColor:  Theme.of(context).primaryColor,
                               valueIndicatorTextStyle:
                                   TextStyle(color: Colors.white),
                             ),

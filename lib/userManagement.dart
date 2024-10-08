@@ -50,6 +50,13 @@ class _ManageState extends State<Manage> {
       return Scaffold(
         appBar: AppBar(
           title: Text('Manage'),
+          leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          splashRadius: 20.0,
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+          )
         ),
         body: FutureBuilder<List<dynamic>>(
           future: fetchFirebaseUsers(),
@@ -110,13 +117,10 @@ class _ManageState extends State<Manage> {
                                   children: <Widget>[
                                     const Spacer(),
                                     TextButton(
-                                      style: TextButton.styleFrom(
-                                        foregroundColor: Colors.blue,
-                                      ),
                                       child: Text(
                                         users[index]['disabled'] ? "Enable" : 
                                         "Disable",
-                                        style: TextStyle(color: Colors.blue),
+                                        style: TextStyle(color: Theme.of(context).primaryColor),
                                       ),
                                       onPressed: () {
                                         String suc = 

@@ -118,9 +118,9 @@ class Inbox extends StatelessWidget
                                 style: TextButton.styleFrom(
                                     foregroundColor: Colors.transparent,
                                 ),
-                                child: const Text(
+                                child: Text(
                                     "Rubric Info",
-                                    style: TextStyle(color: Colors.blue),
+                                    style: TextStyle(color: Theme.of(context).primaryColor),
                                 ),
                                 onPressed: () {
                                     showDialog(
@@ -168,6 +168,13 @@ class Inbox extends StatelessWidget
         return Scaffold(
             appBar: AppBar(
                 title: const Text('Inbox'),
+                leading: IconButton(
+                    icon: const Icon(Icons.arrow_back),
+                    splashRadius: 20.0,
+                    onPressed: () {
+                        Navigator.of(context).pop();
+                    },
+                ),
             ),
             body:
                 new Container(
