@@ -496,11 +496,13 @@ List<Attachment> getAttachmentsFromResource(dynamic data) {
 
 class AttachmentsList extends StatelessWidget {
   AttachmentsList({super.key, required this.analytics, 
-                                                    required this.attachments});
+                                                    required this.attachments,
+                                                    required this.resourceId});
 
   final HomeAnalytics analytics; 
   final List<Attachment> attachments;
   final String type = "attachments";
+  final String resourceId;
 
 
   @override
@@ -513,7 +515,8 @@ class AttachmentsList extends StatelessWidget {
             analytics: analytics,
             type: type,
             text: a.name, 
-            uri: Uri.parse(a.url)),
+            uri: Uri.parse(a.url),
+            resourceId: resourceId,),
           Text(" (${a.mimeType}; ${formatFileSize(a.fileSize)})")
         ]);
       }).toList(),
