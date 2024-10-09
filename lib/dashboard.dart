@@ -125,7 +125,7 @@ class _DashboardState extends State<Dashboard>
 
   Future<void> exportCSVData(BuildContext context, List<Map<String, dynamic>>? data) async {
     try {
-      final csvData = convertDataToCsv(data!);
+      final csvData =await convertDataToCsv(data!);
       // create a blob with the CSV data
       final bytes = utf8.encode(csvData);
       final blob = html.Blob([Uint8List.fromList(bytes)], 'text/csv');
@@ -143,15 +143,26 @@ class _DashboardState extends State<Dashboard>
     }
   }
 
+  // function to fetch the resource name from resourceId
+  Future<String?> getResourceName(resourceId) async {
+    if(resourceId != null) {
+      var doc = await FirebaseFirestore.instance.collection('resources').doc(
+          resourceId).get();
+      String? resourceName = doc.data()?['name'];
+      return resourceName;
+    }
+    else {
+      return "Unknown Resource"; // no resource name found
+    }
+  }
+
   // convert data to CSV format
-  // TODO: get uuid with data?
-  // TODO: Format time with timezone indicator
-  String convertDataToCsv(List<Map<String, dynamic>> data) {
+  Future<String> convertDataToCsv(List<Map<String, dynamic>> data) async {
     List<List<dynamic>> rows = [];
 
     // add headers conditionally based on selected data source
     if (selectedData == 'Clicks to Offsite Links') {
-      rows.add(['Timestamp', 'Group', 'Link']);
+      rows.add(['Timestamp', 'Group', 'Link', 'Resource Name']);
 
     } else {
       rows.add(['Timestamp', 'Group']); // no link header for other data sources
@@ -171,13 +182,31 @@ class _DashboardState extends State<Dashboard>
           formattedTimestamp = timestamp.toUtc().toIso8601String();
         }
       }
-      List<dynamic> row = [
-        formattedTimestamp,
-        item.containsKey('Age Range') ? item['Age Range'] :
-        item.containsKey('Type') ? item['Type'] :
-        item.containsKey('type') ? item['type'] : 'Unknown',
-        item.containsKey('link') ? item['link'] : '',
-      ];
+      // determine group based on available keys
+      String group = item.containsKey('Age Range') ? item['Age Range'] :
+      item.containsKey('Type') ? item['Type'] :
+      item.containsKey('type') ? item['type'] : 'Unknown';
+
+      // get the link if it exists
+      String link = item.containsKey('link') ? item['link'] : '';
+
+      // initialize resource name
+      String resourceName = '';
+
+      // check if the event is 'clicked-link' and if there's a resourceId
+      if(selectedData == 'Clicks to Offsite Links'){
+        resourceName = await getResourceName(item['resourceId']) ?? '';  // fetch the resource name
+      }
+
+
+      // create the row of data
+      List<dynamic> row = [formattedTimestamp, group];
+
+      // include link and resource name only for 'Clicks to Offsite Links'
+      if (selectedData == 'Clicks to Offsite Links') {
+        row.add(link);
+        row.add(resourceName);
+      }
       rows.add(row);
     }
     // convert rows to CSV format
@@ -246,7 +275,8 @@ class _DashboardState extends State<Dashboard>
                 Map<String, dynamic> validDocData = {
                   'timestamp': doc['timestamp'].toDate(),
                   'type': docData['payload']['type'],
-                  'link': docData['payload']['link']
+                  'link': docData['payload']['link'],
+                  'resourceId': docData['payload']['resourceId']
                 };
                 data.add(validDocData);
               }
