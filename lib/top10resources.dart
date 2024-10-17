@@ -156,6 +156,13 @@ class _TopResourcesState extends State<Top10Resources> {
     return Scaffold(
         appBar: AppBar(
           title: const Text('Top 10 Resources'),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            splashRadius: 20.0,
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
         ),
         body: LayoutBuilder(builder: (context, constraints) {
           bool isSmallScreen = constraints.maxWidth < 600;
@@ -196,14 +203,17 @@ class _TopResourcesState extends State<Top10Resources> {
                       child: Column(
                         children: [
                           Container( height: constraints.maxHeight - 250,
-                            child: ListView.builder(
-                              scrollDirection: Axis.vertical,
-                              shrinkWrap: true,
-                              itemCount: topResources.length,
-                              itemBuilder: (context, index){
-                                // display top resources as list tiles with rank(index)
-                                return TopResourceTile(resource: topResources[index], index: index);
-                              },
+                            child: FocusTraversalGroup(
+                              policy: OrderedTraversalPolicy(),
+                              child: ListView.builder(
+                                scrollDirection: Axis.vertical,
+                                shrinkWrap: true,
+                                itemCount: topResources.length,
+                                itemBuilder: (context, index){
+                                  // display top resources as list tiles with rank(index)
+                                  return TopResourceTile(resource: topResources[index], index: index);
+                                },
+                              ),
                             ),)
                         ],
                       ),
@@ -225,53 +235,66 @@ class ResourceData {
 }
 
 // display a resource in a list tile format
-class TopResourceTile extends StatelessWidget {
-
+class TopResourceTile extends StatefulWidget {
   const TopResourceTile({
     Key? key,
     required this.resource,
-    required this.index
+    required this.index,
   }) : super(key: key);
 
   final ResourceData resource;
   final int index;
 
   @override
+  _TopResourceTileState createState() => _TopResourceTileState();
+}
+
+class _TopResourceTileState extends State<TopResourceTile> {
+  bool isFocused = false;
+
+  @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 100,
-      child: Card(
-        color: Colors.white,
-        elevation: 4,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(0),
-        ),
-        child: ListTile(
-          contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 30),
-          dense: false,
-          title: Text(
-            resource.resourceName,
-            textAlign: TextAlign.left,
-            overflow: TextOverflow.ellipsis,
-            maxLines: 1,
-            softWrap: true,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
-            ),
+    return Focus(
+      onFocusChange: (focus) {
+        setState(() {
+          isFocused = focus;
+        });
+      },
+      child: Container(
+        height: 100,
+        child: Card(
+          color: isFocused ? Theme.of(context).focusColor : Colors.white,
+          elevation: 4,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(0),
           ),
-          leading: Text(
-            '${index + 1}',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
+          child: ListTile(
+            contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 30),
+            dense: false,
+            title: Text(
+              widget.resource.resourceName,
+              textAlign: TextAlign.left,
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+              softWrap: true,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
             ),
-          ),
-          subtitle: Text(
-            'Clicks: ${resource.clicks}',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
+            leading: Text(
+              '${widget.index + 1}',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
+            ),
+            subtitle: Text(
+              'Clicks: ${widget.resource.clicks}',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
             ),
           ),
         ),
