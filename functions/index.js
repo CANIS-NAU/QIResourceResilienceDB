@@ -1,7 +1,8 @@
-const handleWebSignUpRole = require("./handle-web-signup-role");
+const api = require("./api");
 const archiveEvents = require("./archive-events");
+const { initializeApp } = require("firebase-admin/app");
 
-exports.handleWebSignUpRole = handleWebSignUpRole.handleWebSignUpRole;
-exports.getUsers = handleWebSignUpRole.getUsers;
-exports.updateAccountStatus = handleWebSignUpRole.updateAccountStatus;
-exports.archiveEvents = archiveEvents.archiveEvents;
+initializeApp();
+
+exports.rrdbApi = api.api;
+exports.rrdbArchiveEvents = archiveEvents.archiveEvents;
