@@ -178,7 +178,7 @@ class _ManageState extends State<Manage> {
 
         if(claims != null) {
             final Map<String, dynamic> requestBody = {
-                'token': adminToken?.token,
+                'adminToken': adminToken?.token,
             };
 
             if(url != null) {
@@ -190,33 +190,8 @@ class _ManageState extends State<Manage> {
                   body: jsonEncode(requestBody),
               );
 
-              if(response.statusCode == 200) {
-                List<dynamic> users = json.decode( response.body )['Users'];
-                List<dynamic> finalUsers = [];
-                // Show only manager accounts, otherwise assume super user
-                users.forEach((user) {
-                    /*
-                    cant modify and iterate at same time
-                      if(!user['customClaims']['manager']) {
-                        users.remove(user);
-                      }
-                    */
-                    // Show only manager accounts, otherwise assume super user
-                    if(claims['admin']) {
-                      if(user['customClaims']['manager']) {
-                        finalUsers.add(user);
-                      }
-                    }
-                    else {
-                      // Superuser can see admin and managers
-                      if(user['customClaims']['manager'] || 
-                                                user['customClaims']['admin']) {
-                        finalUsers.add(user);
-                      }
-                    }
-
-                });
-                return finalUsers;
+          if (response.statusCode == 200) {
+            return json.decode(response.body)['Users'];
               }
             }
         }
@@ -239,7 +214,7 @@ class _ManageState extends State<Manage> {
 
           final Map<String, dynamic> requestBody = {
                 'uid': uid,
-                'token': adminToken?.token,
+                'adminToken': adminToken?.token,
           };
 
           if(url != null) {
