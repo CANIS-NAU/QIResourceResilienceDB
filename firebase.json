@@ -12,28 +12,33 @@
         ".git",
         "firebase-debug.log",
         "firebase-debug.*.log"
-      ],
-      "predeploy": [
-        "npm --prefix \"$RESOURCE_DIR\" run lint"
       ]
     }
   ],
   "hosting": {
     "source": ".",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ],
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "frameworksBackend": {
       "region": "us-west1"
-    }
+    },
+    "rewrites": [
+      {
+        "source": "/api/**",
+        "function": {
+          "functionId": "rrdbApi",
+          "pinTag": true
+        }
+      }
+    ]
   },
-  "storage": [{
-    "bucket": "rrdb-production--attachments",
-    "rules": "storage.rules"
-  }, {
-    "bucket": "sunrise-f9b44--rrdb-attachments",
-    "rules": "storage.rules"
-  }]
+  "storage": [
+    {
+      "bucket": "rrdb-production--attachments",
+      "rules": "storage.rules"
+    },
+    {
+      "bucket": "sunrise-f9b44--rrdb-attachments",
+      "rules": "storage.rules"
+    }
+  ]
 }

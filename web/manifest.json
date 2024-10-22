@@ -1,6 +1,6 @@
 {
-    "name": "web_app",
-    "short_name": "web_app",
+    "name": "rrdb",
+    "short_name": "rrdb",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
