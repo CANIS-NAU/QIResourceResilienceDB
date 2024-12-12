@@ -40,10 +40,8 @@ class EventLog {
     }
 
     final eventObj = {
-      // this naming is a bit misleading, but the original implementation
-      // stores this in the payload as "uuid", but the Cookie that's created
-      // is in fact a session-scope cookie.
-      "uuid": this.session,
+      "uuid": this.uuid,
+      "sessionId": this.session,
       "event": event,
       "payload": payload,
       "timestamp": getCurrentTime()
