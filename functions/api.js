@@ -1,6 +1,8 @@
 const { onRequest } = require("firebase-functions/v2/https");
 const { getAuth } = require("firebase-admin/auth");
 const express = require("express");
+const { v4: uuidv4 } = require("uuid");
+const cookieParser = require("cookie-parser");
 
 // docs:
 // https://firebase.google.com/docs/functions/http-events?gen=2nd
@@ -17,6 +19,8 @@ baseApp.use("/api", app);
 
 // Parse request body as JSON
 app.use(express.json());
+// Parse cookies
+app.use(cookieParser());
 
 /**********************************
  * Middleware for authn and authz *
@@ -77,6 +81,36 @@ const requireAdmin = async (req, res, next) => {
 // Basic "ok" response (which can be used to verify the API is running).
 app.get("/", async (req, res) => {
   return res.status(200).end();
+});
+
+const UUID_COOKIE = "uuid";
+const SESSION_COOKIE = "session";
+
+// Set unique user and session cookies.
+app.get("/getSession", (req, res) => {
+  let uuid = req.cookies[UUID_COOKIE];
+  if (!uuid) {
+    uuid = uuidv4();
+    res.cookie(UUID_COOKIE, uuid, {
+      maxAge: 31_536_000_000, // Expires in one year
+      httpOnly: true, // Deny access from JavaScript
+      secure: true, // Cookie sent only over HTTPS
+      sameSite: "Strict", // Strict same-site policy
+    });
+  }
+
+  let session = req.cookies[SESSION_COOKIE];
+  if (!session) {
+    session = uuidv4();
+    res.cookie(SESSION_COOKIE, session, {
+      // No maxAge means cookie only lives for this session
+      httpOnly: true, // Deny access from JavaScript
+      secure: true, // Cookie sent only over HTTPS
+      sameSite: "Strict", // Strict same-site policy
+    });
+  }
+
+  res.status(200).send({ uuid, session });
 });
 
 // Create a user.
