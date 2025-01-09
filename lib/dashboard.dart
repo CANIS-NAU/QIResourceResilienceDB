@@ -319,28 +319,6 @@ class _DashboardState extends State<Dashboard>
     return [];
   }
 
-  Map<DateTime, Map<String, int>> countsPerDay(List<Map<String, dynamic>> data, String metricStr) {
-    Map<DateTime, Map<String, int>> groupCounts = {};
-    // loop each entry in the data list
-    for (var entry in data) {
-      // get the date and type
-      DateTime date = DateTime(entry['timestamp'].year, entry['timestamp'].month, entry['timestamp'].day);
-      String group = entry[metricStr];
-
-      // if the date is not already in the list, add it
-      if (!groupCounts.containsKey(date)) {
-        groupCounts[date] = {};
-      }
-      // if the group is not in the list, add it
-      if (!groupCounts[date]!.containsKey(group)) {
-        groupCounts[date]![group] = 0;
-      }
-      // increment the count for this group on this day
-      groupCounts[date]![group] = groupCounts[date]![group]! + 1;
-    }
-    return groupCounts;
-  }
-
   // function to get x label based on selected data source
   String getXLabel(String selectedData) {
     return dataSourceLabels[selectedData]!['xLabel']!;
@@ -393,7 +371,7 @@ class _DashboardState extends State<Dashboard>
               .width;
           final isSmallScreen = screenWidth < 600;
           // variables to manage selection and export type
-          String? selectedOption = 'Graph'; // Default selected option
+          String? selectedOption = 'Graph';
           String? selectedExportType = exportTypes.isNotEmpty ? exportTypes
               .first : null;
 
@@ -410,7 +388,7 @@ class _DashboardState extends State<Dashboard>
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Chips for selecting between Graph and Data
+                        // chips for selecting between Graph and Data
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -531,7 +509,7 @@ class _DashboardState extends State<Dashboard>
                       return ElevatedButton(
                         onPressed: () async {
                           await selectDateRange(context);
-                          // After selecting the date range, update the button text
+                          // after selecting the date range, update the button text
                           setState(() {});
                         },
                         child: Text(
@@ -732,101 +710,111 @@ class _DashboardState extends State<Dashboard>
     );
   }
 
-  // function to process data and group it into intervals based on date range
-  List<GraphDataPoint> processData(List<Map<String, dynamic>> data) {
-      // determine the interval using a helper function
-      Duration interval = getIntervalBasedOnDateRange(startDate!, endDate!);
-      print(interval);
-      Map<DateTime, Map<String, int>> countsPerInterval = {};
+  // convert a timestamp to an integer bucket number
+  int getBucketNumber(DateTime timestamp, Duration bucketSize, DateTime baseline) {
+    // convert to UTC to avoid timezone issues
+    DateTime utcTimestamp = timestamp.toUtc();
+    DateTime utcBaseline = baseline.toUtc();
+    // calculate the bucket number by determining how many bucket durations
+    return utcTimestamp.difference(utcBaseline).inMilliseconds ~/ bucketSize.inMilliseconds;
+  }
 
-      // initialize counts for each interval in the date range
-      DateTime currentIntervalStart = startDate!;
-      while (currentIntervalStart.isBefore(endDate!) || currentIntervalStart.isAtSameMomentAs(endDate!)) {
-        countsPerInterval[currentIntervalStart] = {
-          for (var group in allGroups[selectedData] ?? []) group: 0
-        };
-        print("Initialized interval ${currentIntervalStart} with groups: ${countsPerInterval[currentIntervalStart]}");
-        currentIntervalStart = getNextIntervalStart(currentIntervalStart, interval);
+// map a bucket number back to its start date
+  DateTime getBucketStartDate(int bucketNumber, Duration bucketSize, DateTime baseline) {
+    DateTime utcBaseline = baseline.toUtc(); // ensure UTC timezone
+    // calculate the start date of the bucket using the bucket number
+    return utcBaseline.add(Duration(milliseconds: bucketNumber * bucketSize.inMilliseconds));
+  }
+
+  // process data into buckets
+  List<GraphDataPoint> processDataWithBuckets(
+      List<Map<String, dynamic>> data,
+      Duration bucketSize,
+      DateTime startDate,
+      DateTime endDate) {
+    // map to hold counts per bucket for each group
+    Map<int, Map<String, int>> countsPerBucket = {};
+
+    // use the start date as baseline for bucket calculations
+    DateTime baseline = startDate.toUtc();
+
+    // iterate over the data to populate counts per bucket
+    for (var entry in data) {
+      if (entry['timestamp'] == null) continue;
+      DateTime timestamp = entry['timestamp'].toUtc(); // convert to UTC
+      if (timestamp.isBefore(startDate) || timestamp.isAfter(endDate)) continue;
+
+      // get the bucket number for the current timestamp
+      int bucketNumber = getBucketNumber(timestamp, bucketSize, baseline);
+
+      // determine the group based on selected data
+      String? group;
+      if (selectedData == 'Resource Type Searches') {
+        group = entry['Type'];
+      } else if (selectedData == "Age Range Searches") {
+        group = entry['Age Range'];
+      } else {
+        group = entry['type'];
       }
+      if (group == null) continue;
 
-      // populate countsPerInterval with actual data from `data`
-      data.forEach((entry) {
-        if (entry['timestamp'] == null) return;
-        DateTime timestamp = entry['timestamp'];
-        DateTime intervalStart = getIntervalStart(timestamp, interval);
-
-        // determine the group based on the selectedData type
-        String? group;
-        if (selectedData == 'Resource Type Searches') {
-          group = entry['Type'];
-        } else if (selectedData == "Age Range Searches") {
-          group = entry['Age Range'];
-        } else {
-          group = entry['type'];
-        }
-
-        if (group == null) return;
-
-        // initialize group count if missing and increment count
-        countsPerInterval[intervalStart] ??= {};
-        countsPerInterval[intervalStart]![group] = (countsPerInterval[intervalStart]![group] ?? 0) + 1;
-        print("Processed entry for group '$group' on date ${timestamp}: interval ${intervalStart}, current count: ${countsPerInterval[intervalStart]![group]}");
-      });
-
-      // ensure all groups have zero counts for missing intervals
-      List<String> groups = allGroups[selectedData] ?? [];
-      countsPerInterval.forEach((date, groupCounts) {
-        for (var group in groups) {
-          if (!groupCounts.containsKey(group)) {
-            groupCounts[group] = 0; // set zero count for missing group in this interval
-          }
-        }
-      });
-
-      // convert countsPerInterval to a list of GraphDataPoint objects
-      List<GraphDataPoint> processedData = [];
-      countsPerInterval.forEach((date, groupCounts) {
-        groupCounts.forEach((group, count) {
-          // Use millisecondsSinceEpoch to ensure consistency in time representation
-          processedData.add(GraphDataPoint(x: date, y: count.toDouble(), group: group));
-        });
-      });
-
-      return processedData;
+      // initialize the bucket and group count
+      countsPerBucket[bucketNumber] ??= {};
+      countsPerBucket[bucketNumber]![group] = (countsPerBucket[bucketNumber]![group] ?? 0) + 1;
     }
 
-// get the start of the current interval based on the interval duration
-  DateTime getIntervalStart(DateTime timestamp, Duration interval) {
-    if (interval.inDays == 30) {
-      return DateTime(timestamp.year, timestamp.month);
-    } else if (interval.inDays == 7) {
-      return timestamp.subtract(Duration(days: timestamp.weekday - 1));
-    } else {
-      return DateTime(timestamp.year, timestamp.month, timestamp.day);
+    // ensure all buckets are initialized, in order to plot 0 data
+    List<String> groups = allGroups[selectedData] ?? [];
+    DateTime currentBucketStart = startDate.toUtc();
+    // create all buckets
+    while (currentBucketStart.isBefore(endDate.toUtc()) || currentBucketStart.isAtSameMomentAs(endDate.toUtc())) {
+      int bucketNumber = getBucketNumber(currentBucketStart, bucketSize, baseline);
+
+      // initialize the bucket if it doesn't exist
+      countsPerBucket[bucketNumber] ??= {};
+      for (var group in groups) {
+        // set 0 count for any missing values
+        countsPerBucket[bucketNumber]![group] ??= 0;
+      }
+      // move to next bucket
+      currentBucketStart = currentBucketStart.add(bucketSize);
     }
+
+    // convert countsPerBucket to GraphDataPoint objects
+    List<GraphDataPoint> processedData = [];
+    countsPerBucket.forEach((bucketNumber, groupCounts) {
+      // get the start and end dates for buckets
+      DateTime bucketStartDate = getBucketStartDate(bucketNumber, bucketSize, baseline);
+      DateTime bucketEndDate = bucketStartDate.add(bucketSize).subtract(Duration(days: 1));
+
+      // print the bucket details
+      print('Bucket Number: $bucketNumber, Date Range: ${bucketStartDate.month}/${bucketStartDate.day}–${bucketEndDate.month}/${bucketEndDate.day}');
+
+      // add group data as graph point
+      groupCounts.forEach((group, count) {
+        processedData.add(GraphDataPoint(
+          bucket: bucketNumber, // use bucket number as x-value
+          y: count.toDouble(),
+          group: group,
+        ));
+      });
+    });
+
+    // return data points
+    return processedData;
   }
 
-// get the next interval start date based on the interval
-  DateTime getNextIntervalStart(DateTime date, Duration interval) {
-    if (interval.inDays == 30) {
-      return DateTime(date.year, date.month + 1);
-    } else if (interval.inDays == 7) {
-      return date.add(Duration(days: 7));
-    } else {
-      return date.add(Duration(days: 1));
-    }
-  }
-
-  // function to determine the interval based on the total date range
-  Duration getIntervalBasedOnDateRange(DateTime startDate, DateTime endDate) {
+  // adjust bucket size dynamically based on date range
+  // TODO: multiple years
+  Duration getDynamicBucketSize(DateTime startDate, DateTime endDate) {
     int totalDays = endDate.difference(startDate).inDays;
 
     if (totalDays >= 90) {
-      return Duration(days: 30); // monthly intervals for ranges over 3 months
+      return Duration(days: 30); // monthly buckets
     } else if (totalDays >= 30) {
-      return Duration(days: 7); // weekly intervals for ranges between 1 and 3 months
+      return Duration(days: 7); // weekly buckets
     } else {
-      return Duration(days: 1); // daily intervals for ranges under 1 month
+      return Duration(days: 1); // daily buckets
     }
   }
 
@@ -850,21 +838,12 @@ class _DashboardState extends State<Dashboard>
     }
   }
 
-  double calculateXAxisInterval(List<DateTime> dateRange) {
-    if (dateRange.isEmpty) return Duration(days: 1).inMilliseconds.toDouble();
-
-    DateTime startDate = dateRange.first;
-    DateTime endDate = dateRange.last;
-
-    // get interval based on the date range
-    Duration interval = getIntervalBasedOnDateRange(startDate, endDate);
-    print(interval);
-
-    // return the interval in milliseconds for the x-axis interval
-    return interval.inMilliseconds.toDouble();
+  double calculateXAxisInterval(Duration bucketSize) {
+    // return the interval in terms of bucket numbers
+    return 1.0; // each bucket is represented as a single unit (1 bucket = 1 interval)
   }
 
-
+  // build the chart based on selected chart type
   Widget buildChart(String chartType, List<Map<String, dynamic>> data) {
     if (selectedData != 'Age Range Searches' &&
         selectedData != 'Resource Type Searches' &&
@@ -876,8 +855,11 @@ class _DashboardState extends State<Dashboard>
         ),
       );
     }
+    // determine bucket size
+    Duration bucketSize = getDynamicBucketSize(startDate!, endDate!);
+    // process data into buckets
+    List<GraphDataPoint> processedData = processDataWithBuckets(data, bucketSize, startDate!, endDate!);
 
-    List<GraphDataPoint> processedData = processData(data);
     switch (chartType) {
       case 'Line':
         return buildLineChart(processedData);
@@ -893,22 +875,11 @@ class _DashboardState extends State<Dashboard>
   // build a line chart widget using GraphDataPoints
   Widget buildLineChart(List<GraphDataPoint> data) {
 
-    // sort data by date first to ensure we can iterate efficiently
-    data.sort((a, b) => a.x.compareTo(b.x));
+    // sort data by bucket to ensure correct order
+    data.sort((a, b) => a.bucket.compareTo(b.bucket));
 
     // group data points by their group
     Map<String, List<FlSpot>> groupedData = {};
-
-    // get date range for the graph
-    DateTime startDate = this.startDate!;
-    DateTime endDate = this.endDate!;
-
-    List<DateTime> dateRange = [];
-    for (DateTime date = startDate;
-    date.isBefore(endDate) || date.isAtSameMomentAs(endDate);
-    date = date.add(Duration(days: 1))) {
-      dateRange.add(date);
-    }
 
     // get the list of all groups for the selectedData
     List<String> groups = allGroups[selectedData] ?? [];
@@ -931,10 +902,11 @@ class _DashboardState extends State<Dashboard>
         groupColors[point.group] = color;
       }
       groupedData[point.group]!.add(
-        FlSpot(point.x.millisecondsSinceEpoch.toDouble(), point.y),
+        FlSpot(point.bucket.toDouble(), point.y),
       );
     }
 
+    // TODO: show xaxis label
     // create a list of LineChartBarData for each group
     List<LineChartBarData> lines = groupedData.entries.map((entry) {
       return LineChartBarData(
@@ -966,22 +938,34 @@ class _DashboardState extends State<Dashboard>
           sideTitles: SideTitles(
             showTitles: true,
             getTitlesWidget: (value, meta) {
-              DateTime date = DateTime.fromMillisecondsSinceEpoch(value.toInt());
-              String formattedDate;
-              Duration interval = getIntervalBasedOnDateRange(startDate!, endDate!);
-              if (interval.inDays >= 30) {
-                formattedDate = '${date.month}/${date.year}';
-              } else if (interval.inDays >= 7) {
-                formattedDate = '${date.month}/${date.day}';
-              } else {
-                formattedDate = '${date.month}/${date.day}';
+              // map bucket number back to start date for labeling
+              DateTime bucketStart = getBucketStartDate(
+                value.toInt(),
+                getDynamicBucketSize(startDate!, endDate!),
+                startDate!,
+              );
+              DateTime bucketEnd = bucketStart.add(getDynamicBucketSize(startDate!, endDate!)).subtract(Duration(days: 1)); // inclusive end
+              // truncate bucketEnd if it exceeds the selected endDate
+              if (bucketEnd.isAfter(endDate!)) {
+                bucketEnd = endDate!;
               }
+
+              // check if the bucket is a single day
+              String formattedDateRange;
+              if (bucketStart == bucketEnd) {
+                // single-day bucket format
+                formattedDateRange = '${bucketStart.month}/${bucketStart.day}';
+              } else {
+                // multi-day bucket range
+                formattedDateRange = '${bucketStart.month}/${bucketStart.day}–${bucketEnd.month}/${bucketEnd.day}';
+              }
+
               return Padding(
                 padding: const EdgeInsets.only(top: 8.0),
-                child: Text(formattedDate, style: TextStyle(fontSize: 12)),
+                child: Text(formattedDateRange, style: TextStyle(fontSize: 12)),
               );
             },
-            interval: calculateXAxisInterval(data.map((d) => d.x).toList()),
+            interval: 1,
           ),
         ),
         rightTitles: AxisTitles(
@@ -1008,7 +992,7 @@ class _DashboardState extends State<Dashboard>
       gridData: FlGridData(
         show: true,
         drawVerticalLine: true,
-        verticalInterval: calculateXAxisInterval(data.map((d) => d.x).toList()),
+        verticalInterval: 1.0, // interval for integer buckets
         getDrawingVerticalLine: (value) => FlLine(
           color: Colors.grey.withOpacity(0.3),
           strokeWidth: 1,
@@ -1090,10 +1074,10 @@ class _DashboardState extends State<Dashboard>
 // class representing a data point for a graph
 class GraphDataPoint {
   // x,y coordinates of data point and the group that the point belongs to
-  final DateTime x;
+  final int bucket; // use bucket number as x int value
   final double y;
   final String group;
 
   // initialize GraphDataPoint instance
-  GraphDataPoint({required this.x, required this.y, required this.group});
+  GraphDataPoint({required this.bucket, required this.y, required this.group});
 }
