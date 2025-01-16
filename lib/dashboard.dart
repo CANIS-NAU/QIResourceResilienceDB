@@ -805,11 +805,13 @@ class _DashboardState extends State<Dashboard>
   }
 
   // adjust bucket size dynamically based on date range
-  // TODO: multiple years
   Duration getDynamicBucketSize(DateTime startDate, DateTime endDate) {
     int totalDays = endDate.difference(startDate).inDays;
-
-    if (totalDays >= 90) {
+    if(totalDays >= 365 * 5) {
+      return Duration(days: 365); // year buckets
+    } else if(totalDays >= 365) {
+      return Duration(days: 90); // 3 month buckets
+    } else if (totalDays >= 90) {
       return Duration(days: 30); // monthly buckets
     } else if (totalDays >= 30) {
       return Duration(days: 7); // weekly buckets
@@ -866,7 +868,7 @@ class _DashboardState extends State<Dashboard>
       case 'Bar':
         return buildBarChart(processedData);
       case 'Scatter Plot':
-        return buildScatterPlot(processedData);
+        return buildPieChart(processedData);
       default:
         return Container();
     }
@@ -1060,14 +1062,210 @@ class _DashboardState extends State<Dashboard>
     );
   }
 
-  // TODO: implement bar chart
   Widget buildBarChart(List<GraphDataPoint> data) {
-    return Container(child: Text('Bar chart under development'));
-  }
+    
+    // sort data by bucket to ensure correct order
+    data.sort((a, b) => a.bucket.compareTo(b.bucket));
+
+    // group data by buckets
+    Map<int, Map<String, double>> groupedData = {};
+    for (var point in data) {
+      groupedData[point.bucket] ??= {};
+      groupedData[point.bucket]![point.group] = point.y;
+    }
+
+    // get the list of all groups for the selectedData
+    List<String> groups = allGroups[selectedData] ?? [];
+
+    // assign colors for each group
+    Map<String, Color> groupColors = {};
+    for (var group in groups) {
+      groupColors[group] = predefinedColors[groupColors.length % predefinedColors.length];
+    }
+
+    // dynamically calculate bar width based on the number of buckets and chart space
+    int totalBuckets = groupedData.keys.length;
+    double chartWidth = MediaQuery.of(context).size.width * 0.8; 
+    double maxBarWidth = chartWidth / (totalBuckets * groups.length + totalBuckets - 1); // allow space for bars and groups
+    double barWidth = maxBarWidth.clamp(1.0, 20.0); // limit bar width between 1 and 20
+
+
+     List<BarChartGroupData> barGroups = groupedData.entries.map((entry) {
+    int bucket = entry.key;
+    Map<String, double> groupCounts = entry.value;
+
+    // create a bar for each group in the bucket
+    List<BarChartRodData> rods = groups.map((group) {
+      return BarChartRodData(
+        toY: groupCounts[group] ?? 0,
+        color: groupColors[group],
+        width: barWidth, // set bar width
+        borderRadius: BorderRadius.circular(4),
+      );
+    }).toList();
+
+    return BarChartGroupData(
+      x: bucket,
+      barRods: rods,
+      barsSpace: barWidth * 0.2,
+    );
+  }).toList();
+
+  BarChartData barChartData = BarChartData(
+    barGroups: barGroups,
+    groupsSpace: barWidth * 0.5, // space between groups
+    titlesData: FlTitlesData(
+      topTitles: AxisTitles(
+          sideTitles: SideTitles(showTitles: false),
+        ),
+      bottomTitles: AxisTitles(
+        sideTitles: SideTitles(
+          showTitles: true,
+          getTitlesWidget: (value, meta) {
+           // map bucket number back to start date for labeling
+              DateTime bucketStart = getBucketStartDate(
+                value.toInt(),
+                getDynamicBucketSize(startDate!, endDate!),
+                startDate!,
+              );
+              DateTime bucketEnd = bucketStart.add(getDynamicBucketSize(startDate!, endDate!)).subtract(Duration(days: 1)); // inclusive end
+              // truncate bucketEnd if it exceeds the selected endDate
+              if (bucketEnd.isAfter(endDate!)) {
+                bucketEnd = endDate!;
+              }
+              String formattedDateRange;
+              if (bucketStart == bucketEnd) {
+                // single-day bucket format
+                formattedDateRange = '${bucketStart.month}/${bucketStart.day}';
+              } else {
+                // multi-day bucket range
+                formattedDateRange = '${bucketStart.month}/${bucketStart.day}–${bucketEnd.month}/${bucketEnd.day}';
+              }
+
+              return Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: Text(formattedDateRange, style: TextStyle(fontSize: 12)),
+              );
+            },
+            interval: 1,
+        ),
+      ),
+      rightTitles: AxisTitles(
+          sideTitles: SideTitles(showTitles: false),
+        ),
+      leftTitles: AxisTitles(
+        axisNameWidget: Text(
+          getYLabel(selectedData),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.0),
+        ),
+        sideTitles: SideTitles(
+          showTitles: true,
+          getTitlesWidget: (value, meta) {
+            return Text(
+              '${value.toInt()}',
+              style: TextStyle(fontSize: 12),
+            );
+          },
+          interval: calculateYAxisInterval(data),
+        ),
+      ),
+    ),
+    gridData: FlGridData(
+      show: true,
+        drawVerticalLine: true,
+        verticalInterval: 1.0, // interval for integer buckets
+        getDrawingVerticalLine: (value) => FlLine(
+          color: Colors.grey.withOpacity(0.3),
+          strokeWidth: 1,
+        ),
+        drawHorizontalLine: true,
+        horizontalInterval: calculateYAxisInterval(data),
+        getDrawingHorizontalLine: (value) => FlLine(
+          color: Colors.grey.withOpacity(0.3),
+          strokeWidth: 1,
+        ),
+    ),
+    borderData: FlBorderData(show: true),
+    barTouchData: BarTouchData(
+       touchTooltipData: BarTouchTooltipData(
+         tooltipBgColor: Colors.grey[300]!,
+         getTooltipItem: (group, groupIndex, rod, rodIndex)
+         {
+          if (rod.toY == 0) {
+            return null;
+          }
+          return BarTooltipItem(
+           '${rod.toY.toInt()}',
+        TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+          color: Colors.black,
+        ),
+        );
+         }
+       ),
+   
+        handleBuiltInTouches: true, 
+    )
+  );
+
+  // create legend
+  List<Widget> keyWidgets = groupColors.entries.map((entry) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+      child: Row(
+        children: [
+          Container(
+            width: 20,
+            height: 20,
+            decoration: BoxDecoration(
+              color: entry.value,
+              border: Border.all(color: Colors.black, width: 1),
+            ),
+          ),
+          SizedBox(width: 5),
+          Text(entry.key),
+        ],
+      ),
+    );
+  }).toList();
+
+  // return the bar chart widget
+  return Row(
+    children: [
+      Expanded(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(8),
+              child: Center(
+                child: Text(
+                  selectedData,
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+            Expanded(
+              child: BarChart(barChartData),
+            ),
+          ],
+        ),
+      ),
+      Container(
+        padding: EdgeInsets.symmetric(vertical: 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: keyWidgets,
+        ),
+      ),
+    ],
+  );
+}
+
 
   // TODO: scatter, pie?
-  Widget buildScatterPlot(List<GraphDataPoint> data) {
-    return Container(child: Text('Scatter plot under development'));
+  Widget buildPieChart(List<GraphDataPoint> data) {
+    return Container(child: Text('Pie chart under development'));
   }
 }
 
