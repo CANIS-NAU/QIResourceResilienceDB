@@ -26,8 +26,8 @@ class _DashboardState extends State<Dashboard>
   Widget? graphWidget;
 
   // options for chart types
-  final List<String> chartTypes = ['Line', 'Bar', 'Scatter Plot'];
-  String selectedChartType = "Line";
+  final List<String> chartTypes = ['Line Graph', 'Bar Graph', 'Pie Chart'];
+  String selectedChartType = "Line Graph";
 
   // options for export types
   String selectedExportType = 'PDF';
@@ -863,11 +863,11 @@ class _DashboardState extends State<Dashboard>
     List<GraphDataPoint> processedData = processDataWithBuckets(data, bucketSize, startDate!, endDate!);
 
     switch (chartType) {
-      case 'Line':
+      case 'Line Graph':
         return buildLineChart(processedData);
-      case 'Bar':
+      case 'Bar Graph':
         return buildBarChart(processedData);
-      case 'Scatter Plot':
+      case 'Pie Chart':
         return buildPieChart(processedData);
       default:
         return Container();
@@ -1265,7 +1265,92 @@ class _DashboardState extends State<Dashboard>
 
   // TODO: scatter, pie?
   Widget buildPieChart(List<GraphDataPoint> data) {
-    return Container(child: Text('Pie chart under development'));
+    // calculate total count for each group
+    Map<String, double> groupTotals = {};
+    for (var point in data) {
+      groupTotals[point.group] = (groupTotals[point.group] ?? 0) + point.y;
+    }
+    // assign colors for each group
+    Map<String, Color> groupColors = {};
+    List<String> groups = allGroups[selectedData] ?? [];
+    for (var group in groups) {
+      groupColors[group] = predefinedColors[groupColors.length % predefinedColors.length];
+    }
+
+     // Create PieChartSectionData for each group
+    List<PieChartSectionData> sections = groupTotals.entries.map((entry) {
+      double percentage = (entry.value / groupTotals.values.reduce((a, b) => a + b)) * 100;
+      return PieChartSectionData(
+        color: groupColors[entry.key],
+        value: entry.value,
+        title: '${percentage.toStringAsFixed(1)}%',
+        radius: 150,
+        titleStyle: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
+      );
+    }).toList();
+
+    // Create legend
+    List<Widget> keyWidgets = groupColors.entries.map((entry) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+        child: Row(
+          children: [
+            Container(
+              width: 20,
+              height: 20,
+              decoration: BoxDecoration(
+                color: entry.value,
+                border: Border.all(color: Colors.black, width: 1),
+              ),
+            ),
+            SizedBox(width: 5),
+            Text(entry.key),
+          ],
+        ),
+      );
+    }).toList();
+
+    // Return PieChart with legend
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(8),
+                child: Center(
+                  child: Text(
+                    selectedData,
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: PieChart(
+                  PieChartData(
+                    sections: sections,
+                    centerSpaceRadius: double.infinity,
+                    sectionsSpace: 2,
+                    borderData: FlBorderData(show: false),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Container(
+          padding: EdgeInsets.symmetric(vertical: 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: keyWidgets,
+          ),
+        ),
+      ],
+    );
   }
 }
 
