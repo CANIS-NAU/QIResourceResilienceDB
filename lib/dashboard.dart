@@ -9,6 +9,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:csv/csv.dart' as csv;
 import 'package:fl_chart/fl_chart.dart';
+import 'graph_utils.dart';
 
 // main dashboard widget
 class Dashboard extends StatefulWidget {
@@ -39,7 +40,6 @@ class _DashboardState extends State<Dashboard>
     'Age Range Searches', 'Health Focus Searches', 'Resource Type Searches'];
 
   // map to store x and y labels for each data source
-  // TODO: group by type (color code for each type of age range, health focus, resource type)
   final Map<String, Map<String, String>> dataSourceLabels = {
     'Total Site Visits': {'xLabel': 'Date', 'yLabel': 'Number Of Visits'},
     'Clicks to Offsite Links': {'xLabel': 'Date', 'yLabel': 'Number Of Clicks'},
@@ -75,7 +75,6 @@ class _DashboardState extends State<Dashboard>
   List<Map<String, dynamic>>? data;
 
   // function that exports the graph as PNG or PDF
-  // TODO: is this similar to pdfDownload.dart, can it be incorporated?
   Future<void> exportGraph(BuildContext context) async {
     Uint8List? pngBytes;
     try {
@@ -211,7 +210,6 @@ class _DashboardState extends State<Dashboard>
         resourceName = await getResourceName(item['resourceId']) ?? '';  // fetch the resource name
       }
 
-
       // create the row of data
       List<dynamic> row = [formattedTimestamp, group];
 
@@ -227,7 +225,6 @@ class _DashboardState extends State<Dashboard>
   }
 
   // function to fetch data from RRDBFilters
-  // TODO: only done AGE RANGE, RESOURCE TYPE, CLICKS OFFSITE LINKS
   Future<List<Map<String, dynamic>>> fetchData() async {
     try {
       // check if data source is type or age
@@ -240,7 +237,6 @@ class _DashboardState extends State<Dashboard>
             .where('timestamp', isLessThanOrEqualTo: endDate)
             .where('event', isEqualTo: 'filter')
             .get();
-        print("collected data");
 
         List<Map<String, dynamic>> data = [];
 
@@ -274,7 +270,6 @@ class _DashboardState extends State<Dashboard>
             }
           }
         });
-        print(data);
         return data;
       }
       // check if the selected data source is 'Clicks to Offsite Links'
@@ -287,7 +282,6 @@ class _DashboardState extends State<Dashboard>
             .where('timestamp', isLessThanOrEqualTo: endDate)
             .where('event', isEqualTo: 'clicked-link')
             .get();
-        print("collected data");
 
         List<Map<String, dynamic>> data = [];
 
@@ -306,7 +300,6 @@ class _DashboardState extends State<Dashboard>
             data.add(validDocData);
           }
         });
-        print(data);
         return data;
       }
       else {
@@ -710,141 +703,6 @@ class _DashboardState extends State<Dashboard>
     );
   }
 
-  // convert a timestamp to an integer bucket number
-  int getBucketNumber(DateTime timestamp, Duration bucketSize, DateTime baseline) {
-    // convert to UTC to avoid timezone issues
-    DateTime utcTimestamp = timestamp.toUtc();
-    DateTime utcBaseline = baseline.toUtc();
-    // calculate the bucket number by determining how many bucket durations
-    return utcTimestamp.difference(utcBaseline).inMilliseconds ~/ bucketSize.inMilliseconds;
-  }
-
-// map a bucket number back to its start date
-  DateTime getBucketStartDate(int bucketNumber, Duration bucketSize, DateTime baseline) {
-    DateTime utcBaseline = baseline.toUtc(); // ensure UTC timezone
-    // calculate the start date of the bucket using the bucket number
-    return utcBaseline.add(Duration(milliseconds: bucketNumber * bucketSize.inMilliseconds));
-  }
-
-  // process data into buckets
-  List<GraphDataPoint> processDataWithBuckets(
-      List<Map<String, dynamic>> data,
-      Duration bucketSize,
-      DateTime startDate,
-      DateTime endDate) {
-    // map to hold counts per bucket for each group
-    Map<int, Map<String, int>> countsPerBucket = {};
-
-    // use the start date as baseline for bucket calculations
-    DateTime baseline = startDate.toUtc();
-
-    // iterate over the data to populate counts per bucket
-    for (var entry in data) {
-      if (entry['timestamp'] == null) continue;
-      DateTime timestamp = entry['timestamp'].toUtc(); // convert to UTC
-      if (timestamp.isBefore(startDate) || timestamp.isAfter(endDate)) continue;
-
-      // get the bucket number for the current timestamp
-      int bucketNumber = getBucketNumber(timestamp, bucketSize, baseline);
-
-      // determine the group based on selected data
-      String? group;
-      if (selectedData == 'Resource Type Searches') {
-        group = entry['Type'];
-      } else if (selectedData == "Age Range Searches") {
-        group = entry['Age Range'];
-      } else {
-        group = entry['type'];
-      }
-      if (group == null) continue;
-
-      // initialize the bucket and group count
-      countsPerBucket[bucketNumber] ??= {};
-      countsPerBucket[bucketNumber]![group] = (countsPerBucket[bucketNumber]![group] ?? 0) + 1;
-    }
-
-    // ensure all buckets are initialized, in order to plot 0 data
-    List<String> groups = allGroups[selectedData] ?? [];
-    DateTime currentBucketStart = startDate.toUtc();
-    // create all buckets
-    while (currentBucketStart.isBefore(endDate.toUtc()) || currentBucketStart.isAtSameMomentAs(endDate.toUtc())) {
-      int bucketNumber = getBucketNumber(currentBucketStart, bucketSize, baseline);
-
-      // initialize the bucket if it doesn't exist
-      countsPerBucket[bucketNumber] ??= {};
-      for (var group in groups) {
-        // set 0 count for any missing values
-        countsPerBucket[bucketNumber]![group] ??= 0;
-      }
-      // move to next bucket
-      currentBucketStart = currentBucketStart.add(bucketSize);
-    }
-
-    // convert countsPerBucket to GraphDataPoint objects
-    List<GraphDataPoint> processedData = [];
-    countsPerBucket.forEach((bucketNumber, groupCounts) {
-      // get the start and end dates for buckets
-      DateTime bucketStartDate = getBucketStartDate(bucketNumber, bucketSize, baseline);
-      DateTime bucketEndDate = bucketStartDate.add(bucketSize).subtract(Duration(days: 1));
-
-      // print the bucket details
-      print('Bucket Number: $bucketNumber, Date Range: ${bucketStartDate.month}/${bucketStartDate.day}–${bucketEndDate.month}/${bucketEndDate.day}');
-
-      // add group data as graph point
-      groupCounts.forEach((group, count) {
-        processedData.add(GraphDataPoint(
-          bucket: bucketNumber, // use bucket number as x-value
-          y: count.toDouble(),
-          group: group,
-        ));
-      });
-    });
-
-    // return data points
-    return processedData;
-  }
-
-  // adjust bucket size dynamically based on date range
-  Duration getDynamicBucketSize(DateTime startDate, DateTime endDate) {
-    int totalDays = endDate.difference(startDate).inDays;
-    if(totalDays >= 365 * 5) {
-      return Duration(days: 365); // year buckets
-    } else if(totalDays >= 365) {
-      return Duration(days: 90); // 3 month buckets
-    } else if (totalDays >= 90) {
-      return Duration(days: 30); // monthly buckets
-    } else if (totalDays >= 30) {
-      return Duration(days: 7); // weekly buckets
-    } else {
-      return Duration(days: 1); // daily buckets
-    }
-  }
-
-  double calculateYAxisInterval(List<GraphDataPoint> data)
-  {
-    if (data.isEmpty) {
-      return 1; // interval when there is no data
-    }
-    // find the maximum Y value in the data
-    double maxY = data.map((point) => point.y).reduce((a, b) => a > b ? a : b);
-
-    // set an interval based on the max Y value
-    if (maxY >= 100) {
-      return 10;
-    } else if (maxY >= 50) {
-      return 5;
-    } else if (maxY >= 10) {
-      return 2;
-    } else {
-      return 1;
-    }
-  }
-
-  double calculateXAxisInterval(Duration bucketSize) {
-    // return the interval in terms of bucket numbers
-    return 1.0; // each bucket is represented as a single unit (1 bucket = 1 interval)
-  }
-
   // build the chart based on selected chart type
   Widget buildChart(String chartType, List<Map<String, dynamic>> data) {
     if (selectedData != 'Age Range Searches' &&
@@ -860,7 +718,7 @@ class _DashboardState extends State<Dashboard>
     // determine bucket size
     Duration bucketSize = getDynamicBucketSize(startDate!, endDate!);
     // process data into buckets
-    List<GraphDataPoint> processedData = processDataWithBuckets(data, bucketSize, startDate!, endDate!);
+    List<GraphDataPoint> processedData = processDataWithBuckets(data, bucketSize, startDate!, endDate!, selectedData, allGroups);
 
     switch (chartType) {
       case 'Line Graph':
@@ -908,7 +766,6 @@ class _DashboardState extends State<Dashboard>
       );
     }
 
-    // TODO: show xaxis label
     // create a list of LineChartBarData for each group
     List<LineChartBarData> lines = groupedData.entries.map((entry) {
       return LineChartBarData(
@@ -922,10 +779,6 @@ class _DashboardState extends State<Dashboard>
       );
     }).toList();
 
-    // get the corresponding labels for the selected data source
-    String xLabel = getXLabel(selectedData);
-    String yLabel = getYLabel(selectedData);
-
     // prepare LineChartData
     LineChartData chartData = LineChartData(
       lineTouchData: LineTouchData(
@@ -937,6 +790,8 @@ class _DashboardState extends State<Dashboard>
           sideTitles: SideTitles(showTitles: false),
         ),
         bottomTitles: AxisTitles(
+          axisNameWidget: Text(getXLabel(selectedData), style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.0),
+            ),
           sideTitles: SideTitles(
             showTitles: true,
             getTitlesWidget: (value, meta) {
@@ -976,7 +831,7 @@ class _DashboardState extends State<Dashboard>
         leftTitles: AxisTitles(
           axisNameWidget: Padding(
             padding: const EdgeInsets.only(left: 6.0),
-            child: Text(yLabel, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.0),),
+            child: Text(getYLabel(selectedData), style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.0),),
 
           ),
           sideTitles: SideTitles(
@@ -1009,28 +864,7 @@ class _DashboardState extends State<Dashboard>
       borderData: FlBorderData(show: true),
     );
 
-    // create legend widgets for the groups
-    List<Widget> keyWidgets = groupColors.entries.map((entry) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
-        child: Row(
-          children: [
-            Container(
-              width: 20,
-              height: 20,
-              decoration: BoxDecoration(
-                color: entry.value,
-                border: Border.all(color: Colors.black, width: 1),
-              ),
-            ),
-            SizedBox(width: 5),
-            Text(entry.key),
-          ],
-        ),
-      );
-    }).toList();
-
-    // return a line chart widget with title and key
+    // return a line chart widget with title and legend
     return Row(
       children: [
         Expanded(
@@ -1053,17 +887,13 @@ class _DashboardState extends State<Dashboard>
         ),
         Container(
           padding: EdgeInsets.symmetric(vertical: 10),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: keyWidgets,
-          ),
+          child: buildLegend(groupColors, direction: Axis.vertical),
         ),
       ],
     );
   }
 
   Widget buildBarChart(List<GraphDataPoint> data) {
-    
     // sort data by bucket to ensure correct order
     data.sort((a, b) => a.bucket.compareTo(b.bucket));
 
@@ -1080,190 +910,173 @@ class _DashboardState extends State<Dashboard>
     // assign colors for each group
     Map<String, Color> groupColors = {};
     for (var group in groups) {
-      groupColors[group] = predefinedColors[groupColors.length % predefinedColors.length];
+      groupColors[group] =
+          predefinedColors[groupColors.length % predefinedColors.length];
     }
 
     // dynamically calculate bar width based on the number of buckets and chart space
     int totalBuckets = groupedData.keys.length;
-    double chartWidth = MediaQuery.of(context).size.width * 0.8; 
-    double maxBarWidth = chartWidth / (totalBuckets * groups.length + totalBuckets - 1); // allow space for bars and groups
-    double barWidth = maxBarWidth.clamp(1.0, 20.0); // limit bar width between 1 and 20
+    double chartWidth = MediaQuery.of(context).size.width * 0.8;
+    double maxBarWidth = chartWidth /
+        (totalBuckets * groups.length +
+            totalBuckets -
+            1); // allow space for bars and groups
+    double barWidth =
+        maxBarWidth.clamp(1.0, 20.0); // limit bar width between 1 and 20
 
+    List<BarChartGroupData> barGroups = groupedData.entries.map((entry) {
+      int bucket = entry.key;
+      Map<String, double> groupCounts = entry.value;
 
-     List<BarChartGroupData> barGroups = groupedData.entries.map((entry) {
-    int bucket = entry.key;
-    Map<String, double> groupCounts = entry.value;
+      // create a bar for each group in the bucket
+      List<BarChartRodData> rods = groups.map((group) {
+        return BarChartRodData(
+          toY: groupCounts[group] ?? 0,
+          color: groupColors[group],
+          width: barWidth, // set bar width
+          borderRadius: BorderRadius.circular(4),
+        );
+      }).toList();
 
-    // create a bar for each group in the bucket
-    List<BarChartRodData> rods = groups.map((group) {
-      return BarChartRodData(
-        toY: groupCounts[group] ?? 0,
-        color: groupColors[group],
-        width: barWidth, // set bar width
-        borderRadius: BorderRadius.circular(4),
+      return BarChartGroupData(
+        x: bucket,
+        barRods: rods,
+        barsSpace: barWidth * 0.2,
       );
     }).toList();
 
-    return BarChartGroupData(
-      x: bucket,
-      barRods: rods,
-      barsSpace: barWidth * 0.2,
-    );
-  }).toList();
+    BarChartData barChartData = BarChartData(
+        barGroups: barGroups,
+        groupsSpace: barWidth * 0.5, // space between groups
+        titlesData: FlTitlesData(
+          topTitles: AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          bottomTitles: AxisTitles(
+            axisNameWidget: Text(
+              getXLabel(selectedData),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.0),
+            ),
+            sideTitles: SideTitles(
+              showTitles: true,
+              getTitlesWidget: (value, meta) {
+                // map bucket number back to start date for labeling
+                DateTime bucketStart = getBucketStartDate(
+                  value.toInt(),
+                  getDynamicBucketSize(startDate!, endDate!),
+                  startDate!,
+                );
+                DateTime bucketEnd = bucketStart
+                    .add(getDynamicBucketSize(startDate!, endDate!))
+                    .subtract(Duration(days: 1)); // inclusive end
+                // truncate bucketEnd if it exceeds the selected endDate
+                if (bucketEnd.isAfter(endDate!)) {
+                  bucketEnd = endDate!;
+                }
+                String formattedDateRange;
+                if (bucketStart == bucketEnd) {
+                  // single-day bucket format
+                  formattedDateRange =
+                      '${bucketStart.month}/${bucketStart.day}';
+                } else {
+                  // multi-day bucket range
+                  formattedDateRange =
+                      '${bucketStart.month}/${bucketStart.day}–${bucketEnd.month}/${bucketEnd.day}';
+                }
 
-  BarChartData barChartData = BarChartData(
-    barGroups: barGroups,
-    groupsSpace: barWidth * 0.5, // space between groups
-    titlesData: FlTitlesData(
-      topTitles: AxisTitles(
-          sideTitles: SideTitles(showTitles: false),
-        ),
-      bottomTitles: AxisTitles(
-        sideTitles: SideTitles(
-          showTitles: true,
-          getTitlesWidget: (value, meta) {
-           // map bucket number back to start date for labeling
-              DateTime bucketStart = getBucketStartDate(
-                value.toInt(),
-                getDynamicBucketSize(startDate!, endDate!),
-                startDate!,
-              );
-              DateTime bucketEnd = bucketStart.add(getDynamicBucketSize(startDate!, endDate!)).subtract(Duration(days: 1)); // inclusive end
-              // truncate bucketEnd if it exceeds the selected endDate
-              if (bucketEnd.isAfter(endDate!)) {
-                bucketEnd = endDate!;
-              }
-              String formattedDateRange;
-              if (bucketStart == bucketEnd) {
-                // single-day bucket format
-                formattedDateRange = '${bucketStart.month}/${bucketStart.day}';
-              } else {
-                // multi-day bucket range
-                formattedDateRange = '${bucketStart.month}/${bucketStart.day}–${bucketEnd.month}/${bucketEnd.day}';
-              }
-
-              return Padding(
-                padding: const EdgeInsets.only(top: 8.0),
-                child: Text(formattedDateRange, style: TextStyle(fontSize: 12)),
-              );
-            },
-            interval: 1,
-        ),
-      ),
-      rightTitles: AxisTitles(
-          sideTitles: SideTitles(showTitles: false),
-        ),
-      leftTitles: AxisTitles(
-        axisNameWidget: Text(
-          getYLabel(selectedData),
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.0),
-        ),
-        sideTitles: SideTitles(
-          showTitles: true,
-          getTitlesWidget: (value, meta) {
-            return Text(
-              '${value.toInt()}',
-              style: TextStyle(fontSize: 12),
-            );
-          },
-          interval: calculateYAxisInterval(data),
-        ),
-      ),
-    ),
-    gridData: FlGridData(
-      show: true,
-        drawVerticalLine: true,
-        verticalInterval: 1.0, // interval for integer buckets
-        getDrawingVerticalLine: (value) => FlLine(
-          color: Colors.grey.withOpacity(0.3),
-          strokeWidth: 1,
-        ),
-        drawHorizontalLine: true,
-        horizontalInterval: calculateYAxisInterval(data),
-        getDrawingHorizontalLine: (value) => FlLine(
-          color: Colors.grey.withOpacity(0.3),
-          strokeWidth: 1,
-        ),
-    ),
-    borderData: FlBorderData(show: true),
-    barTouchData: BarTouchData(
-       touchTooltipData: BarTouchTooltipData(
-         tooltipBgColor: Colors.grey[300]!,
-         getTooltipItem: (group, groupIndex, rod, rodIndex)
-         {
-          if (rod.toY == 0) {
-            return null;
-          }
-          return BarTooltipItem(
-           '${rod.toY.toInt()}',
-        TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
-          color: Colors.black,
-        ),
-        );
-         }
-       ),
-   
-        handleBuiltInTouches: true, 
-    )
-  );
-
-  // create legend
-  List<Widget> keyWidgets = groupColors.entries.map((entry) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
-      child: Row(
-        children: [
-          Container(
-            width: 20,
-            height: 20,
-            decoration: BoxDecoration(
-              color: entry.value,
-              border: Border.all(color: Colors.black, width: 1),
+                return Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child:
+                      Text(formattedDateRange, style: TextStyle(fontSize: 12)),
+                );
+              },
+              interval: 1,
             ),
           ),
-          SizedBox(width: 5),
-          Text(entry.key),
-        ],
-      ),
-    );
-  }).toList();
+          rightTitles: AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          leftTitles: AxisTitles(
+            axisNameWidget: Text(
+              getYLabel(selectedData),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.0),
+            ),
+            sideTitles: SideTitles(
+              showTitles: true,
+              getTitlesWidget: (value, meta) {
+                return Text(
+                  '${value.toInt()}',
+                  style: TextStyle(fontSize: 12),
+                );
+              },
+              interval: calculateYAxisInterval(data),
+            ),
+          ),
+        ),
+        gridData: FlGridData(
+          show: true,
+          drawVerticalLine: true,
+          verticalInterval: 1.0, // interval for integer buckets
+          getDrawingVerticalLine: (value) => FlLine(
+            color: Colors.grey.withOpacity(0.3),
+            strokeWidth: 1,
+          ),
+          drawHorizontalLine: true,
+          horizontalInterval: calculateYAxisInterval(data),
+          getDrawingHorizontalLine: (value) => FlLine(
+            color: Colors.grey.withOpacity(0.3),
+            strokeWidth: 1,
+          ),
+        ),
+        borderData: FlBorderData(show: true),
+        barTouchData: BarTouchData(
+          touchTooltipData: BarTouchTooltipData(
+              tooltipBgColor: Colors.grey[300]!,
+              getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                if (rod.toY == 0) {
+                  return null;
+                }
+                return BarTooltipItem(
+                  '${rod.toY.toInt()}',
+                  TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                );
+              }),
+          handleBuiltInTouches: true,
+        ));
 
-  // return the bar chart widget
-  return Row(
-    children: [
-      Expanded(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(8),
-              child: Center(
-                child: Text(
-                  selectedData,
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+    // return the bar chart widget with legend
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(8),
+                child: Center(
+                  child: Text(
+                    selectedData,
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
                 ),
               ),
-            ),
-            Expanded(
-              child: BarChart(barChartData),
-            ),
-          ],
+              Expanded(
+                child: BarChart(barChartData),
+              ),
+            ],
+          ),
         ),
-      ),
-      Container(
-        padding: EdgeInsets.symmetric(vertical: 10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: keyWidgets,
+        Container(
+          padding: EdgeInsets.symmetric(vertical: 10),
+          child: buildLegend(groupColors, direction: Axis.vertical),
         ),
-      ),
-    ],
-  );
-}
+      ],
+    );
+  }
 
-
-  // TODO: scatter, pie?
   Widget buildPieChart(List<GraphDataPoint> data) {
     // calculate total count for each group
     Map<String, double> groupTotals = {};
@@ -1277,7 +1090,6 @@ class _DashboardState extends State<Dashboard>
       groupColors[group] = predefinedColors[groupColors.length % predefinedColors.length];
     }
 
-     // Create PieChartSectionData for each group
     List<PieChartSectionData> sections = groupTotals.entries.map((entry) {
       double percentage = (entry.value / groupTotals.values.reduce((a, b) => a + b)) * 100;
       return PieChartSectionData(
@@ -1293,28 +1105,7 @@ class _DashboardState extends State<Dashboard>
       );
     }).toList();
 
-    // Create legend
-    List<Widget> keyWidgets = groupColors.entries.map((entry) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
-        child: Row(
-          children: [
-            Container(
-              width: 20,
-              height: 20,
-              decoration: BoxDecoration(
-                color: entry.value,
-                border: Border.all(color: Colors.black, width: 1),
-              ),
-            ),
-            SizedBox(width: 5),
-            Text(entry.key),
-          ],
-        ),
-      );
-    }).toList();
-
-    // Return PieChart with legend
+    // return completed pie chart with legend
     return Row(
       children: [
         Expanded(
@@ -1344,23 +1135,9 @@ class _DashboardState extends State<Dashboard>
         ),
         Container(
           padding: EdgeInsets.symmetric(vertical: 10),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: keyWidgets,
+          child: buildLegend(groupColors, direction: Axis.vertical),
           ),
-        ),
       ],
     );
   }
-}
-
-// class representing a data point for a graph
-class GraphDataPoint {
-  // x,y coordinates of data point and the group that the point belongs to
-  final int bucket; // use bucket number as x int value
-  final double y;
-  final String group;
-
-  // initialize GraphDataPoint instance
-  GraphDataPoint({required this.bucket, required this.y, required this.group});
 }
