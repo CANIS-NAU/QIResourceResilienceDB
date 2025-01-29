@@ -146,7 +146,6 @@ class ResourceDetail extends StatelessWidget {
         fieldDefined('location') ? Uri.parse(fieldString('location')!) : null;
 
     PdfDownload pdfDownload = PdfDownload();
-    print(resource.id);
     return SimpleDialog(
       key: ObjectKey(resource.id),
       titlePadding: EdgeInsets.fromLTRB(16, 16, 16, 0),

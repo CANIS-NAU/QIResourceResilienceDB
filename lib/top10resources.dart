@@ -12,8 +12,8 @@ class _TopResourcesState extends State<Top10Resources> {
   List<ResourceData> topResources = [];
 
   // start and end date filters
-  DateTime? startDate;
-  DateTime? endDate;
+  DateTime startDate = DateTime(2000, 1, 1);
+  DateTime endDate = DateTime.now();
 
   // loading state
   bool isLoading = false;
@@ -21,28 +21,7 @@ class _TopResourcesState extends State<Top10Resources> {
   @override
   void initState() {
     super.initState();
-    // get the first data's date
-    fetchDefaultDates();
-  }
-
-  // fetch the first data entry to set default dates
-  Future<void> fetchDefaultDates() async {
-    final QuerySnapshot querySnapshot = await FirebaseFirestore.instance
-        .collection('RRDBClickedResources')
-        .orderBy('timestamp')
-        .limit(1)
-        .get();
-
-    // if there is data, set the start date to the first data entry and
-    // the end date to the current date
-    if (querySnapshot.docs.isNotEmpty) {
-      setState(() {
-        startDate = (querySnapshot.docs.first['timestamp'] as Timestamp).toDate();
-        endDate = DateTime.now();
-        // get the top clicked resources
-        getTopResources();
-      });
-    }
+    getTopResources();
   }
 
   // function to show date range picker
@@ -52,8 +31,8 @@ class _TopResourcesState extends State<Top10Resources> {
       firstDate: DateTime(2000), // earliest date
       lastDate: DateTime.now(),  // latest date
       initialDateRange: DateTimeRange(
-        start: startDate ?? DateTime.now(), // default start date to display
-        end: endDate ?? DateTime.now(), // default end date to display
+        start: startDate, // default start date to display
+        end: endDate, // default end date to display
       ),
       builder: (BuildContext context, Widget? child) {
         return LayoutBuilder(
@@ -61,7 +40,7 @@ class _TopResourcesState extends State<Top10Resources> {
             return Dialog(
               child: Container(
                 width: constraints.maxWidth * 0.5,
-                height: constraints.maxHeight * 0.7,
+                height: constraints.maxHeight * 0.5,
                 child: child,
               ),
             );
@@ -89,15 +68,6 @@ class _TopResourcesState extends State<Top10Resources> {
     setState(() {
       isLoading = true;
     });
-
-    //  check if either start date or end date is null
-    if (startDate == null || endDate == null ) {
-      setState(() {
-        topResources = []; // clear existing top resources
-        isLoading = false; // set loading state to false
-      });
-      return; // return if the date range is invalid
-    }
 
     // define the start and end dates for filtering
     DateTime? startDateFilter = startDate;
@@ -130,7 +100,6 @@ class _TopResourcesState extends State<Top10Resources> {
     }
 
     // retrieve resource details (name) from firebase based on resource ids
-    // TODO: get any other info we want to display for a resource on the top10 page
     List<ResourceData> topResourcesData = [];
     for (String resourceId in topResourceIds) {
       final DocumentSnapshot resourceSnapshot = await FirebaseFirestore.instance
@@ -165,7 +134,6 @@ class _TopResourcesState extends State<Top10Resources> {
           ),
         ),
         body: LayoutBuilder(builder: (context, constraints) {
-          bool isSmallScreen = constraints.maxWidth < 600;
           return Container(
             padding: EdgeInsets.all(16.0),
             child: Center(
@@ -184,9 +152,8 @@ class _TopResourcesState extends State<Top10Resources> {
                     padding: EdgeInsets.symmetric(vertical: 6, horizontal: 6),
                     child: ElevatedButton(
                       onPressed: () => selectDateRange(context),
-                      child: Text(startDate != null && endDate != null
-                          ? 'Date Range: ${DateFormat('yyyy-MM-dd').format(startDate!)} - ${DateFormat('yyyy-MM-dd').format(endDate!)}'
-                          : 'Select Date Range'),
+                      child: Text('Date Range: ${DateFormat('yyyy-MM-dd').format(startDate!)} - ${DateFormat('yyyy-MM-dd').format(endDate)}'
+                      ),
                     ),
                   ),
                   // display loading indicator if resources are loading

@@ -78,7 +78,7 @@ class Link extends StatelessWidget {
   }
 
   void _handleTap(BuildContext context) async {
-    analytics.submitClickedkLink(type, uri, resourceId);
+    analytics.submitClickedLink(type, uri, resourceId);
     if (await canLaunchUrl(uri)) {
       launchUrl(uri);
     } else {

@@ -24,7 +24,6 @@ class _DashboardState extends State<Dashboard>
 
   // global key to capture graph for export
   final GlobalKey graphToExport = GlobalKey();
-  Widget? graphWidget;
 
   // options for chart types
   final List<String> chartTypes = ['Line Graph', 'Bar Graph', 'Pie Chart'];
@@ -57,9 +56,9 @@ class _DashboardState extends State<Dashboard>
     'Resource Type Searches': ['Online', 'In Person', 'App', 'Hotline', 'Event', 'Podcast'],
   };
 
-  // create a set to keep track of used colors
-  final Set<Color> usedColors = {};
   // create a predefined list of distinct colors for graphs
+  // https://www.simplifiedsciencepublishing.com/resources/best-color-palettes-for-scientific-figures-and-data-visualizations
+  // colors are from the "Eight Color Combinations for Charts", bright colors
   final List<Color> predefinedColors = [
     Color(0xFF003a7d),
     Color(0xFF008dff),
@@ -452,16 +451,17 @@ class _DashboardState extends State<Dashboard>
                     },
                     child: Text('Cancel'),
                   ),
-                  ElevatedButton(
-                    onPressed: () {
+                  LoadingButton(
+                    label: "Export",
+                    icon: Icons.download,
+                    onPressed: () async {
                       if (selectedOption == 'Graph') {
-                        exportGraph(context);
+                        await exportGraph(context);
                       } else {
-                        exportCSVData(context, data);
+                        await exportCSVData(context, data);
                       }
                       Navigator.of(context).pop();
                     },
-                    child: Text('Export'),
                   ),
                 ],
               );
@@ -471,10 +471,11 @@ class _DashboardState extends State<Dashboard>
       );
     }
     else {
-      // no data is available
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No data available to export')),
-      );
+      ScaffoldMessenger.of(context)
+        ..removeCurrentSnackBar() // dismiss any existing snackbar
+        ..showSnackBar(
+          SnackBar(content: Text('No data available to export')),
+        );
     }
   }
 
@@ -1138,6 +1139,57 @@ class _DashboardState extends State<Dashboard>
           child: buildLegend(groupColors, direction: Axis.vertical),
           ),
       ],
+    );
+  }
+}
+
+class LoadingButton extends StatefulWidget {
+  final String label;
+  final Future<void> Function() onPressed;
+  final IconData icon;
+
+  const LoadingButton({
+    Key? key,
+    required this.label,
+    required this.onPressed,
+    required this.icon,
+  }) : super(key: key);
+
+  @override
+  _LoadingButtonState createState() => _LoadingButtonState();
+}
+
+class _LoadingButtonState extends State<LoadingButton> {
+  bool _isLoading = false;
+
+  void _handlePress() {
+  setState(() => _isLoading = true); // start loading state
+
+  // delay first so UI updates, then run export function
+  Future.delayed(const Duration(seconds: 2), () async {
+    await Future.microtask(() async {
+      await widget.onPressed(); 
+      setState(() => _isLoading = false);
+    });
+  });
+}
+
+  @override
+  Widget build(BuildContext context) {
+    return ElevatedButton.icon(
+      onPressed: _isLoading ? null : _handlePress, // disable while loading
+      style: ElevatedButton.styleFrom(padding: const EdgeInsets.all(16.0)),
+      icon: _isLoading
+          ? Container(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(
+                color: Colors.white,
+                strokeWidth: 3,
+              ),
+            )
+          : Icon(widget.icon), 
+      label: Text("Export"),
     );
   }
 }
