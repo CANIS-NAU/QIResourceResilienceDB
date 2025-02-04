@@ -641,6 +641,13 @@ class _DashboardState extends State<Dashboard>
     return Scaffold(
       appBar: AppBar(
         title: const Text('Dashboard'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          splashRadius: 20.0,
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

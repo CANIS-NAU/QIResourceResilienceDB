@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'view_resource/resource_detail.dart';
+import 'package:web_app/Analytics.dart';
 
 class Top10Resources extends StatefulWidget {
   @override
@@ -110,7 +112,7 @@ class _TopResourcesState extends State<Top10Resources> {
         final resourceName = resourceSnapshot['name'] as String;
         // handle any data inconsistencies to ensure clicks in not null
         final clicks = resourceClickCounts[resourceId] ?? 0;
-        topResourcesData.add(ResourceData(resourceName, clicks));
+        topResourcesData.add(ResourceData(resourceId, resourceName, clicks));
       }
     }
     // update state with top resources data
@@ -178,7 +180,7 @@ class _TopResourcesState extends State<Top10Resources> {
                                 itemCount: topResources.length,
                                 itemBuilder: (context, index){
                                   // display top resources as list tiles with rank(index)
-                                  return TopResourceTile(resource: topResources[index], index: index);
+                                  return TopResourceTile(resource: topResources[index], index: index, analytics: HomeAnalytics(),);
                                 },
                               ),
                             ),)
@@ -195,10 +197,11 @@ class _TopResourcesState extends State<Top10Resources> {
 
 // class to represent resource data (name and click count)
 class ResourceData {
+  final String resourceId;
   final String resourceName;
   final int clicks;
 
-  ResourceData(this.resourceName, this.clicks);
+  ResourceData(this.resourceId, this.resourceName, this.clicks);
 }
 
 // display a resource in a list tile format
@@ -207,40 +210,64 @@ class TopResourceTile extends StatefulWidget {
     Key? key,
     required this.resource,
     required this.index,
+    required this.analytics,  // pass the analytics object
   }) : super(key: key);
 
   final ResourceData resource;
   final int index;
+  final HomeAnalytics analytics;
 
   @override
   _TopResourceTileState createState() => _TopResourceTileState();
 }
 
 class _TopResourceTileState extends State<TopResourceTile> {
-  bool isFocused = false;
+  Future<void> _showResourceDetails() async {
+    try {
+      // fetch the full resource details
+      final DocumentSnapshot resourceSnapshot = await FirebaseFirestore.instance
+          .collection('resources')
+          .doc(widget.resource.resourceId)
+          .get();
+
+      if (resourceSnapshot.exists) {
+        // display the ResourceDetail popup
+        showDialog(
+          context: context,
+          builder: (context) => ResourceDetail(
+            analytics: widget.analytics,
+            resource: resourceSnapshot,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Resource not found!')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error fetching resource: $e')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Focus(
-      onFocusChange: (focus) {
-        setState(() {
-          isFocused = focus;
-        });
-      },
-      child: Container(
-        height: 100,
-        child: Card(
-          color: isFocused ? Theme.of(context).focusColor : Colors.white,
-          elevation: 4,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(0),
-          ),
-          child: ListTile(
-            contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 30),
-            dense: false,
-            title: Text(
-              widget.resource.resourceName,
-              textAlign: TextAlign.left,
+    return Card(
+      margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      child: ListTile(
+        contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 30),
+        dense: false,
+        leading: Text(
+              '${widget.index + 1}',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
+            ),
+        title: Text(
+          widget.resource.resourceName,
+           textAlign: TextAlign.left,
               overflow: TextOverflow.ellipsis,
               maxLines: 1,
               softWrap: true,
@@ -248,22 +275,18 @@ class _TopResourceTileState extends State<TopResourceTile> {
                 fontWeight: FontWeight.bold,
                 fontSize: 18,
               ),
-            ),
-            leading: Text(
-              '${widget.index + 1}',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-              ),
-            ),
-            subtitle: Text(
+        ),
+        subtitle:  Text(
               'Clicks: ${widget.resource.clicks}',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 14,
               ),
-            ),
-          ),
+        ),
+        trailing: IconButton(
+          icon: Icon(Icons.arrow_forward),
+          splashRadius: 20,
+          onPressed: _showResourceDetails,
         ),
       ),
     );
