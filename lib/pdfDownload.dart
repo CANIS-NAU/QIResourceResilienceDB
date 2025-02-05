@@ -75,6 +75,7 @@ class PdfDownload {
     String description,
     String resourceType,
     List<dynamic> privacy,
+    List<dynamic> healthFocus,
     int culturalResponsiveness,
     String? fullAddress,
     String? phoneNumber,
@@ -102,6 +103,7 @@ class PdfDownload {
       addRow(grid, 'Description', description);
       addRow(grid, 'Type', resourceType);
       addRow(grid, 'Privacy', privacy.map((e) => e.toString()).join(', '));
+      addRow(grid, 'Health Focus', healthFocus.map((e) => e.toString()).join(', '));
       addRow(grid, 'Cultural Responsiveness', culturalResponsiveness);
 
       if (fullAddress != null) {

@@ -82,6 +82,16 @@ final categories = UnmodifiableListView<FilterCategory>([
       '65+',
       'All ages'
       ])),
+   FilterCategory("Health Focus", "healthFocus",
+      values: UnmodifiableListView([
+      'Anxiety',
+      'Depression',
+      'Stress Management',
+      'Substance Abuse',
+      'Grief and Loss',
+      'Trama and PTSD',
+      'Suicide Prevention',
+      ]), canHaveMultiple: true ),
   FilterCategory("Event happening in the next", "nextDate",
       values: UnmodifiableListView([
         "Week",

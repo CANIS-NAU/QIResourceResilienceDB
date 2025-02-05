@@ -196,6 +196,8 @@ class ResourceDetail extends StatelessWidget {
                   ),
                 if (fieldDefined('cost')) //
                   field('Cost', Text(resource['cost'])),
+                if (fieldDefined('healthFocus'))
+                  field('Health Focus', Text(fieldString('healthFocus')!)),
                 if (fullAddress != null)
                   field(
                       'Address',
@@ -247,6 +249,7 @@ class ResourceDetail extends StatelessWidget {
                               resource['description'],
                               resource['resourceType'],
                               resource['privacy'],
+                              resource['healthFocus'],
                               resource['culturalResponsivness'],
                               fullAddress,
                               fieldString('phoneNumber'),

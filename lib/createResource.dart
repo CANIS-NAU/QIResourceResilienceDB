@@ -49,6 +49,16 @@ const List<String> resourceCostOptions = [
   'Fees associated'
 ];
 
+const List<String>healthFocusOptions = [
+  'Anxiety',
+  'Depression',
+  'Stress Management',
+  'Substance Abuse',
+  'Grief and Loss',
+  'Trama and PTSD',
+  'Suicide Prevention',
+];
+
 String culturalResponseScoreToText(double sliderValue) {
   if (sliderValue <= 1) {
     return "Low Cultural Responsivness";
@@ -96,6 +106,11 @@ class _CreateResourceState extends State<CreateResource> {
   final List<bool> _selectedPrivacy =
       List<bool>.filled(resourcePrivacy.length, false);
   List<String> selectedPrivacyOptions = [];
+
+  // used to store health focus options
+  final List<bool> _selectedHealthFocus =
+      List<bool>.filled(healthFocusOptions.length, false);
+  List<String> selectedHealthFocusOptions = [];
 
   // boolean to track hotline and in person selection
   bool isHotlineSelected = false;
@@ -157,6 +172,7 @@ class _CreateResourceState extends State<CreateResource> {
       // Check if any of the type, privacy, or cost options are not selected.
       if (resourceType == "" ||
           selectedPrivacyOptions.isEmpty ||
+          selectedHealthFocusOptions.isEmpty ||
           resourceCost == "") {
         await showMessageDialog(
           context,
@@ -207,6 +223,7 @@ class _CreateResourceState extends State<CreateResource> {
             culturalResponseScoreToText(_culturalResponseSliderValue),
         'culturalResponsivness': _culturalResponseSliderValue,
         'cost': resourceCost,
+        'healthFocus': selectedHealthFocusOptions,
         'tagline': selectedTags,
         if (resourceSchedule != null) 'schedule': resourceSchedule!.toJson(),
         'attachments': attachments.map((x) => x.toJson()),
@@ -520,6 +537,33 @@ class _CreateResourceState extends State<CreateResource> {
                     );
                   }).toList(),
                 ),
+
+                buildTitles("Health Focus"),
+                ListView(
+                  shrinkWrap: true,
+                  children: List<Widget>.generate(
+                    _selectedHealthFocus.length,
+                    (int index) => CheckboxListTile(
+                      title: Text(
+                        healthFocusOptions[index],
+                        style: TextStyle(fontSize: 16),
+                      ),
+                      value: _selectedHealthFocus[index],
+                      onChanged: (value) => setState(() {
+                        _selectedHealthFocus[index] = value!;
+                        if (value) {
+                          selectedHealthFocusOptions.add(healthFocusOptions[index]);
+                        } else {
+                          selectedHealthFocusOptions.remove(healthFocusOptions[index]);
+                        }
+                      }),
+                      controlAffinity: ListTileControlAffinity.leading,
+                      dense: true,
+                      focusNode: FocusNode(skipTraversal: true),
+                    ),
+                  ),
+                ),
+
                 buildTitles("Cultural Responsiveness"),
                 Center(
                   child: new Container(
