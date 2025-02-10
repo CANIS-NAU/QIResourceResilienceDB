@@ -83,6 +83,8 @@ Widget buildLegend(Map<String, Color> groupColors, {Axis direction = Axis.vertic
         group = entry['Type'];
       } else if (selectedData == "Age Range Searches") {
         group = entry['Age Range'];
+      } else if (selectedData == "Health Focus Searches") {
+        group = entry['Health Focus']; 
       } else {
         group = entry['type'];
       }

@@ -43,7 +43,7 @@ class _DashboardState extends State<Dashboard>
     'Total Site Visits': {'xLabel': 'Date', 'yLabel': 'Number Of Visits'},
     'Clicks to Offsite Links': {'xLabel': 'Date', 'yLabel': 'Number Of Clicks'},
     'Age Range Searches': {'xLabel': 'Date', 'yLabel': 'Number Of Searches'},
-    'Searches per Health Focus': {'xLabel': 'Date', 'yLabel': 'Number Of Searches'},
+    'Health Focus Searches': {'xLabel': 'Date', 'yLabel': 'Number Of Searches'},
     'Resource Type Searches': {'xLabel': 'Date', 'yLabel': 'Number Of Searches'},
   };
 
@@ -52,7 +52,7 @@ class _DashboardState extends State<Dashboard>
     'Total Site Visits': ['Total Site Visits'], // single group
     'Clicks to Offsite Links': ['url', 'phone', 'address'],
     'Age Range Searches': ['Under 18', '18-24', '24-65', '65+', 'All ages'],
-    'Health Focus Searches': ['Focus Area 1', 'Focus Area 2', 'Focus Area 3'], // TODO: replace
+    'Health Focus Searches': ['Anxiety', 'Depression', 'Stress Management', 'Substance Abuse', 'Grief and Loss', 'Trama and PTSD', 'Suicide Prevention'],
     'Resource Type Searches': ['Online', 'In Person', 'App', 'Hotline', 'Event', 'Podcast'],
   };
 
@@ -196,6 +196,7 @@ class _DashboardState extends State<Dashboard>
       // determine group based on available keys
       String group = item.containsKey('Age Range') ? item['Age Range'] :
       item.containsKey('Type') ? item['Type'] :
+      item.containsKey('Health Focus') ? item['Health Focus'] :
       item.containsKey('type') ? item['type'] : 'Unknown';
 
       // get the link if it exists
@@ -228,7 +229,7 @@ class _DashboardState extends State<Dashboard>
     try {
       // check if data source is type or age
       if (selectedData == 'Resource Type Searches' ||
-          selectedData == 'Age Range Searches') {
+          selectedData == 'Age Range Searches' || selectedData == 'Health Focus Searches') {
         // get documents in event log collection where event is filter
         QuerySnapshot querySnapshot = await FirebaseFirestore.instance
             .collection('RRDBEventLog')
@@ -268,6 +269,15 @@ class _DashboardState extends State<Dashboard>
               data.add(validDocData);
             }
           }
+          if (selectedData == 'Health Focus Searches' && 
+            docData['payload'] != null &&
+            docData['payload'].containsKey("Health Focus")) {
+              Map<String, dynamic> validDocData = {
+                'timestamp': doc['timestamp'].toDate(),
+                'Health Focus': docData['payload']['Health Focus']
+              };
+              data.add(validDocData);
+            }
         });
         return data;
       }
@@ -347,7 +357,7 @@ class _DashboardState extends State<Dashboard>
     if (pickedDateRange != null) {
       setState(() {
         startDate = pickedDateRange.start;
-        endDate = pickedDateRange.end;
+        endDate = pickedDateRange.end.add(Duration(days: 1)).subtract(Duration(milliseconds: 1)); // end date should include the entire day
       });
     }
   }
@@ -715,7 +725,8 @@ class _DashboardState extends State<Dashboard>
   Widget buildChart(String chartType, List<Map<String, dynamic>> data) {
     if (selectedData != 'Age Range Searches' &&
         selectedData != 'Resource Type Searches' &&
-        selectedData != 'Clicks to Offsite Links') {
+        selectedData != 'Clicks to Offsite Links' &&
+        selectedData != 'Health Focus Searches') {
       return Center(
         child: Text(
           "No data available for '${selectedData}' at this time",
