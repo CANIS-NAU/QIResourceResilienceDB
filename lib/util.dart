@@ -52,12 +52,14 @@ Future<void> showMessageDialog(BuildContext context,
 
 class Link extends StatelessWidget {
   Link({super.key, required this.analytics, required this.type, 
-                                        required this.text, required this.uri});
+                                        required this.text, required this.uri,
+                                        required this.resourceId});
 
   final HomeAnalytics analytics;
   final String type;
   final String text;
   final Uri uri;
+  final String resourceId;
 
   void onError(BuildContext context) {
     showDialog(
@@ -76,7 +78,7 @@ class Link extends StatelessWidget {
   }
 
   void _handleTap(BuildContext context) async {
-    analytics.submitClickedkLink(type, uri);
+    analytics.submitClickedLink(type, uri, resourceId);
     if (await canLaunchUrl(uri)) {
       launchUrl(uri);
     } else {

@@ -15,11 +15,13 @@ class DetailLink extends StatelessWidget {
       required this.analytics,
       required this.type,
       required this.text,
-      required this.uriText});
+      required this.uriText,
+      required this.resourceId});
   final HomeAnalytics analytics;
   final String type;
   final String text;
   final String uriText;
+  final String resourceId;
 
   Uri parseUriText() {
     // Default to URL
@@ -44,6 +46,7 @@ class DetailLink extends StatelessWidget {
       type: type,
       text: text,
       uri: parseUriText(),
+      resourceId: resourceId,
     );
   }
 }
@@ -143,7 +146,6 @@ class ResourceDetail extends StatelessWidget {
         fieldDefined('location') ? Uri.parse(fieldString('location')!) : null;
 
     PdfDownload pdfDownload = PdfDownload();
-
     return SimpleDialog(
       key: ObjectKey(resource.id),
       titlePadding: EdgeInsets.fromLTRB(16, 16, 16, 0),
@@ -201,7 +203,8 @@ class ResourceDetail extends StatelessWidget {
                           analytics: analytics,
                           type: "address",
                           text: fullAddress,
-                          uriText: fullAddress)),
+                          uriText: fullAddress,
+                          resourceId: resource.id,)),
                 if (fieldDefined('phoneNumber'))
                   field(
                       'Phone Number',
@@ -209,7 +212,8 @@ class ResourceDetail extends StatelessWidget {
                           analytics: analytics,
                           type: "phone",
                           text: fieldString('phoneNumber')!,
-                          uriText: fieldString('phoneNumber')!)),
+                          uriText: fieldString('phoneNumber')!,
+                          resourceId: resource.id,)),
                 if (url != null)
                   field(
                       'URL',
@@ -217,7 +221,8 @@ class ResourceDetail extends StatelessWidget {
                           analytics: analytics,
                           type: "url",
                           text: 'link to website here',
-                          uriText: url.toString())),
+                          uriText: url.toString(),
+                          resourceId: resource.id)),
                 if (attachments.length > 0)
                   Padding(
                     padding: fieldPadding,
@@ -226,7 +231,7 @@ class ResourceDetail extends StatelessWidget {
                       children: [
                         Text('Attachments: '),
                         AttachmentsList(
-                            analytics: analytics, attachments: attachments),
+                            analytics: analytics, attachments: attachments, resourceId: resource.id),
                       ],
                     ),
                   ),

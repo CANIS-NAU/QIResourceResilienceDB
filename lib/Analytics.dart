@@ -84,10 +84,11 @@ class HomeAnalytics {
   }
 
   // Submit the link the user submitted
-  Future<void> submitClickedkLink(String type, Uri link) {
+  Future<void> submitClickedLink(String type,Uri link, String resourceId) {
     final linkClicked = {
       "type": type,
       "link": link.toString(),
+      "resourceId": resourceId
     };
 
     return eventLog.uploadRecord("clicked-link", linkClicked);

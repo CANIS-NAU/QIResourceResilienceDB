@@ -1,5 +1,6 @@
 //Package imports
 import 'package:flutter/material.dart';
+import 'package:web_app/top10resources.dart';
 import 'firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -57,6 +58,7 @@ class MyApp extends StatelessWidget {
         '/inbox': ( context ) => Inbox(),
         '/usermanagement': ( context ) => Manage(),
         '/reviewresource' :  ( context ) => ReviewResource(resourceData: ModalRoute.of(context)!.settings.arguments as QueryDocumentSnapshot),
+        '/top10resources' : (context) => Top10Resources(),
       },
       theme: ThemeData(
         primaryColor: Color(0xFF0060BE),
