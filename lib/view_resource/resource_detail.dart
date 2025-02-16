@@ -242,6 +242,9 @@ class ResourceDetail extends StatelessWidget {
                   // button to download resource pdf
                   child: ElevatedButton(
                     onPressed: () async {
+                      Map<String, dynamic>? resourceData = resource.data() as Map<String, dynamic>?;
+                      List<dynamic> healthFocus = (resourceData != null && resourceData.containsKey('healthFocus')) ? resourceData['healthFocus']: [];
+
                       // generate PDF
                       List<int> pdfBytes =
                           await pdfDownload.generateResourcePdf(
@@ -249,7 +252,7 @@ class ResourceDetail extends StatelessWidget {
                               resource['description'],
                               resource['resourceType'],
                               resource['privacy'],
-                              resource['healthFocus'],
+                              healthFocus,
                               resource['culturalResponsivness'],
                               fullAddress,
                               fieldString('phoneNumber'),
