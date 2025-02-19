@@ -229,7 +229,8 @@ class _DashboardState extends State<Dashboard>
     try {
       // check if data source is type or age
       if (selectedData == 'Resource Type Searches' ||
-          selectedData == 'Age Range Searches' || selectedData == 'Health Focus Searches') {
+          selectedData == 'Age Range Searches' || 
+          selectedData == 'Health Focus Searches') {
         // get documents in event log collection where event is filter
         QuerySnapshot querySnapshot = await FirebaseFirestore.instance
             .collection('RRDBEventLog')
@@ -250,11 +251,20 @@ class _DashboardState extends State<Dashboard>
             // check if the document's payload contains the 'Type' key
             if (docData['payload'] != null &&
                 docData['payload'].containsKey('Type')) {
-              Map<String, dynamic> validDocData = {
-                'timestamp': doc['timestamp'].toDate(),
-                'Type': docData['payload']['Type']
-              };
-              data.add(validDocData);
+              var value = docData['payload']['Type'];
+              if (value is List) {
+                for (var item in value) {
+                  data.add({
+                    'timestamp': doc['timestamp'].toDate(),
+                    'Type': item,
+                  });
+                }
+              } else if (value is String) {
+                data.add({
+                  'timestamp': doc['timestamp'].toDate(),
+                  'Type': value,
+                });
+              }
             }
           }
           // if the selected data source is 'Age Range Searches'
@@ -262,22 +272,40 @@ class _DashboardState extends State<Dashboard>
             // check if the document's payload contains the 'Age Range' key
             if (docData['payload'] != null &&
                 docData['payload'].containsKey('Age Range')) {
-              Map<String, dynamic> validDocData = {
-                'timestamp': doc['timestamp'].toDate(),
-                'Age Range': docData['payload']['Age Range']
-              };
-              data.add(validDocData);
+              var value = docData['payload']['Age Range'];
+              if (value is List) {
+                for (var item in value) {
+                  data.add({
+                    'timestamp': doc['timestamp'].toDate(),
+                    'Age Range': item,
+                  });
+                }
+              } else if (value is String) {
+                data.add({
+                  'timestamp': doc['timestamp'].toDate(),
+                  'Age Range': value,
+                });
+              }
             }
           }
-          if (selectedData == 'Health Focus Searches' && 
-            docData['payload'] != null &&
-            docData['payload'].containsKey("Health Focus")) {
-              Map<String, dynamic> validDocData = {
+          if (selectedData == 'Health Focus Searches' &&
+              docData['payload'] != null &&
+              docData['payload'].containsKey("Health Focus")) {
+            var value = docData['payload']['Health Focus'];
+            if (value is List) {
+              for (var item in value) {
+                data.add({
+                  'timestamp': doc['timestamp'].toDate(),
+                  'Health Focus': item,
+                });
+              }
+            } else if (value is String) {
+              data.add({
                 'timestamp': doc['timestamp'].toDate(),
-                'Health Focus': docData['payload']['Health Focus']
-              };
-              data.add(validDocData);
+                'Health Focus': value,
+              });
             }
+          }
         });
         return data;
       }
@@ -374,8 +402,6 @@ class _DashboardState extends State<Dashboard>
           final isSmallScreen = screenWidth < 600;
           // variables to manage selection and export type
           String? selectedOption = 'Graph';
-          String? selectedExportType = exportTypes.isNotEmpty ? exportTypes
-              .first : null;
 
           return StatefulBuilder(
             builder: (BuildContext context, StateSetter setState) {
@@ -434,7 +460,7 @@ class _DashboardState extends State<Dashboard>
                                     value: selectedExportType,
                                     onChanged: (String? newValue) {
                                       setState(() {
-                                        selectedExportType = newValue;
+                                        selectedExportType = newValue!;
                                       });
                                     },
                                     items: exportTypes
