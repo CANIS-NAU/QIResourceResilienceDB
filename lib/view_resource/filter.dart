@@ -65,6 +65,12 @@ final categories = UnmodifiableListView<FilterCategory>([
         "Low Cultural Responsivness",
         "Medium Cultural Responsivness",
         "High Cultural Responsivness",
+        "Not culturally specific to Hopi or Indigenous communities",
+      "Minimal Cultural Responsiveness",
+      "Low Cultural Responsiveness",
+      "Some Cultural Responsiveness",
+      "Good Cultural Responsiveness",
+      "Specific resource for Hopi community"
       ])),
   FilterCategory("Privacy", "privacy",
       values: UnmodifiableListView([
