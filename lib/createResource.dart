@@ -50,13 +50,20 @@ const List<String> resourceCostOptions = [
 ];
 
 String culturalResponseScoreToText(double sliderValue) {
-  if (sliderValue <= 1) {
-    return "Low Cultural Responsivness";
-  } else if (sliderValue <= 3) {
-    return "Medium Cultural Responsivness";
-  } else {
-    return "High Cultural Responsivness";
-  }
+  
+  // create list with text display options 
+  const List<String> culturalResponsivnessText = <String>[
+    'Not culturally specific to Hopi or Indigenous communities',
+    'Minimal Cultural Responsiveness',
+    'Low Cultural Responsiveness',
+    'Some Cultural Responsiveness',
+    'Good Cultural Responsiveness',
+    'Specific resource for Hopi community'
+  ];
+
+  // return list indexed with slider value
+  return culturalResponsivnessText[sliderValue.round()];
+  
 }
 
 // Create resource page
@@ -539,30 +546,14 @@ class _CreateResourceState extends State<CreateResource> {
                               value: _culturalResponseSliderValue,
                               max: 5,
                               divisions: 5,
-                              label: _culturalResponseSliderValue
-                                  .round()
-                                  .toString(),
+                              label: culturalResponseScoreToText(_culturalResponseSliderValue),
                               onChanged: (double value) {
                                 setState(() {
+
                                   _culturalResponseSliderValue = value;
                                 });
                               },
                             ),
-                          ),
-                          // anchor descriptions for slider
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Tooltip(
-                                  message:
-                                      "Not culturally specific to Hopi or Indigenous communities",
-                                  child: Text("Low ")),
-                              Spacer(),
-                              Tooltip(
-                                  message:
-                                      "Specific resource for Hopi community",
-                                  child: Text("High")),
-                            ],
                           ),
                         ],
                       ),
