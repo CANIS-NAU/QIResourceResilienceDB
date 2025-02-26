@@ -72,16 +72,11 @@ class HomeAnalytics {
   // Submit the user filtered search
   Future<void> submitFilterSearch(Set<FilterItem> filter) {
   // gather all values in a list keyed by the category
-  Map<String, dynamic> submissionFilter = {};
+  Map<String, List<String>> submissionFilter = {};
 
   for (var filterItem in filter) {
     // if the map already has a key for this category, append to the list
-    if (submissionFilter.containsKey(filterItem.category)) {
-      (submissionFilter[filterItem.category] as List).add(filterItem.value);
-    } else {
-      // otherwise create a new list with the first value
-      submissionFilter[filterItem.category] = [filterItem.value];
-    }
+    submissionFilter.putIfAbsent(filterItem.category, () => []).add(filterItem.value);
   }
   return eventLog.uploadRecord("filter", submissionFilter);
 }

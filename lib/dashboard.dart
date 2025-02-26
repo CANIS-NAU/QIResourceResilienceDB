@@ -224,6 +224,21 @@ class _DashboardState extends State<Dashboard>
     return csv.ListToCsvConverter().convert(rows);
   }
 
+  // normalize the payload value for a given key
+  List<Map<String, dynamic>> normalizeAndAdd(
+      Map<String, dynamic> payload, String key, DateTime timestamp) {
+    final value = payload[key];
+    // if it's not a list, wrap it in one
+    final normalizedValues = value is List ? value : [value];
+    // create a map for each value
+    return normalizedValues.map((item) {
+      return {
+        'timestamp': timestamp,
+        key: item,
+      };
+    }).toList();
+  }
+
   // function to fetch data from RRDBFilters
   Future<List<Map<String, dynamic>>> fetchData() async {
     try {
@@ -251,20 +266,7 @@ class _DashboardState extends State<Dashboard>
             // check if the document's payload contains the 'Type' key
             if (docData['payload'] != null &&
                 docData['payload'].containsKey('Type')) {
-              var value = docData['payload']['Type'];
-              if (value is List) {
-                for (var item in value) {
-                  data.add({
-                    'timestamp': doc['timestamp'].toDate(),
-                    'Type': item,
-                  });
-                }
-              } else if (value is String) {
-                data.add({
-                  'timestamp': doc['timestamp'].toDate(),
-                  'Type': value,
-                });
-              }
+              data.addAll(normalizeAndAdd( docData['payload'], 'Type', doc['timestamp'].toDate()));
             }
           }
           // if the selected data source is 'Age Range Searches'
@@ -272,38 +274,13 @@ class _DashboardState extends State<Dashboard>
             // check if the document's payload contains the 'Age Range' key
             if (docData['payload'] != null &&
                 docData['payload'].containsKey('Age Range')) {
-              var value = docData['payload']['Age Range'];
-              if (value is List) {
-                for (var item in value) {
-                  data.add({
-                    'timestamp': doc['timestamp'].toDate(),
-                    'Age Range': item,
-                  });
-                }
-              } else if (value is String) {
-                data.add({
-                  'timestamp': doc['timestamp'].toDate(),
-                  'Age Range': value,
-                });
-              }
+              data.addAll(normalizeAndAdd( docData['payload'], 'Age Range', doc['timestamp'].toDate()));
             }
           }
-          if (selectedData == 'Health Focus Searches' &&
-              docData['payload'] != null &&
-              docData['payload'].containsKey("Health Focus")) {
-            var value = docData['payload']['Health Focus'];
-            if (value is List) {
-              for (var item in value) {
-                data.add({
-                  'timestamp': doc['timestamp'].toDate(),
-                  'Health Focus': item,
-                });
-              }
-            } else if (value is String) {
-              data.add({
-                'timestamp': doc['timestamp'].toDate(),
-                'Health Focus': value,
-              });
+          if (selectedData == 'Health Focus Searches'){
+            if(docData['payload'] != null && 
+               docData['payload'].containsKey("Health Focus")) {
+              data.addAll(normalizeAndAdd( docData['payload'], 'Health Focus', doc['timestamp'].toDate()));
             }
           }
         });
