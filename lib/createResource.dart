@@ -49,22 +49,14 @@ const List<String> resourceCostOptions = [
   'Fees associated'
 ];
 
-String culturalResponseScoreToText(double sliderValue) {
-  
-  // create list with text display options 
-  const List<String> culturalResponsivnessText = <String>[
-    'Not culturally specific to Hopi or Indigenous communities',
-    'Minimal Cultural Responsiveness',
-    'Low Cultural Responsiveness',
-    'Some Cultural Responsiveness',
-    'Good Cultural Responsiveness',
-    'Specific resource for Hopi community'
-  ];
-
-  // return list indexed with slider value
-  return culturalResponsivnessText[sliderValue.round()];
-  
-}
+// map for asscociating culturalResponsiveness values with their labels
+const Map<String, String> culturalResponsivenessMap = {
+  'none' : 'Not culturally specific to Hopi or Indigenous communities',
+  'low' : 'Low Cultural Responsiveness',
+  'some' : 'Some Cultural Responsiveness',
+  'good' : 'Good Cultural Responsiveness',
+  'high' : 'Specific resource for Hopi community'
+};
 
 // Create resource page
 class CreateResource extends StatefulWidget {
@@ -88,7 +80,7 @@ class _CreateResourceState extends State<CreateResource> {
   String resourceLocationBoxText = "Link to the resource";
   String resourceCost = "";
   String resourceType = "";
-  double _culturalResponseSliderValue = 0;
+  String culturalResponsiveness = "";
   String _ageRange = ageItems.first;
   Schedule? resourceSchedule = null;
   List<FileUpload> _attachments = [];
@@ -210,9 +202,7 @@ class _CreateResourceState extends State<CreateResource> {
         'verified': false, // Always false upon creation.
         'resourceType': resourceType,
         'privacy': selectedPrivacyOptions,
-        'culturalResponse':
-            culturalResponseScoreToText(_culturalResponseSliderValue),
-        'culturalResponsivness': _culturalResponseSliderValue,
+        'culturalResponsiveness': culturalResponsiveness,
         'cost': resourceCost,
         'tagline': selectedTags,
         if (resourceSchedule != null) 'schedule': resourceSchedule!.toJson(),
@@ -289,6 +279,36 @@ class _CreateResourceState extends State<CreateResource> {
       ),
     );
   }
+  // list of radio buttons
+  ListView buildlRadioList<T>({
+    required Map<T, String> options,
+    required T selectedValue,
+    required ValueChanged<T?> onChanged,
+    TextStyle? titleStyle,
+    FocusNode? focusNode,
+    }
+    ){
+      return(
+        ListView(
+          shrinkWrap: true,
+          children: options.entries.map( (entry) {
+            final T value = entry.key;
+            final String label = entry.value;
+            return RadioListTile<T>(
+              title: Text(
+                label, style: titleStyle
+              ),
+              value: value,
+              groupValue: selectedValue,
+              onChanged: onChanged,
+              focusNode: focusNode ?? FocusNode(skipTraversal: true),
+              controlAffinity: ListTileControlAffinity.leading,
+              dense: true
+            );
+          }).toList()
+        )   
+      );
+    }
 
   // Create resource UI
   @override
@@ -531,32 +551,18 @@ class _CreateResourceState extends State<CreateResource> {
                 Center(
                   child: new Container(
                     child: Center(
-                      child: Stack(
-                        children: [
-                          SliderTheme(
-                            data: SliderTheme.of(context).copyWith(
-                              activeTrackColor: Theme.of(context).primaryColor,
-                              thumbColor: Theme.of(context).primaryColor,
-                              overlayColor: Theme.of(context).primaryColor.withOpacity(0.2),
-                              valueIndicatorColor:  Theme.of(context).primaryColor,
-                              valueIndicatorTextStyle:
-                                  TextStyle(color: Colors.white),
-                            ),
-                            child: Slider(
-                              value: _culturalResponseSliderValue,
-                              max: 5,
-                              divisions: 5,
-                              label: culturalResponseScoreToText(_culturalResponseSliderValue),
-                              onChanged: (double value) {
-                                setState(() {
+                      child: Column(
+                        children:[
+                          buildlRadioList(
+                            options: culturalResponsivenessMap,
+                            selectedValue: culturalResponsiveness,
+                            onChanged: (value) => setState(() {
+                              culturalResponsiveness = value!;
 
-                                  _culturalResponseSliderValue = value;
-                                });
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
+                            }),
+                            titleStyle: TextStyle(fontSize: 16)
+                          )
+                        ]),
                     ),
                   ),
                 ),

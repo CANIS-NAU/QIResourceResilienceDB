@@ -555,7 +555,7 @@ class _ReviewResourceState extends State<ReviewResource> {
 
     resourceInfo += 'Privacy: ${widget.resourceData['privacy'].join(', ')}\n\n'
         'Cultural Responsiveness: ${widget
-        .resourceData['culturalResponsivness']}\n';
+        .resourceData['culturalResponsiveness']}\n';
 
     if (widget.resourceData['resourceType'] == 'Event') {
       final schedule = Schedule.fromJson(widget.resourceData['schedule']);
