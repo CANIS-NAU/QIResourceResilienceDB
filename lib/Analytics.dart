@@ -71,12 +71,15 @@ class HomeAnalytics {
 
   // Submit the user filtered search
   Future<void> submitFilterSearch(Set<FilterItem> filter) {
-    Map<String, dynamic> submissionFilter = {};
-    for (var filterItem in filter) {
-      submissionFilter[filterItem.category] = filterItem.value;
-    }
-    return eventLog.uploadRecord("filter", submissionFilter);
+  // gather all values in a list keyed by the category
+  Map<String, List<String>> submissionFilter = {};
+
+  for (var filterItem in filter) {
+    // if the map already has a key for this category, append to the list
+    submissionFilter.putIfAbsent(filterItem.category, () => []).add(filterItem.value);
   }
+  return eventLog.uploadRecord("filter", submissionFilter);
+}
 
   // Submit the resource clicked event
   Future<void> submitClickedResource(String resource) {

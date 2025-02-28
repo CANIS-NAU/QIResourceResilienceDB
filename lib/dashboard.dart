@@ -224,12 +224,28 @@ class _DashboardState extends State<Dashboard>
     return csv.ListToCsvConverter().convert(rows);
   }
 
+  // normalize the payload value for a given key
+  List<Map<String, dynamic>> normalizeAndAdd(
+      Map<String, dynamic> payload, String key, DateTime timestamp) {
+    final value = payload[key];
+    // if it's not a list, wrap it in one
+    final normalizedValues = value is List ? value : [value];
+    // create a map for each value
+    return normalizedValues.map((item) {
+      return {
+        'timestamp': timestamp,
+        key: item,
+      };
+    }).toList();
+  }
+
   // function to fetch data from RRDBFilters
   Future<List<Map<String, dynamic>>> fetchData() async {
     try {
       // check if data source is type or age
       if (selectedData == 'Resource Type Searches' ||
-          selectedData == 'Age Range Searches' || selectedData == 'Health Focus Searches') {
+          selectedData == 'Age Range Searches' || 
+          selectedData == 'Health Focus Searches') {
         // get documents in event log collection where event is filter
         QuerySnapshot querySnapshot = await FirebaseFirestore.instance
             .collection('RRDBEventLog')
@@ -250,11 +266,7 @@ class _DashboardState extends State<Dashboard>
             // check if the document's payload contains the 'Type' key
             if (docData['payload'] != null &&
                 docData['payload'].containsKey('Type')) {
-              Map<String, dynamic> validDocData = {
-                'timestamp': doc['timestamp'].toDate(),
-                'Type': docData['payload']['Type']
-              };
-              data.add(validDocData);
+              data.addAll(normalizeAndAdd( docData['payload'], 'Type', doc['timestamp'].toDate()));
             }
           }
           // if the selected data source is 'Age Range Searches'
@@ -262,22 +274,15 @@ class _DashboardState extends State<Dashboard>
             // check if the document's payload contains the 'Age Range' key
             if (docData['payload'] != null &&
                 docData['payload'].containsKey('Age Range')) {
-              Map<String, dynamic> validDocData = {
-                'timestamp': doc['timestamp'].toDate(),
-                'Age Range': docData['payload']['Age Range']
-              };
-              data.add(validDocData);
+              data.addAll(normalizeAndAdd( docData['payload'], 'Age Range', doc['timestamp'].toDate()));
             }
           }
-          if (selectedData == 'Health Focus Searches' && 
-            docData['payload'] != null &&
-            docData['payload'].containsKey("Health Focus")) {
-              Map<String, dynamic> validDocData = {
-                'timestamp': doc['timestamp'].toDate(),
-                'Health Focus': docData['payload']['Health Focus']
-              };
-              data.add(validDocData);
+          if (selectedData == 'Health Focus Searches'){
+            if(docData['payload'] != null && 
+               docData['payload'].containsKey("Health Focus")) {
+              data.addAll(normalizeAndAdd( docData['payload'], 'Health Focus', doc['timestamp'].toDate()));
             }
+          }
         });
         return data;
       }
@@ -374,8 +379,6 @@ class _DashboardState extends State<Dashboard>
           final isSmallScreen = screenWidth < 600;
           // variables to manage selection and export type
           String? selectedOption = 'Graph';
-          String? selectedExportType = exportTypes.isNotEmpty ? exportTypes
-              .first : null;
 
           return StatefulBuilder(
             builder: (BuildContext context, StateSetter setState) {
@@ -434,7 +437,7 @@ class _DashboardState extends State<Dashboard>
                                     value: selectedExportType,
                                     onChanged: (String? newValue) {
                                       setState(() {
-                                        selectedExportType = newValue;
+                                        selectedExportType = newValue!;
                                       });
                                     },
                                     items: exportTypes
