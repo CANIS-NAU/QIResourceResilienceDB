@@ -9,11 +9,12 @@ import 'package:web_app/events/schedule.dart';
 import 'package:web_app/common.dart';
 
 /// A single item in a filter selection. The pair of category and value.
-class FilterItem {
-  FilterItem(this.category, this.value);
+class FilterItem<T> {
+  FilterItem(this.category, this.value, this.label);
 
   String category;
-  String value;
+  T value;
+  String label;
 
   @override
   int get hashCode => category.hashCode ^ value.hashCode;
@@ -31,7 +32,7 @@ class FilterItem {
 class FilterCategory {
   FilterCategory(this.name, this.field,
       {required this.values, this.canHaveMultiple = false})
-      : items = UnmodifiableListView(values.map((v) => FilterItem(name, v)));
+      : items = UnmodifiableListView(values.entries.map( (entry) => FilterItem(name, entry.key, entry.value)));
 
   /// The category name
   final String name;
@@ -40,60 +41,61 @@ class FilterCategory {
   final String field;
 
   /// All possible values for this category, as they would appear in the data
-  final UnmodifiableListView<String> values;
+  final UnmodifiableMapView<String, String> values;
 
   /// Values as preconstructed FilterItem instances.
   final UnmodifiableListView<FilterItem> items;
+
+  /// Labels for display on filter chips
 
   /// Can a resource have more than one value for this?
   final bool canHaveMultiple;
 }
 
+
+
+
 /// All available resource filter categories, their values, and other useful metadata.
 final categories = UnmodifiableListView<FilterCategory>([
   FilterCategory("Type", "resourceType",
-      values: UnmodifiableListView([
-        "Online",
-        "In Person",
-        "App",
-        "Hotline",
-        "Event",
-        "Podcast",
-      ])),
-  FilterCategory("Cultural Responsiveness", "culturalResponse",
-      values: UnmodifiableListView([
-        "Low Cultural Responsivness",
-        "Medium Cultural Responsivness",
-        "High Cultural Responsivness",
-        "Not culturally specific to Hopi or Indigenous communities",
-      "Minimal Cultural Responsiveness",
-      "Low Cultural Responsiveness",
-      "Some Cultural Responsiveness",
-      "Good Cultural Responsiveness",
-      "Specific resource for Hopi community"
-      ])),
+      values: UnmodifiableMapView({
+        "Online" : "Online",
+        "In Person" : "In Person",
+        "App" : "App",
+        "Hotline" : "Hotline",
+        "Event" : "Event",
+        "Podcast" : "Podcast"
+      })),
+  FilterCategory("Cultural Responsiveness", "culturalResponsiveness",
+      values: UnmodifiableMapView({
+        "none" : "Not culturally specific to Hopi or Indigenous communities",
+        "low" : "Low Cultural Responsiveness",
+        "some" : "Some Cultural Responsiveness",
+        "good" : "Good Cultural Responsiveness",
+        "high" : "Specific resource for Hopi community"
+      })),
   FilterCategory("Privacy", "privacy",
-      values: UnmodifiableListView([
-        "HIPAA Compliant",
-        "Anonymous",
-        "Mandatory Reporting",
-        "None Stated",
-      ]),
+      values: UnmodifiableMapView({
+        "HIPAA Compliant" : "HIPAA Compliant",
+        "Anonymous" : "Anonymous",
+        "Mandatory Reporting" : "Mandatory Reporting",
+        "None Stated" : "None Stated",
+      }),
       canHaveMultiple: true),
   FilterCategory("Age Range", "agerange",
-      values: UnmodifiableListView([
-      'Under 18',
-      '18-24',
-      '24-65',
-      '65+',
-      'All ages'
-      ])),
+      values: UnmodifiableMapView({
+      "Under 18" : "Under 18",
+      "18-24" : "18-24",
+      "24-65" : "24-65",
+      "65+" : "65+",
+      "All ages" : "All ages"
+      })),
   FilterCategory("Event happening in the next", "nextDate",
-      values: UnmodifiableListView([
-        "Week",
-        "Month",
-        "3 Months",
-      ])),
+      values: UnmodifiableMapView({
+        "Week" : "Week",
+        "Month" : "Month",
+        "3 Months" : "3 Months"
+      })),
 ]);
 
 /// Represents a complete resource filter query.
@@ -145,7 +147,7 @@ class CategoryFilterDialog extends StatelessWidget {
 
   Widget buildFilterChip(FilterItem item) {
     return CustomFilterChip(
-      label: item.value,
+      label: item.label,
       selected: filter.isSelected(item),
       onSelected: (bool selected) {
         if (selected) {
