@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'view_resource/resource_detail.dart';
-import 'package:web_app/Analytics.dart';
+import 'package:provider/provider.dart';
+import 'package:web_app/analytics_provider.dart';
 
 class Top10Resources extends StatefulWidget {
   @override
@@ -23,7 +24,20 @@ class _TopResourcesState extends State<Top10Resources> {
   @override
   void initState() {
     super.initState();
+
+     WidgetsBinding.instance.addPostFrameCallback((_) {
+    Provider.of<AnalyticsProvider>(context, listen: false).shouldTrackLinks = false;
+  });
+
     getTopResources();
+  }
+
+   @override
+  void dispose() {
+    // turn link tracking back ON when we leave this page
+    Provider.of<AnalyticsProvider>(context, listen: false).shouldTrackLinks = true;
+
+    super.dispose();
   }
 
   // function to show date range picker
@@ -180,7 +194,7 @@ class _TopResourcesState extends State<Top10Resources> {
                                 itemCount: topResources.length,
                                 itemBuilder: (context, index){
                                   // display top resources as list tiles with rank(index)
-                                  return TopResourceTile(resource: topResources[index], index: index, analytics: HomeAnalytics(),);
+                                  return TopResourceTile(resource: topResources[index], index: index);
                                 },
                               ),
                             ),)
@@ -210,12 +224,10 @@ class TopResourceTile extends StatefulWidget {
     Key? key,
     required this.resource,
     required this.index,
-    required this.analytics,  // pass the analytics object
   }) : super(key: key);
 
   final ResourceData resource;
   final int index;
-  final HomeAnalytics analytics;
 
   @override
   _TopResourceTileState createState() => _TopResourceTileState();
@@ -235,7 +247,6 @@ class _TopResourceTileState extends State<TopResourceTile> {
         showDialog(
           context: context,
           builder: (context) => ResourceDetail(
-            analytics: widget.analytics,
             resource: resourceSnapshot,
           ),
         );

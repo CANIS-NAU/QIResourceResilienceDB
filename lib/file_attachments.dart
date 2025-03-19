@@ -3,7 +3,6 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:mime/mime.dart';
-import 'package:web_app/Analytics.dart';
 import 'package:web_app/util.dart';
 
 // The file attachment workflow has two main parts:
@@ -495,11 +494,8 @@ List<Attachment> getAttachmentsFromResource(dynamic data) {
 }
 
 class AttachmentsList extends StatelessWidget {
-  AttachmentsList({super.key, required this.analytics, 
-                                                    required this.attachments,
-                                                    required this.resourceId});
+  AttachmentsList({super.key, required this.attachments, required this.resourceId});
 
-  final HomeAnalytics analytics; 
   final List<Attachment> attachments;
   final String type = "attachments";
   final String resourceId;
@@ -512,7 +508,6 @@ class AttachmentsList extends StatelessWidget {
       children: attachments.map((a) {
         return Row(children: [
           Link(
-            analytics: analytics,
             type: type,
             text: a.name, 
             uri: Uri.parse(a.url),

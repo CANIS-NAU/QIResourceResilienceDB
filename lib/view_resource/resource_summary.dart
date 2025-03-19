@@ -5,7 +5,8 @@ import 'package:web_app/events/schedule.dart';
 import 'package:web_app/util.dart';
 import 'package:web_app/view_resource/filter.dart';
 import 'package:web_app/view_resource/resource_detail.dart';
-import 'package:web_app/Analytics.dart';
+import 'package:web_app/analytics_provider.dart';
+import 'package:provider/provider.dart';
 
 final typeIcon = const {
   'Online': Icons.wifi,
@@ -20,12 +21,10 @@ final typeIcon = const {
 /// in a scrolling list of resources.
 class ResourceSummary extends StatelessWidget {
   ResourceSummary(
-      {super.key, required this.resource, required this.isSmallScreen,
-                                                      required this.analytics});
+      {super.key, required this.resource, required this.isSmallScreen});
 
   final QueryDocumentSnapshot resource;
   final bool isSmallScreen;
-  final HomeAnalytics analytics;
 
   @override
   Widget build(BuildContext context) {
@@ -130,11 +129,13 @@ class ResourceSummary extends StatelessWidget {
               color: Colors.black,
             ),
             onTap: () {
-              analytics.submitClickedResource(resource.id);
+              final analyticsProvider =
+                Provider.of<AnalyticsProvider>(context, listen: false);
+            analyticsProvider.analytics.submitClickedResource(resource.id);
+
               showDialog(
                 context: context,
-                builder: (context) => ResourceDetail(analytics:analytics,
-                                                            resource: resource),
+                builder: (context) => ResourceDetail(resource: resource),
               );
             },
           ),
