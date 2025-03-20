@@ -79,16 +79,19 @@ class Link extends StatelessWidget {
   }
 
   void _handleTap(BuildContext context) async {
-    final analyticsProvider = Provider.of<AnalyticsProvider>(context, listen: false);
+  final analyticsProvider = Provider.of<AnalyticsProvider?>(context, listen: false);
+  if (analyticsProvider == null) {
+    debugPrint("AnalyticsProvider not found in context!");
+  } else {
     analyticsProvider.submitClickedLink(type, uri, resourceId);
-
-    if (await canLaunchUrl(uri)) {
-      launchUrl(uri);
-    } else {
-      onError(context);
-    }
   }
 
+  if (await canLaunchUrl(uri)) {
+    launchUrl(uri);
+  } else {
+    onError(context);
+  }
+}
   // replaced GestureDetector with inkwell because it is focusable and handles keyboard taps
   @override
   Widget build(BuildContext context) {

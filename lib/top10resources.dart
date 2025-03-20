@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'view_resource/resource_detail.dart';
-import 'package:provider/provider.dart';
-import 'package:web_app/analytics_provider.dart';
 
 class Top10Resources extends StatefulWidget {
   @override
@@ -24,20 +22,7 @@ class _TopResourcesState extends State<Top10Resources> {
   @override
   void initState() {
     super.initState();
-
-     WidgetsBinding.instance.addPostFrameCallback((_) {
-    Provider.of<AnalyticsProvider>(context, listen: false).shouldTrackLinks = false;
-  });
-
     getTopResources();
-  }
-
-   @override
-  void dispose() {
-    // turn link tracking back ON when we leave this page
-    Provider.of<AnalyticsProvider>(context, listen: false).shouldTrackLinks = true;
-
-    super.dispose();
   }
 
   // function to show date range picker

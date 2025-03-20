@@ -133,10 +133,15 @@ class ResourceSummary extends StatelessWidget {
                 Provider.of<AnalyticsProvider>(context, listen: false);
             analyticsProvider.analytics.submitClickedResource(resource.id);
 
-              showDialog(
-                context: context,
-                builder: (context) => ResourceDetail(resource: resource),
-              );
+             showDialog(
+              context: context,
+              builder: (dialogContext) {
+                return ChangeNotifierProvider<AnalyticsProvider>.value(
+                  value: Provider.of<AnalyticsProvider>(context, listen: false),
+                  child: ResourceDetail(resource: resource),
+                );
+              },
+            );
             },
           ),
         ),
