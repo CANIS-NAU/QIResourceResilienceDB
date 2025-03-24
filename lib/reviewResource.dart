@@ -347,8 +347,7 @@ class _ReviewResourceState extends State<ReviewResource> {
                 if(newValue == 'No')
                 {
                     deleteResource(widget.resourceData);
-                    Navigator.pop(context);
-                    Navigator.pushNamed( context, '/inbox' );
+                    Navigator.pushReplacementNamed(context, '/verify');
                     //submitToInbox( widget.resourceData, "Denied", userComments);
                 }
               },
@@ -1147,8 +1146,7 @@ class _ReviewResourceState extends State<ReviewResource> {
                                                                     totalScore);
                     submitToInbox( widget.resourceData, "Approved", 
                                                                  userComments );
-                    Navigator.pop(context);
-                    Navigator.pushNamed( context, '/inbox' );
+                    Navigator.pushReplacementNamed(context, '/verify');
                   },
                   child: Text(
                     'Verify',
@@ -1173,8 +1171,7 @@ class _ReviewResourceState extends State<ReviewResource> {
                   onPressed: () {
                     deleteResource(widget.resourceData);
                     submitToInbox( widget.resourceData, "Denied",userComments );
-                    Navigator.pop(context);
-                    Navigator.pushNamed( context, '/inbox' );
+                    Navigator.pushReplacementNamed(context, '/verify');
                   },
                   child: Text(
                     'Deny',

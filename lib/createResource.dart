@@ -102,6 +102,8 @@ class _CreateResourceState extends State<CreateResource> {
   // For tags text input.
   final _tagsController = TextEditingController();
 
+  bool bypassVerification = false;
+
   // Used to store selected privacy options
   final List<bool> _selectedPrivacy =
       List<bool>.filled(resourcePrivacy.length, false);
@@ -216,7 +218,7 @@ class _CreateResourceState extends State<CreateResource> {
         'description': resourceDescription,
         'agerange': _ageRange,
         'isVisable': true,
-        'verified': false, // Always false upon creation.
+        'verified': bypassVerification,
         'resourceType': resourceType,
         'privacy': selectedPrivacyOptions,
         'culturalResponse':
@@ -245,10 +247,15 @@ class _CreateResourceState extends State<CreateResource> {
       });
 
       debugPrint("Created resource ${resourceId}");
+
+      String successMessage = bypassVerification
+          ? "Resource submitted and auto-verified."
+          : "Submitted resource for review.";
+
       await showMessageDialog(
         context,
         title: "Success",
-        message: "Submitted resource for review.",
+        message: successMessage,
       );
 
       // Return to origin page after successful document creation.
@@ -640,6 +647,40 @@ class _CreateResourceState extends State<CreateResource> {
                   onChanged: (files) {
                     _attachments = files;
                   },
+                ),
+
+                Padding(
+                  padding: const EdgeInsets.only(top: 16.0),
+                  child: CheckboxListTile(
+                    title: Text(
+                      "Bypass Verification (Auto-Verify)",
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    subtitle: Text(
+                      "Select this option if your resource is trusted and should bypass manual verification process.",
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[700],
+                      ),
+                    ),
+                    value: bypassVerification,
+                    onChanged: (bool? value) {
+                      setState(() {
+                        bypassVerification = value ?? false;
+                      });
+                    },
+                    activeColor: Theme.of(context).primaryColor,
+                    controlAffinity: ListTileControlAffinity.trailing,
+                    contentPadding: EdgeInsets.all(8.0),
+                    tileColor: Colors.grey[100],
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    focusNode: FocusNode(skipTraversal: true),
+                  ),
                 ),
 
                 // Submit button and progress indicator (while submitting)
