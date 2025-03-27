@@ -14,7 +14,7 @@ import 'package:web_app/view_resource/filter.dart';
 import 'package:web_app/pdfDownload.dart';
 import 'package:web_app/util.dart';
 import 'package:provider/provider.dart';
-import 'package:web_app/analytics_provider.dart';
+import 'package:web_app/Analytics.dart';
 
 /// The home page main widget
 class MyHomePage extends StatefulWidget {
@@ -36,11 +36,6 @@ class _MyHomePageState extends State<MyHomePage> {
   final searchFieldController = TextEditingController();
   ResourceFilter filter = ResourceFilter.empty();
 
-   @override
-  void initState() {
-    super.initState();
-  }
-
   void onFilterChange() {
     // TODO: only change the query if filter *actually* changed.
     searchFieldController.text = filter.textual ?? "";
@@ -59,8 +54,8 @@ class _MyHomePageState extends State<MyHomePage> {
     bool Function(QueryDocumentSnapshot) filterFunction =
         clientSideFilter(filter);
 
-    return ChangeNotifierProvider<AnalyticsProvider>(
-      create: (_) => AnalyticsProvider(),
+    return ChangeNotifierProvider<HomeAnalytics>(
+      create: (_) => HomeAnalytics(),
       child: Scaffold(
         key: _scaffoldKey,
         appBar: AppBar(
@@ -138,8 +133,8 @@ class _MyHomePageState extends State<MyHomePage> {
                             setState(() {
                               final t = text.isNotEmpty ? text : null;
                               if (t != null) {
-                                final analyticsProvider = Provider.of<AnalyticsProvider>(context, listen: false);
-                                analyticsProvider.analytics.submitTextSearch(t);
+                                final homeAnalytics = Provider.of<HomeAnalytics>(context, listen: false);
+                                homeAnalytics.submitTextSearch(t);
                               }
                               filter.setTextSearch(t);
                               onFilterChange();
@@ -170,8 +165,8 @@ class _MyHomePageState extends State<MyHomePage> {
                                     }),
                                   ),
                                 ).then((value) {
-                                  final analyticsProvider = Provider.of<AnalyticsProvider>(context, listen: false);
-                                  analyticsProvider.analytics.submitFilterSearch(filter.categorical);
+                                  final homeAnalytics = Provider.of<HomeAnalytics>(context, listen: false);
+                                  homeAnalytics.submitFilterSearch(filter.categorical);
                                 });
                               },
                             ),

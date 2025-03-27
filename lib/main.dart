@@ -7,7 +7,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:timezone/browser.dart' as tz;
-import 'package:provider/provider.dart';
 
 //Screen or class imports
 import 'package:web_app/home.dart';
@@ -20,7 +19,6 @@ import 'package:web_app/account.dart';
 import 'package:web_app/reviewResource.dart';
 import 'package:web_app/inbox.dart';
 import 'package:web_app/userManagement.dart';
-import 'package:web_app/analytics_provider.dart';
 
 //Main function
 void main() async {

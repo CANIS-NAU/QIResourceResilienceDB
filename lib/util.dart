@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:provider/provider.dart';
-import 'package:web_app/analytics_provider.dart';
+import 'package:web_app/Analytics.dart';
 
 void showAlertDialog(BuildContext context, String statement) {
   // set up the button
@@ -78,17 +78,23 @@ class Link extends StatelessWidget {
     );
   }
 
+  // HomeAnalytics is expected to always return a non-null value.
+  // If it's not found, it doesn't return null, it throws an error, so we cannot use null check anymore.
+  // To safely handle cases where the provider does not exist (like in top10 page), 
+  // we can catch the exception rather than checking for null
   void _handleTap(BuildContext context) async {
-    final analyticsProvider = Provider.of<AnalyticsProvider?>(context, listen: false);
-    if (analyticsProvider != null) {
-      analyticsProvider.submitClickedLink(type, uri, resourceId);
+    try {
+      final homeAnalytics = Provider.of<HomeAnalytics>(context, listen: false);
+      homeAnalytics.submitClickedLink(type, uri, resourceId);
+    } catch (e) {
+      // provider not found, do nothing
     }
     if (await canLaunchUrl(uri)) {
       launchUrl(uri);
     } else {
       onError(context);
     }
-  }
+}
   // replaced GestureDetector with inkwell because it is focusable and handles keyboard taps
   @override
   Widget build(BuildContext context) {
