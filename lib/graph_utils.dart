@@ -57,17 +57,60 @@ Widget buildLegend(Map<String, Color> groupColors, {Axis direction = Axis.vertic
     return utcBaseline.add(Duration(milliseconds: bucketNumber * bucketSize.inMilliseconds));
   }
 
-  // process data into buckets
-  List<GraphDataPoint> processDataWithBuckets( List<Map<String, dynamic>> data,
-      Duration bucketSize, DateTime startDate, DateTime endDate, 
-      String selectedData,  Map<String, List<String>> allGroups) {
+// process data into buckets
+List<GraphDataPoint> processDataWithBuckets(
+    List<Map<String, dynamic>> data,
+    Duration bucketSize,
+    DateTime startDate,
+    DateTime endDate,
+    String selectedData,
+    Map<String, List<String>> allGroups) {
+  // map to hold counts per bucket for each group
+  Map<int, Map<String, int>> countsPerBucket = {};
 
-    // map to hold counts per bucket for each group
-    Map<int, Map<String, int>> countsPerBucket = {};
+  // use the start date as baseline for bucket calculations
+  DateTime baseline = startDate.toUtc();
+  // for Total Site Visits, count unique session IDs per bucket
+  if (selectedData == 'Total Site Visits') {
+    // map bucket number to a set of unique session IDs
+    Map<int, Set<String>> sessionsPerBucket = {};
 
-    // use the start date as baseline for bucket calculations
-    DateTime baseline = startDate.toUtc();
+    for (var entry in data) {
+      if (entry['timestamp'] == null) continue;
+      DateTime timestamp = entry['timestamp'].toUtc();
+      if (timestamp.isBefore(startDate.toUtc()) ||
+          timestamp.isAfter(endDate.toUtc())) continue;
 
+      // calculate bucket number
+      int bucketNumber = timestamp.difference(baseline).inMilliseconds ~/
+          bucketSize.inMilliseconds;
+
+      // ensure sessionId exists
+      String? sessionId = entry['sessionId'];
+      if (sessionId == null) continue;
+
+      sessionsPerBucket[bucketNumber] ??= <String>{};
+      sessionsPerBucket[bucketNumber]!.add(sessionId);
+    }
+
+    // ensure all buckets are initialized
+    int lastBucket = getBucketNumber(endDate.toUtc(), bucketSize, baseline);
+    for (int bucket = 0; bucket <= lastBucket; bucket++) {
+      sessionsPerBucket[bucket] ??= <String>{};
+    }
+
+    // convert unique session counts to GraphDataPoint
+    List<GraphDataPoint> processedData = [];
+    sessionsPerBucket.forEach((bucketNumber, sessionSet) {
+      processedData.add(GraphDataPoint(
+        bucket: bucketNumber,
+        y: sessionSet.length.toDouble(),
+        group: 'Total Site Visits',
+      ));
+    });
+    return processedData;
+    
+  } else {
     // iterate over the data to populate counts per bucket
     for (var entry in data) {
       if (entry['timestamp'] == null) continue;
@@ -84,7 +127,7 @@ Widget buildLegend(Map<String, Color> groupColors, {Axis direction = Axis.vertic
       } else if (selectedData == "Age Range Searches") {
         group = entry['Age Range'];
       } else if (selectedData == "Health Focus Searches") {
-        group = entry['Health Focus']; 
+        group = entry['Health Focus'];
       } else {
         group = entry['type'];
       }
@@ -92,15 +135,18 @@ Widget buildLegend(Map<String, Color> groupColors, {Axis direction = Axis.vertic
 
       // initialize the bucket and group count
       countsPerBucket[bucketNumber] ??= {};
-      countsPerBucket[bucketNumber]![group] = (countsPerBucket[bucketNumber]![group] ?? 0) + 1;
+      countsPerBucket[bucketNumber]![group] =
+          (countsPerBucket[bucketNumber]![group] ?? 0) + 1;
     }
 
     // ensure all buckets are initialized, in order to plot 0 data
     List<String> groups = allGroups[selectedData] ?? [];
     DateTime currentBucketStart = startDate.toUtc();
     // create all buckets
-    while (currentBucketStart.isBefore(endDate.toUtc()) || currentBucketStart.isAtSameMomentAs(endDate.toUtc())) {
-      int bucketNumber = getBucketNumber(currentBucketStart, bucketSize, baseline);
+    while (currentBucketStart.isBefore(endDate.toUtc()) ||
+        currentBucketStart.isAtSameMomentAs(endDate.toUtc())) {
+      int bucketNumber =
+          getBucketNumber(currentBucketStart, bucketSize, baseline);
 
       // initialize the bucket if it doesn't exist
       countsPerBucket[bucketNumber] ??= {};
@@ -128,6 +174,7 @@ Widget buildLegend(Map<String, Color> groupColors, {Axis direction = Axis.vertic
     // return data points
     return processedData;
   }
+}
 
    // adjust bucket size dynamically based on date range
   Duration getDynamicBucketSize(DateTime startDate, DateTime endDate) {

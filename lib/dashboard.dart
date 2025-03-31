@@ -167,17 +167,21 @@ class _DashboardState extends State<Dashboard>
     }
   }
 
+  List<String> getCsvHeaders() {
+    if (selectedData == 'Clicks to Offsite Links') {
+      return ['Timestamp', 'Group', 'Link', 'Resource Name'];
+    } else if (selectedData == 'Total Site Visits') {
+      return ['Timestamp', 'Session ID'];
+    } else {
+      return ['Timestamp', 'Group'];
+    }
+  }
+
   // convert data to CSV format
   Future<String> convertDataToCsv(List<Map<String, dynamic>> data) async {
     List<List<dynamic>> rows = [];
 
-    // add headers conditionally based on selected data source
-    if (selectedData == 'Clicks to Offsite Links') {
-      rows.add(['Timestamp', 'Group', 'Link', 'Resource Name']);
-
-    } else {
-      rows.add(['Timestamp', 'Group']); // no link header for other data sources
-    }
+    rows.add(getCsvHeaders());
 
     for (var item in data) {
       // format timestamp as ISO8601
@@ -187,40 +191,42 @@ class _DashboardState extends State<Dashboard>
         if (item['timestamp'] is DateTime) {
           // add timezone offset to ISO 8601 format
           DateTime timestamp = item['timestamp'];
-          formattedTimestamp = timestamp.toUtc().toIso8601String();
+          formattedTimestamp = timestamp.toIso8601String();
         } else {
           DateTime timestamp = DateTime.parse(item['timestamp'].toString());
-          formattedTimestamp = timestamp.toUtc().toIso8601String();
+          formattedTimestamp = timestamp.toIso8601String();
         }
       }
-      // determine group based on available keys
-      String group = item.containsKey('Age Range') ? item['Age Range'] :
-      item.containsKey('Type') ? item['Type'] :
-      item.containsKey('Health Focus') ? item['Health Focus'] :
-      item.containsKey('type') ? item['type'] : 'Unknown';
-
-      // get the link if it exists
-      String link = item.containsKey('link') ? item['link'] : '';
-
-      // initialize resource name
-      String resourceName = '';
-
-      // check if the event is 'clicked-link' and if there's a resourceId
-      if(selectedData == 'Clicks to Offsite Links'){
-        resourceName = await getResourceName(item['resourceId']) ?? '';  // fetch the resource name
-      }
-
-      // create the row of data
-      List<dynamic> row = [formattedTimestamp, group];
-
-      // include link and resource name only for 'Clicks to Offsite Links'
+      // build a row based on selectedData
       if (selectedData == 'Clicks to Offsite Links') {
-        row.add(link);
-        row.add(resourceName);
+        String group = item.containsKey('Age Range')
+            ? item['Age Range']
+            : item.containsKey('Type')
+                ? item['Type']
+                : item.containsKey('Health Focus')
+                    ? item['Health Focus']
+                    : item.containsKey('type')
+                        ? item['type']
+                        : 'Unknown';
+        String link = item.containsKey('link') ? item['link'] : '';
+        String resourceName = await getResourceName(item['resourceId']) ?? '';
+        rows.add([formattedTimestamp, group, link, resourceName]);
+      } else if (selectedData == 'Total Site Visits') {
+        String sessionId = item['sessionId'] ?? '';
+        rows.add([formattedTimestamp, sessionId]);
+      } else {
+        String group = item.containsKey('Age Range')
+            ? item['Age Range']
+            : item.containsKey('Type')
+                ? item['Type']
+                : item.containsKey('Health Focus')
+                    ? item['Health Focus']
+                    : item.containsKey('type')
+                        ? item['type']
+                        : 'Unknown';
+        rows.add([formattedTimestamp, group]);
       }
-      rows.add(row);
     }
-    // convert rows to CSV format
     return csv.ListToCsvConverter().convert(rows);
   }
 
@@ -315,6 +321,28 @@ class _DashboardState extends State<Dashboard>
           }
         });
         return data;
+      }
+
+      else if (selectedData == 'Total Site Visits') {
+      // fetch all events within the selected date range
+      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+          .collection('RRDBEventLog')
+          .where('timestamp', isGreaterThanOrEqualTo: startDate)
+          .where('timestamp', isLessThanOrEqualTo: endDate)
+          .get();
+
+      List<Map<String, dynamic>> data = [];
+      querySnapshot.docs.forEach((doc) {
+        Map<String, dynamic> docData = doc.data() as Map<String, dynamic>;
+        // every event is assumed to have a sessionId
+        if (docData.containsKey('sessionId')) {
+          data.add({
+            'timestamp': doc['timestamp'].toDate(),
+            'sessionId': docData['sessionId'],
+          });
+        }
+      });
+      return data;
       }
       else {
         return []; // empty list if no data source matches
@@ -726,17 +754,6 @@ class _DashboardState extends State<Dashboard>
 
   // build the chart based on selected chart type
   Widget buildChart(String chartType, List<Map<String, dynamic>> data) {
-    if (selectedData != 'Age Range Searches' &&
-        selectedData != 'Resource Type Searches' &&
-        selectedData != 'Clicks to Offsite Links' &&
-        selectedData != 'Health Focus Searches') {
-      return Center(
-        child: Text(
-          "No data available for '${selectedData}' at this time",
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-      );
-    }
     // determine bucket size
     Duration bucketSize = getDynamicBucketSize(startDate!, endDate!);
     // process data into buckets
