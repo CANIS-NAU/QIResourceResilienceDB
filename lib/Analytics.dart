@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -57,7 +56,7 @@ class EventLog {
 }
 
 // Resonsible for uploading searches and filter options
-class HomeAnalytics {
+class HomeAnalytics extends ChangeNotifier {
   EventLog eventLog = EventLog();
 
   // Submit the user text search

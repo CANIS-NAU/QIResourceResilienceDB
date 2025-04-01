@@ -42,10 +42,10 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: "Resilience Resource Database",
-
+    
       //Initial Route to home
       initialRoute: '/',
-
+    
       //Declare app routes. New screen routes to be added here
       routes: {
         '/home': ( context ) => const MyHomePage(),

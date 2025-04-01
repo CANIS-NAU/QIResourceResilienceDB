@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:web_app/Analytics.dart';
 import 'package:web_app/common.dart';
 import 'package:web_app/events/schedule.dart';
 import 'package:web_app/events/schedule_view.dart';
@@ -12,12 +11,10 @@ import 'package:web_app/util.dart';
 class DetailLink extends StatelessWidget {
   DetailLink(
       {super.key,
-      required this.analytics,
       required this.type,
       required this.text,
       required this.uriText,
       required this.resourceId});
-  final HomeAnalytics analytics;
   final String type;
   final String text;
   final String uriText;
@@ -42,7 +39,6 @@ class DetailLink extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Link(
-      analytics: analytics,
       type: type,
       text: text,
       uri: parseUriText(),
@@ -70,10 +66,9 @@ String? formatResourceAddress(DocumentSnapshot resource) {
 }
 
 class ResourceDetail extends StatelessWidget {
-  const ResourceDetail({required this.analytics, required this.resource});
+  const ResourceDetail({required this.resource});
 
   final DocumentSnapshot resource;
-  final HomeAnalytics analytics;
 
   String? addressString() {
     try {
@@ -202,7 +197,6 @@ class ResourceDetail extends StatelessWidget {
                   field(
                       'Address',
                       DetailLink(
-                          analytics: analytics,
                           type: "address",
                           text: fullAddress,
                           uriText: fullAddress,
@@ -211,7 +205,6 @@ class ResourceDetail extends StatelessWidget {
                   field(
                       'Phone Number',
                       DetailLink(
-                          analytics: analytics,
                           type: "phone",
                           text: fieldString('phoneNumber')!,
                           uriText: fieldString('phoneNumber')!,
@@ -220,7 +213,6 @@ class ResourceDetail extends StatelessWidget {
                   field(
                       'URL',
                       DetailLink(
-                          analytics: analytics,
                           type: "url",
                           text: 'link to website here',
                           uriText: url.toString(),
@@ -233,7 +225,7 @@ class ResourceDetail extends StatelessWidget {
                       children: [
                         Text('Attachments: '),
                         AttachmentsList(
-                            analytics: analytics, attachments: attachments, resourceId: resource.id),
+                          attachments: attachments, resourceId: resource.id),
                       ],
                     ),
                   ),

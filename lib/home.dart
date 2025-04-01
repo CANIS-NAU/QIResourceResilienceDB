@@ -13,6 +13,7 @@ import 'package:web_app/view_resource/resource_summary.dart';
 import 'package:web_app/view_resource/filter.dart';
 import 'package:web_app/pdfDownload.dart';
 import 'package:web_app/util.dart';
+import 'package:provider/provider.dart';
 import 'package:web_app/Analytics.dart';
 
 /// The home page main widget
@@ -35,8 +36,6 @@ class _MyHomePageState extends State<MyHomePage> {
   final searchFieldController = TextEditingController();
   ResourceFilter filter = ResourceFilter.empty();
 
-  HomeAnalytics analytics = HomeAnalytics();
-
   void onFilterChange() {
     // TODO: only change the query if filter *actually* changed.
     searchFieldController.text = filter.textual ?? "";
@@ -55,227 +54,232 @@ class _MyHomePageState extends State<MyHomePage> {
     bool Function(QueryDocumentSnapshot) filterFunction =
         clientSideFilter(filter);
 
-    return Scaffold(
-      key: _scaffoldKey,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        titleSpacing: 0,
-        leading: isLargeScreen
-            ? null
-            : IconButton(
-                color: Theme.of(context).primaryColor,
-                icon: const Icon(Icons.menu),
-                onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-              ),
-        title: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Focus(child: Builder(builder: (context) {
-                final bool hasFocus = Focus.of(context).hasFocus;
-                return Container(
-                  decoration: BoxDecoration(
-                    border: hasFocus
-                        ? Border.all(
-                            // color: Colors.black,
-                            style: BorderStyle.solid)
-                        : null,
-                  ),
-                  child: Image.asset(
-                    'assets/rrdb_logo.png',
-                    height: 55,
-                    semanticLabel: "Resilience Resource Database Logo",
-                  ),
-                );
-              })),
-              if (isLargeScreen) Expanded(child: _navBarItems())
-            ],
-          ),
-        ),
-        actions: const [
-          Padding(
-            padding: EdgeInsets.only(right: 16.0),
-            child: CircleAvatar(child: ProfileIcon()),
-          )
-        ],
-      ),
-      drawer: isLargeScreen ? null : _drawer(),
-      body: LayoutBuilder(builder: (context, windowSize) {
-        return SingleChildScrollView(
-          child: new Column(children: [
-            // search bar
-            new Container(
-              padding:
-                  EdgeInsets.symmetric(vertical: windowSize.maxHeight / 100),
-              margin: EdgeInsets.only(
-                  right: windowSize.maxWidth / 6,
-                  left: windowSize.maxWidth / 6),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  //SizedBox(height: 20.0,),
-                  Container(
-                    child: TextField(
-                        decoration: InputDecoration(
-                          filled: true,
-                          fillColor: Color(0xFFEEEEEE),
-                          border: OutlineInputBorder(),
-                          labelText: "Enter a keyword for the resource",
-                          suffixIcon: Icon(Icons.search),
-                        ),
-                        obscureText: false,
-                        controller: searchFieldController,
-                        onSubmitted: (text) {
-                          setState(() {
-                            final t = text.isNotEmpty ? text : null;
-                            if (t != null) {
-                              analytics.submitTextSearch(t);
-                            }
-                            filter.setTextSearch(t);
-                            onFilterChange();
-                          });
-                        }),
-                  ),
-                  SizedBox(
-                    height: 10,
-                  ),
-                  // filter items
-                  Container(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        SizedBox(
-                          width: 90,
-                          child: ElevatedButton(
-                            child: Text('Filter'),
-                            onPressed: () {
-                              // show the filter pop-up
-                              showDialog(
-                                context: context,
-                                builder: (context) => CategoryFilterDialog(
-                                  filter: filter,
-                                  onChanged: (updatedFilter) => setState(() {
-                                    filter = updatedFilter;
-                                    onFilterChange();
-                                  }),
-                                ),
-                              ).then((value) => analytics
-                                  .submitFilterSearch(filter.categorical));
-                            },
-                          ),
-                        ),
-                        SizedBox(width: 10),
-                        SizedBox(
-                          child: ElevatedButton(
-                            onPressed: () {
-                              setState(() {
-                                filter.clear();
-                                onFilterChange();
-                              });
-                            },
-                            child: Text("Reset Filters"),
-                          ),
-                        ),
-                      ],
+    return ChangeNotifierProvider<HomeAnalytics>(
+      create: (_) => HomeAnalytics(),
+      child: Scaffold(
+        key: _scaffoldKey,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          titleSpacing: 0,
+          leading: isLargeScreen
+              ? null
+              : IconButton(
+                  color: Theme.of(context).primaryColor,
+                  icon: const Icon(Icons.menu),
+                  onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+                ),
+          title: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Focus(child: Builder(builder: (context) {
+                  final bool hasFocus = Focus.of(context).hasFocus;
+                  return Container(
+                    decoration: BoxDecoration(
+                      border: hasFocus
+                          ? Border.all(
+                              // color: Colors.black,
+                              style: BorderStyle.solid)
+                          : null,
                     ),
-                  ),
-                  SizedBox(height: 10),
-                  MultiSelectChipDisplay(
-                    items: filter.categorical
-                        .map((e) => MultiSelectItem(e, e.value))
-                        .toList(),
-                    onTap: (value) {
-                      setState(() {
-                        filter.removeFilter(value);
-                        onFilterChange();
-                      });
-                    },
-                  ),
-                ],
-              ),
+                    child: Image.asset(
+                      'assets/rrdb_logo.png',
+                      height: 55,
+                      semanticLabel: "Resilience Resource Database Logo",
+                    ),
+                  );
+                })),
+                if (isLargeScreen) Expanded(child: _navBarItems())
+              ],
             ),
-            new Container(
-              margin: EdgeInsets.only(
-                  right: windowSize.maxWidth / 6,
-                  left: windowSize.maxWidth / 6),
-              padding: const EdgeInsets.symmetric(vertical: 20),
-              child: StreamBuilder<QuerySnapshot>(
-                  stream: resources,
-                  builder: (
-                    BuildContext context,
-                    AsyncSnapshot<QuerySnapshot> snapshot,
-                  ) {
-                    //Check for firestore snapshot error
-                    if (snapshot.hasError) {
-                      return Text("${snapshot.error}");
-                    }
-                    //Check if connection is being made
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return Text("Loading Resources");
-                    }
-
-                    //Get the snapshot data and filter
-                    final data = snapshot.requireData;
-                    final docs = data.docs.where(filterFunction).toList();
-
-                    //Return a list of the data (resources)
-                    if (data.size == 0) {
-                      return Text('No resources');
-                    } else {
-                      return Column(children: [
-                        Container(
-                            height: 500,
-                            child: FocusTraversalGroup(
-                              policy: OrderedTraversalPolicy(),
-                              child: ListView.builder(
-                                  scrollDirection: Axis.vertical,
-                                  shrinkWrap: true,
-                                  itemCount: docs.length,
-                                  itemBuilder: (context, index) {
-                                    return ResourceSummary(
-                                      resource: docs[index],
-                                      isSmallScreen: isSmallScreen,
-                                      analytics: analytics,
-                                    );
-                                  }),
-                            )),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          child: Align(
-                            alignment: Alignment.bottomRight,
-                            // button to download currently filtered resources
-                            child: ElevatedButton(
-                                onPressed: () async {
-                                  // get only resources that are visible
-                                  List<QueryDocumentSnapshot> unarchivedDocs =
-                                      docs
-                                          .where(
-                                              (doc) => doc['isVisable'] ?? true)
-                                          .toList();
-                                  if (unarchivedDocs.isNotEmpty) {
-                                    // create pdf of visible resources currently being filtered
-                                    await pdfDownload
-                                        .generateFilteredResourcesPdf(
-                                            unarchivedDocs);
-                                  } else {
-                                    // show message that there are no visible resources to download
-                                    showAlertDialog(context,
-                                        "There are no resources available to download");
-                                  }
-                                },
-                                child: Text("Download List")),
+          ),
+          actions: const [
+            Padding(
+              padding: EdgeInsets.only(right: 16.0),
+              child: CircleAvatar(child: ProfileIcon()),
+            )
+          ],
+        ),
+        drawer: isLargeScreen ? null : _drawer(),
+        body: LayoutBuilder(builder: (context, windowSize) {
+          return SingleChildScrollView(
+            child: new Column(children: [
+              // search bar
+              new Container(
+                padding:
+                    EdgeInsets.symmetric(vertical: windowSize.maxHeight / 100),
+                margin: EdgeInsets.only(
+                    right: windowSize.maxWidth / 6,
+                    left: windowSize.maxWidth / 6),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    //SizedBox(height: 20.0,),
+                    Container(
+                      child: TextField(
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: Color(0xFFEEEEEE),
+                            border: OutlineInputBorder(),
+                            labelText: "Enter a keyword for the resource",
+                            suffixIcon: Icon(Icons.search),
                           ),
-                        ),
-                      ]);
-                    }
-                  }),
-            ),
-          ]),
-        );
-      }),
+                          obscureText: false,
+                          controller: searchFieldController,
+                          onSubmitted: (text) {
+                            setState(() {
+                              final t = text.isNotEmpty ? text : null;
+                              if (t != null) {
+                                final homeAnalytics = Provider.of<HomeAnalytics>(context, listen: false);
+                                homeAnalytics.submitTextSearch(t);
+                              }
+                              filter.setTextSearch(t);
+                              onFilterChange();
+                            });
+                          }),
+                    ),
+                    SizedBox(
+                      height: 10,
+                    ),
+                    // filter items
+                    Container(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          SizedBox(
+                            width: 90,
+                            child: ElevatedButton(
+                              child: Text('Filter'),
+                              onPressed: () {
+                                // show the filter pop-up
+                                showDialog(
+                                  context: context,
+                                  builder: (context) => CategoryFilterDialog(
+                                    filter: filter,
+                                    onChanged: (updatedFilter) => setState(() {
+                                      filter = updatedFilter;
+                                      onFilterChange();
+                                    }),
+                                  ),
+                                ).then((value) {
+                                  final homeAnalytics = Provider.of<HomeAnalytics>(context, listen: false);
+                                  homeAnalytics.submitFilterSearch(filter.categorical);
+                                });
+                              },
+                            ),
+                          ),
+                          SizedBox(width: 10),
+                          SizedBox(
+                            child: ElevatedButton(
+                              onPressed: () {
+                                setState(() {
+                                  filter.clear();
+                                  onFilterChange();
+                                });
+                              },
+                              child: Text("Reset Filters"),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 10),
+                    MultiSelectChipDisplay(
+                      items: filter.categorical
+                          .map((e) => MultiSelectItem(e, e.value))
+                          .toList(),
+                      onTap: (value) {
+                        setState(() {
+                          filter.removeFilter(value);
+                          onFilterChange();
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              new Container(
+                margin: EdgeInsets.only(
+                    right: windowSize.maxWidth / 6,
+                    left: windowSize.maxWidth / 6),
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                child: StreamBuilder<QuerySnapshot>(
+                    stream: resources,
+                    builder: (
+                      BuildContext context,
+                      AsyncSnapshot<QuerySnapshot> snapshot,
+                    ) {
+                      //Check for firestore snapshot error
+                      if (snapshot.hasError) {
+                        return Text("${snapshot.error}");
+                      }
+                      //Check if connection is being made
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return Text("Loading Resources");
+                      }
+    
+                      //Get the snapshot data and filter
+                      final data = snapshot.requireData;
+                      final docs = data.docs.where(filterFunction).toList();
+    
+                      //Return a list of the data (resources)
+                      if (data.size == 0) {
+                        return Text('No resources');
+                      } else {
+                        return Column(children: [
+                          Container(
+                              height: 500,
+                              child: FocusTraversalGroup(
+                                policy: OrderedTraversalPolicy(),
+                                child: ListView.builder(
+                                    scrollDirection: Axis.vertical,
+                                    shrinkWrap: true,
+                                    itemCount: docs.length,
+                                    itemBuilder: (context, index) {
+                                      return ResourceSummary(
+                                        resource: docs[index],
+                                        isSmallScreen: isSmallScreen,
+                                      );
+                                    }),
+                              )),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            child: Align(
+                              alignment: Alignment.bottomRight,
+                              // button to download currently filtered resources
+                              child: ElevatedButton(
+                                  onPressed: () async {
+                                    // get only resources that are visible
+                                    List<QueryDocumentSnapshot> unarchivedDocs =
+                                        docs
+                                            .where(
+                                                (doc) => doc['isVisable'] ?? true)
+                                            .toList();
+                                    if (unarchivedDocs.isNotEmpty) {
+                                      // create pdf of visible resources currently being filtered
+                                      await pdfDownload
+                                          .generateFilteredResourcesPdf(
+                                              unarchivedDocs);
+                                    } else {
+                                      // show message that there are no visible resources to download
+                                      showAlertDialog(context,
+                                          "There are no resources available to download");
+                                    }
+                                  },
+                                  child: Text("Download List")),
+                            ),
+                          ),
+                        ]);
+                      }
+                    }),
+              ),
+            ]),
+          );
+        }),
+      ),
     );
   }
 
