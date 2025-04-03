@@ -13,14 +13,16 @@ import 'package:web_app/events/schedule_form.dart';
 import 'package:web_app/file_attachments.dart';
 import 'package:web_app/util.dart';
 import 'package:web_app/Analytics.dart';
+import 'package:web_app/model.dart';
+
 
 //List of ages for dropdown
 const List<String> ageItems = [
-    'Under 18',
-    '18-24',
-    '24-65',
-    '65+',
-    'All ages'
+  'Under 18',
+  '18-24',
+  '24-65',
+  '65+',
+  'All ages'
 ];
 
 //List of strings for resource type
@@ -59,20 +61,44 @@ const List<String>healthFocusOptions = [
   'Suicide Prevention',
 ];
 
-String culturalResponseScoreToText(double sliderValue) {
-  if (sliderValue <= 1) {
-    return "Low Cultural Responsivness";
-  } else if (sliderValue <= 3) {
-    return "Medium Cultural Responsivness";
-  } else {
-    return "High Cultural Responsivness";
-  }
-}
-
 // Create resource page
 class CreateResource extends StatefulWidget {
   @override
   State<CreateResource> createState() => _CreateResourceState();
+}
+
+class CustomRadioList<T> extends StatelessWidget {
+  final Map<T, String> options;
+  final T? selectedValue;
+  final ValueChanged<T?> onChanged;
+  final TextStyle? labelStyle;
+  final FocusNode? focusNode;
+
+  const CustomRadioList(
+      {super.key,
+      required this.options,
+      required this.selectedValue,
+      required this.onChanged,
+      this.labelStyle,
+      this.focusNode});
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: options.entries.map((entry) {
+        final value = entry.key;
+        final label = entry.value;
+
+        return RadioListTile<T>(
+            title: Text(label, style: labelStyle),
+            value: value,
+            groupValue: selectedValue,
+            onChanged: onChanged,
+            focusNode: focusNode ?? FocusNode(skipTraversal: true),
+            controlAffinity: ListTileControlAffinity.leading,
+            dense: true);
+      }).toList(),
+    );
+  }
 }
 
 class _CreateResourceState extends State<CreateResource> {
@@ -91,7 +117,7 @@ class _CreateResourceState extends State<CreateResource> {
   String resourceLocationBoxText = "Link to the resource";
   String resourceCost = "";
   String resourceType = "";
-  double _culturalResponseSliderValue = 0;
+  String culturalResponsiveness = "";
   String _ageRange = ageItems.first;
   Schedule? resourceSchedule = null;
   List<FileUpload> _attachments = [];
@@ -113,7 +139,7 @@ class _CreateResourceState extends State<CreateResource> {
   final List<bool> _selectedHealthFocus =
       List<bool>.filled(healthFocusOptions.length, false);
   List<String> selectedHealthFocusOptions = [];
-
+  
   // boolean to track hotline and in person selection
   bool isHotlineSelected = false;
   bool isInPersonSelected = false;
@@ -124,7 +150,7 @@ class _CreateResourceState extends State<CreateResource> {
   var _uploadProgress = 0.0;
 
   // Get the current user
-  static User? currentUser = FirebaseAuth.instance.currentUser;   
+  static User? currentUser = FirebaseAuth.instance.currentUser;
   // If the current user is not null then initalize the class
   UserResourceSubmission? userSubmission = currentUser != null ? 
                                     UserResourceSubmission(currentUser) : null;
@@ -221,9 +247,7 @@ class _CreateResourceState extends State<CreateResource> {
         'verified': bypassVerification,
         'resourceType': resourceType,
         'privacy': selectedPrivacyOptions,
-        'culturalResponse':
-            culturalResponseScoreToText(_culturalResponseSliderValue),
-        'culturalResponsivness': _culturalResponseSliderValue,
+        'culturalResponsiveness': culturalResponsiveness,
         'cost': resourceCost,
         'healthFocus': selectedHealthFocusOptions,
         'tagline': selectedTags,
@@ -306,7 +330,7 @@ class _CreateResourceState extends State<CreateResource> {
       ),
     );
   }
-
+    
   // Create resource UI
   @override
   Widget build(BuildContext context) {
@@ -572,53 +596,13 @@ class _CreateResourceState extends State<CreateResource> {
                 ),
 
                 buildTitles("Cultural Responsiveness"),
-                Center(
-                  child: new Container(
-                    child: Center(
-                      child: Stack(
-                        children: [
-                          SliderTheme(
-                            data: SliderTheme.of(context).copyWith(
-                              activeTrackColor: Theme.of(context).primaryColor,
-                              thumbColor: Theme.of(context).primaryColor,
-                              overlayColor: Theme.of(context).primaryColor.withOpacity(0.2),
-                              valueIndicatorColor:  Theme.of(context).primaryColor,
-                              valueIndicatorTextStyle:
-                                  TextStyle(color: Colors.white),
-                            ),
-                            child: Slider(
-                              value: _culturalResponseSliderValue,
-                              max: 5,
-                              divisions: 5,
-                              label: _culturalResponseSliderValue
-                                  .round()
-                                  .toString(),
-                              onChanged: (double value) {
-                                setState(() {
-                                  _culturalResponseSliderValue = value;
-                                });
-                              },
-                            ),
-                          ),
-                          // anchor descriptions for slider
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Tooltip(
-                                  message:
-                                      "Not culturally specific to Hopi or Indigenous communities",
-                                  child: Text("Low ")),
-                              Spacer(),
-                              Tooltip(
-                                  message:
-                                      "Specific resource for Hopi community",
-                                  child: Text("High")),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                CustomRadioList(
+                  options: Resource.culturalResponsivenessLabels,
+                  selectedValue: culturalResponsiveness,
+                  onChanged: (value) => setState(() {
+                    culturalResponsiveness = value!;
+                  }),
+                  labelStyle: TextStyle(fontSize: 16),
                 ),
                 buildTitles("Age Range of Resource"),
                 Center(
@@ -682,7 +666,7 @@ class _CreateResourceState extends State<CreateResource> {
                     focusNode: FocusNode(skipTraversal: true),
                   ),
                 ),
-
+                
                 // Submit button and progress indicator (while submitting)
                 Padding(
                   padding: EdgeInsets.symmetric(vertical: 48.0),

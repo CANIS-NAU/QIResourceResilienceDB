@@ -4,7 +4,7 @@ import 'dart:collection';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:web_app/events/schedule.dart';
-
+import 'package:web_app/model.dart';
 // Time
 import 'package:web_app/common.dart';
 
@@ -60,12 +60,8 @@ final categories = UnmodifiableListView<FilterCategory>([
         "Event",
         "Podcast",
       ])),
-  FilterCategory("Cultural Responsiveness", "culturalResponse",
-      values: UnmodifiableListView([
-        "Low Cultural Responsivness",
-        "Medium Cultural Responsivness",
-        "High Cultural Responsivness",
-      ])),
+  FilterCategory("Cultural Responsiveness", "culturalResponsiveness",
+      values: UnmodifiableListView(Resource.culturalResponsivenessLabels.keys)),
   FilterCategory("Privacy", "privacy",
       values: UnmodifiableListView([
         "HIPAA Compliant",
