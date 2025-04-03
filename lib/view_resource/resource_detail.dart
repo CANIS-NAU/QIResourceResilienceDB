@@ -7,6 +7,7 @@ import 'package:web_app/events/schedule_view.dart';
 import 'package:web_app/file_attachments.dart';
 import 'package:web_app/pdfDownload.dart';
 import 'package:web_app/util.dart';
+import 'package:web_app/model.dart';
 
 class DetailLink extends StatelessWidget {
   DetailLink(
@@ -184,10 +185,10 @@ class ResourceDetail extends StatelessWidget {
                   ),
                 if (fieldDefined('privacy')) //
                   field('Privacy', Text(fieldString('privacy')!)),
-                if (fieldDefined('culturalResponse'))
+                if (fieldDefined('culturalResponsiveness'))
                   field(
                     'Cultural Responsiveness',
-                    Text(resource['culturalResponse']),
+                    Text(Resource.culturalResponsivenessLabels[resource['culturalResponsiveness']] ?? "cultural responsiveness not found"),
                   ),
                 if (fieldDefined('cost')) //
                   field('Cost', Text(resource['cost'])),
@@ -245,7 +246,7 @@ class ResourceDetail extends StatelessWidget {
                               resource['resourceType'],
                               resource['privacy'],
                               healthFocus,
-                              resource['culturalResponsivness'],
+                              resource['culturalResponsiveness'],
                               fullAddress,
                               fieldString('phoneNumber'),
                               url);
