@@ -1126,7 +1126,7 @@ class _DashboardState extends State<Dashboard>
     {
       return Center(
         child: Text(
-          'Pie Chart is not available for Total Site Visits.',
+          'Pie Chart is not available for Total Site Visits because it only contains one group.',
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
         ),
       );
