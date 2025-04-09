@@ -171,7 +171,7 @@ class _DashboardState extends State<Dashboard>
     if (selectedData == 'Clicks to Offsite Links') {
       return ['Timestamp', 'Group', 'Link', 'Resource Name'];
     } else if (selectedData == 'Total Site Visits') {
-      return ['Timestamp', 'Session ID'];
+      return ['Timestamp', 'Session ID', 'Event', 'Payload'];
     } else {
       return ['Timestamp', 'Group'];
     }
@@ -197,6 +197,9 @@ class _DashboardState extends State<Dashboard>
           formattedTimestamp = timestamp.toIso8601String();
         }
       }
+      String eventString = item['event'] ?? 'unknown event';
+      String payloadString = jsonEncode(item['payload'] ?? {});
+      
       // build a row based on selectedData
       if (selectedData == 'Clicks to Offsite Links') {
         String group = item.containsKey('Age Range')
@@ -213,7 +216,7 @@ class _DashboardState extends State<Dashboard>
         rows.add([formattedTimestamp, group, link, resourceName]);
       } else if (selectedData == 'Total Site Visits') {
         String sessionId = item['sessionId'] ?? '';
-        rows.add([formattedTimestamp, sessionId]);
+        rows.add([formattedTimestamp, sessionId, eventString, payloadString]);
       } else {
         String group = item.containsKey('Age Range')
             ? item['Age Range']
@@ -339,6 +342,8 @@ class _DashboardState extends State<Dashboard>
           data.add({
             'timestamp': doc['timestamp'].toDate(),
             'sessionId': docData['sessionId'],
+            'event': docData['event'] ?? 'unknown event',
+            'payload':  docData['payload'] ?? {}
           });
         }
       });
@@ -1117,6 +1122,16 @@ class _DashboardState extends State<Dashboard>
   }
 
   Widget buildPieChart(List<GraphDataPoint> data) {
+    if(selectedData == 'Total Site Visits' && selectedChartType == 'Pie Chart')
+    {
+      return Center(
+        child: Text(
+          'Pie Chart is not available for Total Site Visits.',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+        ),
+      );
+    }
+
     // calculate total count for each group
     Map<String, double> groupTotals = {};
     for (var point in data) {
