@@ -4,16 +4,30 @@ import 'dart:collection';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:web_app/events/schedule.dart';
-
+import 'package:web_app/model.dart';
 // Time
 import 'package:web_app/common.dart';
 
-/// A single item in a filter selection. The pair of category and value.
-class FilterItem {
-  FilterItem(this.category, this.value);
+// function for converting list to map with duplicate keys/values
+UnmodifiableMapView<String, String> listToMap(UnmodifiableListView<String> list){
+  // init variables
+  Map<String, String> workingMap = {};
+
+  // loop through list items
+  for( final item in list ){
+    workingMap[item] = item;
+  }
+  // set return map
+  return UnmodifiableMapView(workingMap);
+}
+
+
+class FilterItem<T> {
+  FilterItem(this.category, this.value, this.label);
 
   String category;
-  String value;
+  T value;
+  String label;
 
   @override
   int get hashCode => category.hashCode ^ value.hashCode;
@@ -31,7 +45,8 @@ class FilterItem {
 class FilterCategory {
   FilterCategory(this.name, this.field,
       {required this.values, this.canHaveMultiple = false})
-      : items = UnmodifiableListView(values.map((v) => FilterItem(name, v)));
+      : items = UnmodifiableListView(values.entries
+            .map((entry) => FilterItem(name, entry.key, entry.value)));
 
   /// The category name
   final String name;
@@ -40,10 +55,12 @@ class FilterCategory {
   final String field;
 
   /// All possible values for this category, as they would appear in the data
-  final UnmodifiableListView<String> values;
+  final UnmodifiableMapView<String, String> values;
 
   /// Values as preconstructed FilterItem instances.
   final UnmodifiableListView<FilterItem> items;
+
+  /// Labels for display on filter chips
 
   /// Can a resource have more than one value for this?
   final bool canHaveMultiple;
@@ -52,38 +69,34 @@ class FilterCategory {
 /// All available resource filter categories, their values, and other useful metadata.
 final categories = UnmodifiableListView<FilterCategory>([
   FilterCategory("Type", "resourceType",
-      values: UnmodifiableListView([
+      values: listToMap(UnmodifiableListView([
         "Online",
         "In Person",
         "App",
         "Hotline",
         "Event",
         "Podcast",
-      ])),
-  FilterCategory("Cultural Responsiveness", "culturalResponse",
-      values: UnmodifiableListView([
-        "Low Cultural Responsivness",
-        "Medium Cultural Responsivness",
-        "High Cultural Responsivness",
-      ])),
+      ]))),
+  FilterCategory("Cultural Responsiveness", "culturalResponsiveness",
+      values: UnmodifiableMapView(Resource.culturalResponsivenessLabels)),
   FilterCategory("Privacy", "privacy",
-      values: UnmodifiableListView([
+      values: listToMap(UnmodifiableListView([
         "HIPAA Compliant",
         "Anonymous",
         "Mandatory Reporting",
         "None Stated",
-      ]),
+      ])),
       canHaveMultiple: true),
   FilterCategory("Age Range", "agerange",
-      values: UnmodifiableListView([
+      values: listToMap(UnmodifiableListView([
       'Under 18',
       '18-24',
       '24-65',
       '65+',
       'All ages'
-      ])),
+      ]))),
    FilterCategory("Health Focus", "healthFocus",
-      values: UnmodifiableListView([
+      values: listToMap(UnmodifiableListView([
       'Anxiety',
       'Depression',
       'Stress Management',
@@ -91,13 +104,13 @@ final categories = UnmodifiableListView<FilterCategory>([
       'Grief and Loss',
       'Trama and PTSD',
       'Suicide Prevention',
-      ]), canHaveMultiple: true ),
+      ])), canHaveMultiple: true ),
   FilterCategory("Event happening in the next", "nextDate",
-      values: UnmodifiableListView([
+      values: listToMap(UnmodifiableListView([
         "Week",
         "Month",
         "3 Months",
-      ])),
+      ]))),
 ]);
 
 /// Represents a complete resource filter query.
@@ -149,7 +162,7 @@ class CategoryFilterDialog extends StatelessWidget {
 
   Widget buildFilterChip(FilterItem item) {
     return CustomFilterChip(
-      label: item.value,
+      label: item.label,
       selected: filter.isSelected(item),
       onSelected: (bool selected) {
         if (selected) {

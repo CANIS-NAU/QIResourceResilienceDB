@@ -76,7 +76,7 @@ class PdfDownload {
     String resourceType,
     List<dynamic> privacy,
     List<dynamic> healthFocus,
-    int culturalResponsiveness,
+    String culturalResponsiveness,
     String? fullAddress,
     String? phoneNumber,
     Uri? urlStr,

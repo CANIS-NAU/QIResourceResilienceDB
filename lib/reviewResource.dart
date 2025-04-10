@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 import 'package:web_app/events/schedule.dart';
+import 'package:web_app/model.dart';
 import 'package:web_app/time.dart';
 import 'package:web_app/util.dart';
 import 'package:web_app/Analytics.dart';
@@ -188,7 +189,6 @@ class _ReviewResourceState extends State<ReviewResource> {
     'Resource offers accessibility features for people who are neurodivergent.',
     'Resource is related to a sober living facility, which has been verified by ADHS and AHCCCS.',
   ];
-
   final List<bool> selectedAccessibility = List<bool>.filled(5, false);
   List<String> selectedAccessibilityFeatures = [];
 
@@ -553,8 +553,8 @@ class _ReviewResourceState extends State<ReviewResource> {
         'Type: ${widget.resourceData['resourceType']}\n\n';
 
     resourceInfo += 'Privacy: ${widget.resourceData['privacy'].join(', ')}\n\n'
-        'Cultural Responsiveness: ${widget
-        .resourceData['culturalResponsivness']}\n';
+        'Cultural Responsiveness: ${Resource.culturalResponsivenessLabels[widget
+        .resourceData['culturalResponsiveness']]}\n';
 
     if (widget.resourceData['resourceType'] == 'Event') {
       final schedule = Schedule.fromJson(widget.resourceData['schedule']);

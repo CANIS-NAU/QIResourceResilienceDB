@@ -189,7 +189,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     SizedBox(height: 10),
                     MultiSelectChipDisplay(
                       items: filter.categorical
-                          .map((e) => MultiSelectItem(e, e.value))
+                          .map((e) => MultiSelectItem(e, e.label))
                           .toList(),
                       onTap: (value) {
                         setState(() {
