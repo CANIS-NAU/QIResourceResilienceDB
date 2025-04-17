@@ -147,9 +147,12 @@ class ResourceDetail extends StatelessWidget {
       titlePadding: EdgeInsets.fromLTRB(16, 16, 16, 0),
       contentPadding: EdgeInsets.all(16),
       title: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-        Text(
-          '${resource['name']}',
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        Expanded(
+          child:
+            Text(
+            '${resource['name']}',
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
         ),
         IconButton(
           onPressed: () {

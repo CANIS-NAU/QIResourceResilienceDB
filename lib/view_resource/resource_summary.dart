@@ -99,9 +99,9 @@ class ResourceSummary extends StatelessWidget {
             title: Text(
               resource['name'],
               textAlign: TextAlign.left,
-              overflow: TextOverflow.visible,
+              overflow: TextOverflow.ellipsis,
               softWrap: true,
-              maxLines: isSmallScreen ? 2 : null,
+              maxLines: isSmallScreen ? 1 : 1,
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: isSmallScreen ? 18 : 25,
