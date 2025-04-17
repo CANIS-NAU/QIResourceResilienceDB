@@ -18,7 +18,7 @@ def delete_fields():
     # get resource document
     resources = db.collection("resources")
 
-    for doc in resources.stream:
+    for doc in resources.stream():
 
         data = doc.to_dict()
         update_data = {};
