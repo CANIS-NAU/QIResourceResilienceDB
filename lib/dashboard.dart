@@ -177,6 +177,14 @@ class _DashboardState extends State<Dashboard>
     }
   }
 
+  String getGroupLabel(Map<String, dynamic> item) {
+    if (item.containsKey('Age Range')) return item['Age Range'];
+    if (item.containsKey('Type')) return item['Type'];
+    if (item.containsKey('Health Focus')) return item['Health Focus'];
+    if (item.containsKey('type')) return item['type'];
+    return 'Unknown';
+  }
+
   // convert data to CSV format
   Future<String> convertDataToCsv(List<Map<String, dynamic>> data) async {
     List<List<dynamic>> rows = [];
@@ -199,15 +207,7 @@ class _DashboardState extends State<Dashboard>
       }
       // build a row based on selectedData
       if (selectedData == 'Clicks to Offsite Links') {
-        String group = item.containsKey('Age Range')
-            ? item['Age Range']
-            : item.containsKey('Type')
-                ? item['Type']
-                : item.containsKey('Health Focus')
-                    ? item['Health Focus']
-                    : item.containsKey('type')
-                        ? item['type']
-                        : 'Unknown';
+        String group = getGroupLabel(item);
         String link = item.containsKey('link') ? item['link'] : '';
         String resourceName = await getResourceName(item['resourceId']) ?? '';
         rows.add([formattedTimestamp, group, link, resourceName]);
@@ -215,15 +215,7 @@ class _DashboardState extends State<Dashboard>
         String sessionId = item['sessionId'] ?? '';
         rows.add([formattedTimestamp, sessionId]);
       } else {
-        String group = item.containsKey('Age Range')
-            ? item['Age Range']
-            : item.containsKey('Type')
-                ? item['Type']
-                : item.containsKey('Health Focus')
-                    ? item['Health Focus']
-                    : item.containsKey('type')
-                        ? item['type']
-                        : 'Unknown';
+        String group = getGroupLabel(item);
         rows.add([formattedTimestamp, group]);
       }
     }
