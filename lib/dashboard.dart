@@ -167,17 +167,29 @@ class _DashboardState extends State<Dashboard>
     }
   }
 
+  List<String> getCsvHeaders() {
+    if (selectedData == 'Clicks to Offsite Links') {
+      return ['Timestamp', 'Group', 'Link', 'Resource Name'];
+    } else if (selectedData == 'Total Site Visits') {
+      return ['Timestamp', 'Session ID'];
+    } else {
+      return ['Timestamp', 'Group'];
+    }
+  }
+
+  String getGroupLabel(Map<String, dynamic> item) {
+    if (item.containsKey('Age Range')) return item['Age Range'];
+    if (item.containsKey('Type')) return item['Type'];
+    if (item.containsKey('Health Focus')) return item['Health Focus'];
+    if (item.containsKey('type')) return item['type'];
+    return 'Unknown';
+  }
+
   // convert data to CSV format
   Future<String> convertDataToCsv(List<Map<String, dynamic>> data) async {
     List<List<dynamic>> rows = [];
 
-    // add headers conditionally based on selected data source
-    if (selectedData == 'Clicks to Offsite Links') {
-      rows.add(['Timestamp', 'Group', 'Link', 'Resource Name']);
-
-    } else {
-      rows.add(['Timestamp', 'Group']); // no link header for other data sources
-    }
+    rows.add(getCsvHeaders());
 
     for (var item in data) {
       // format timestamp as ISO8601
@@ -187,40 +199,26 @@ class _DashboardState extends State<Dashboard>
         if (item['timestamp'] is DateTime) {
           // add timezone offset to ISO 8601 format
           DateTime timestamp = item['timestamp'];
-          formattedTimestamp = timestamp.toUtc().toIso8601String();
+          formattedTimestamp = timestamp.toIso8601String();
         } else {
           DateTime timestamp = DateTime.parse(item['timestamp'].toString());
-          formattedTimestamp = timestamp.toUtc().toIso8601String();
+          formattedTimestamp = timestamp.toIso8601String();
         }
       }
-      // determine group based on available keys
-      String group = item.containsKey('Age Range') ? item['Age Range'] :
-      item.containsKey('Type') ? item['Type'] :
-      item.containsKey('Health Focus') ? item['Health Focus'] :
-      item.containsKey('type') ? item['type'] : 'Unknown';
-
-      // get the link if it exists
-      String link = item.containsKey('link') ? item['link'] : '';
-
-      // initialize resource name
-      String resourceName = '';
-
-      // check if the event is 'clicked-link' and if there's a resourceId
-      if(selectedData == 'Clicks to Offsite Links'){
-        resourceName = await getResourceName(item['resourceId']) ?? '';  // fetch the resource name
-      }
-
-      // create the row of data
-      List<dynamic> row = [formattedTimestamp, group];
-
-      // include link and resource name only for 'Clicks to Offsite Links'
+      // build a row based on selectedData
       if (selectedData == 'Clicks to Offsite Links') {
-        row.add(link);
-        row.add(resourceName);
+        String group = getGroupLabel(item);
+        String link = item.containsKey('link') ? item['link'] : '';
+        String resourceName = await getResourceName(item['resourceId']) ?? '';
+        rows.add([formattedTimestamp, group, link, resourceName]);
+      } else if (selectedData == 'Total Site Visits') {
+        String sessionId = item['sessionId'] ?? '';
+        rows.add([formattedTimestamp, sessionId]);
+      } else {
+        String group = getGroupLabel(item);
+        rows.add([formattedTimestamp, group]);
       }
-      rows.add(row);
     }
-    // convert rows to CSV format
     return csv.ListToCsvConverter().convert(rows);
   }
 
@@ -244,7 +242,7 @@ class _DashboardState extends State<Dashboard>
     try {
       // check if data source is type or age
       if (selectedData == 'Resource Type Searches' ||
-          selectedData == 'Age Range Searches' || 
+          selectedData == 'Age Range Searches' ||
           selectedData == 'Health Focus Searches') {
         // get documents in event log collection where event is filter
         QuerySnapshot querySnapshot = await FirebaseFirestore.instance
@@ -266,7 +264,8 @@ class _DashboardState extends State<Dashboard>
             // check if the document's payload contains the 'Type' key
             if (docData['payload'] != null &&
                 docData['payload'].containsKey('Type')) {
-              data.addAll(normalizeAndAdd( docData['payload'], 'Type', doc['timestamp'].toDate()));
+              data.addAll(normalizeAndAdd(
+                  docData['payload'], 'Type', doc['timestamp'].toDate()));
             }
           }
           // if the selected data source is 'Age Range Searches'
@@ -274,21 +273,22 @@ class _DashboardState extends State<Dashboard>
             // check if the document's payload contains the 'Age Range' key
             if (docData['payload'] != null &&
                 docData['payload'].containsKey('Age Range')) {
-              data.addAll(normalizeAndAdd( docData['payload'], 'Age Range', doc['timestamp'].toDate()));
+              data.addAll(normalizeAndAdd(
+                  docData['payload'], 'Age Range', doc['timestamp'].toDate()));
             }
           }
-          if (selectedData == 'Health Focus Searches'){
-            if(docData['payload'] != null && 
-               docData['payload'].containsKey("Health Focus")) {
-              data.addAll(normalizeAndAdd( docData['payload'], 'Health Focus', doc['timestamp'].toDate()));
+          if (selectedData == 'Health Focus Searches') {
+            if (docData['payload'] != null &&
+                docData['payload'].containsKey("Health Focus")) {
+              data.addAll(normalizeAndAdd(docData['payload'], 'Health Focus',
+                  doc['timestamp'].toDate()));
             }
           }
         });
         return data;
       }
       // check if the selected data source is 'Clicks to Offsite Links'
-      else if(selectedData == 'Clicks to Offsite Links')
-      {
+      else if (selectedData == 'Clicks to Offsite Links') {
         // get documents in the event log collection where event is 'clicked-link'
         QuerySnapshot querySnapshot = await FirebaseFirestore.instance
             .collection('RRDBEventLog')
@@ -315,12 +315,30 @@ class _DashboardState extends State<Dashboard>
           }
         });
         return data;
-      }
-      else {
+      } else if (selectedData == 'Total Site Visits') {
+        // fetch all events within the selected date range
+        QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+            .collection('RRDBEventLog')
+            .where('timestamp', isGreaterThanOrEqualTo: startDate)
+            .where('timestamp', isLessThanOrEqualTo: endDate)
+            .get();
+
+        List<Map<String, dynamic>> data = [];
+        querySnapshot.docs.forEach((doc) {
+          Map<String, dynamic> docData = doc.data() as Map<String, dynamic>;
+          // every event is assumed to have a sessionId
+          if (docData.containsKey('sessionId')) {
+            data.add({
+              'timestamp': doc['timestamp'].toDate(),
+              'sessionId': docData['sessionId'],
+            });
+          }
+        });
+        return data;
+      } else {
         return []; // empty list if no data source matches
       }
-    }
-    catch (e) {
+    } catch (e) {
       print("error: $e");
     }
     return [];
@@ -495,8 +513,8 @@ class _DashboardState extends State<Dashboard>
 
   // function that creates a pop-up for adjusting graphing settings
   // date range, chart type, data source
-  void showSettingsDialog() {
-    showDialog(
+  Future<void> showSettingsDialog() async {
+    await showDialog(
       context: context,
       builder: (BuildContext context) {
         final screenWidth = MediaQuery.of(context).size.width;
@@ -507,147 +525,147 @@ class _DashboardState extends State<Dashboard>
             constraints: BoxConstraints(
               maxWidth: isSmallScreen ? screenWidth * 0.9 : screenWidth * 0.8,
             ),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  StatefulBuilder(
-                    builder: (BuildContext context, StateSetter setState) {
-                      return ElevatedButton(
-                        onPressed: () async {
-                          await selectDateRange(context);
-                          // after selecting the date range, update the button text
-                          setState(() {});
-                        },
-                        child: Text(
-                          (startDate != null && endDate != null)
-                              ? 'Selected Date Range: ${DateFormat('yyyy-MM-dd').format(startDate!)} - ${DateFormat('yyyy-MM-dd').format(endDate!)}'
-                              : 'Select Date Range',
-                        ),
-                      );
-                    },
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 16.0),
-                    child: isSmallScreen
-                        ? Column(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 16.0),
-                          child: DropdownButtonFormField<String>(
-                            decoration:
-                            InputDecoration(labelText: 'Chart Type'),
-                            value: selectedChartType,
-                            onChanged: (String? newValue) {
-                              if (newValue != null) {
-                                setState(() {
-                                  selectedChartType = newValue;
-                                });
-                              }
-                            },
-                            items: chartTypes
-                                .map<DropdownMenuItem<String>>(
-                                    (String value) {
-                                  return DropdownMenuItem<String>(
-                                    value: value,
-                                    child: Text(value),
-                                  );
-                                }).toList(),
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 16.0),
-                          child: DropdownButtonFormField<String>(
-                            decoration:
-                            InputDecoration(labelText: 'Data Source'),
-                            value: selectedData,
-                            onChanged: (String? newValue) {
-                              if (newValue != null) {
-                                setState(() {
-                                  selectedData = newValue;
-                                });
-                              }
-                            },
-                            items: dataSources
-                                .map<DropdownMenuItem<String>>(
-                                    (String value) {
-                                  return DropdownMenuItem<String>(
-                                    value: value,
-                                    child: Text(value),
-                                  );
-                                }).toList(),
-                          ),
-                        ),
-                      ],
-                    )
-                        : Row(
-                      children: [
-                        Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.only(right: 16.0),
-                            child: DropdownButtonFormField<String>(
-                              decoration: InputDecoration(
-                                  labelText: 'Chart Type'),
-                              value: selectedChartType,
-                              onChanged: (String? newValue) {
-                                if (newValue != null) {
-                                  setState(() {
-                                    selectedChartType = newValue;
-                                  });
-                                }
-                              },
-                              items: chartTypes
-                                  .map<DropdownMenuItem<String>>(
-                                      (String value) {
-                                    return DropdownMenuItem<String>(
-                                      value: value,
-                                      child: Text(value),
-                                    );
-                                  }).toList(),
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          child: DropdownButtonFormField<String>(
-                            decoration:
-                            InputDecoration(labelText: 'Data Source'),
-                            value: selectedData,
-                            onChanged: (String? newValue) {
-                              if (newValue != null) {
-                                setState(() {
-                                  selectedData = newValue;
-                                });
-                              }
-                            },
-                            items: dataSources
-                                .map<DropdownMenuItem<String>>(
-                                    (String value) {
-                                  return DropdownMenuItem<String>(
-                                    value: value,
-                                    child: Text(value),
-                                  );
-                                }).toList(),
-                          ),
-                        ),
-                      ],
+            child: StatefulBuilder(
+                builder: (BuildContext context, StateSetter setState) {
+              List<String> availableChartTypes = selectedData == 'Total Site Visits'
+                  ? chartTypes.where((chart) => chart != 'Pie Chart').toList()
+                  : chartTypes;
+              if (!availableChartTypes.contains(selectedChartType)) {
+                selectedChartType = availableChartTypes.first;
+              }
+              
+              return SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ElevatedButton(
+                      onPressed: () async {
+                        await selectDateRange(context);
+                        // after selecting the date range, update the button text
+                        setState(() {});
+                      },
+                      child: Text(
+                        (startDate != null && endDate != null)
+                            ? 'Selected Date Range: ${DateFormat('yyyy-MM-dd').format(startDate!)} - ${DateFormat('yyyy-MM-dd').format(endDate!)}'
+                            : 'Select Date Range',
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 16.0),
+                      child: isSmallScreen
+                          ? Column(
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 16.0),
+                                  child: DropdownButtonFormField<String>(
+                                    decoration: InputDecoration(labelText: 'Chart Type'),
+                                    value: selectedChartType,
+                                    onChanged: (String? newValue) {
+                                      if (newValue != null) {
+                                        setState(() {
+                                          selectedChartType = newValue;
+                                        });
+                                      }
+                                    },
+                                    items: availableChartTypes
+                                        .map<DropdownMenuItem<String>>((String value) {
+                                      return DropdownMenuItem<String>(
+                                        value: value,
+                                        child: Text(value),
+                                      );
+                                    }).toList(),
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 16.0),
+                                  child: DropdownButtonFormField<String>(
+                                    decoration: InputDecoration(labelText: 'Data Source'),
+                                    value: selectedData,
+                                    onChanged: (String? newValue) {
+                                      if (newValue != null) {
+                                        setState(() {
+                                          selectedData = newValue;
+                                        });
+                                      }
+                                    },
+                                    items: dataSources
+                                        .map<DropdownMenuItem<String>>((String value) {
+                                      return DropdownMenuItem<String>(
+                                        value: value,
+                                        child: Text(value),
+                                      );
+                                    }).toList(),
+                                  ),
+                                ),
+                              ],
+                            )
+                          : Row(
+                              children: [
+                                Expanded(
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(right: 16.0),
+                                    child: DropdownButtonFormField<String>(
+                                      decoration: InputDecoration(labelText: 'Chart Type'),
+                                      value: selectedChartType,
+                                      onChanged: (String? newValue) {
+                                        if (newValue != null) {
+                                          setState(() {
+                                            selectedChartType = newValue;
+                                          });
+                                        }
+                                      },
+                                      items: availableChartTypes
+                                          .map<DropdownMenuItem<String>>((String value) {
+                                        return DropdownMenuItem<String>(
+                                          value: value,
+                                          child: Text(value),
+                                        );
+                                      }).toList(),
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: DropdownButtonFormField<String>(
+                                    decoration: InputDecoration(labelText: 'Data Source'),
+                                    value: selectedData,
+                                    onChanged: (String? newValue) {
+                                      if (newValue != null) {
+                                        setState(() {
+                                          selectedData = newValue;
+                                        });
+                                      }
+                                    },
+                                    items: dataSources
+                                        .map<DropdownMenuItem<String>>((String value) {
+                                      return DropdownMenuItem<String>(
+                                        value: value,
+                                        child: Text(value),
+                                      );
+                                    }).toList(),
+                                  ),
+                                ),
+                              ],
+                            ),
+                    ),
+                  ],
+                ),
+              );
+            },
           ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text('Save'),
-            ),
-          ],
-        );
-      },
-    );
-  }
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: Text('Save'),
+          ),
+        ],
+      );
+    },
+  );
+  setState(() {});
+}
 
   @override
   Widget build(BuildContext context) {
@@ -726,17 +744,6 @@ class _DashboardState extends State<Dashboard>
 
   // build the chart based on selected chart type
   Widget buildChart(String chartType, List<Map<String, dynamic>> data) {
-    if (selectedData != 'Age Range Searches' &&
-        selectedData != 'Resource Type Searches' &&
-        selectedData != 'Clicks to Offsite Links' &&
-        selectedData != 'Health Focus Searches') {
-      return Center(
-        child: Text(
-          "No data available for '${selectedData}' at this time",
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-      );
-    }
     // determine bucket size
     Duration bucketSize = getDynamicBucketSize(startDate!, endDate!);
     // process data into buckets
@@ -1100,6 +1107,16 @@ class _DashboardState extends State<Dashboard>
   }
 
   Widget buildPieChart(List<GraphDataPoint> data) {
+    if(selectedData == 'Total Site Visits' && selectedChartType == 'Pie Chart')
+    {
+      return Center(
+        child: Text(
+          'Pie Chart is not available for Total Site Visits because it only contains one group.',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+        ),
+      );
+    }
+
     // calculate total count for each group
     Map<String, double> groupTotals = {};
     for (var point in data) {
