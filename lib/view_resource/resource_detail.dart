@@ -201,7 +201,12 @@ class ResourceDetail extends StatelessWidget {
                     )
                   ),
                 if (fieldDefined('healthFocus'))
-                  field('Health Focus', Text(fieldString('healthFocus')!)),
+                  field('Health Focus',
+                    Flexible( child:
+                      Text(fieldString('healthFocus')!)
+                    )
+                   ),
+                  
                 if (fullAddress != null)
                   field(
                       'Address',
