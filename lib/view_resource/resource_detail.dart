@@ -194,9 +194,19 @@ class ResourceDetail extends StatelessWidget {
                     Text(Resource.culturalResponsivenessLabels[resource['culturalResponsiveness']] ?? "cultural responsiveness not found"),
                   ),
                 if (fieldDefined('cost')) //
-                  field('Cost', Text(resource['cost'])),
+                  field(
+                    'Cost',
+                    Flexible( child: 
+                      Text(fieldString('cost')!)
+                    )
+                  ),
                 if (fieldDefined('healthFocus'))
-                  field('Health Focus', Text(fieldString('healthFocus')!)),
+                  field('Health Focus',
+                    Flexible( child:
+                      Text(fieldString('healthFocus')!)
+                    )
+                   ),
+                  
                 if (fullAddress != null)
                   field(
                       'Address',

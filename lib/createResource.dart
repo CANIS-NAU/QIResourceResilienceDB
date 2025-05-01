@@ -46,9 +46,14 @@ const List<String> resourcePrivacy = [
 // list of strings for resource cost
 const List<String> resourceCostOptions = [
   'Free',
-  'Covered by Insurance',
+  'Covered by insurance',
+  'Covered by insurance with copay',
+  'Sliding scale (income-based)',
+  'Pay what you can/donation-based',
+  'Payment plans available',
   'Subscription',
-  'Fees associated'
+  'One-time fee',
+  'Free trial period'
 ];
 
 const List<String>healthFocusOptions = [
@@ -115,7 +120,6 @@ class _CreateResourceState extends State<CreateResource> {
   String resourcePhoneNumber = "";
   String resourceDescription = "";
   String resourceLocationBoxText = "Link to the resource";
-  String resourceCost = "";
   String resourceType = "";
   String culturalResponsiveness = "";
   String _ageRange = ageItems.first;
@@ -139,6 +143,11 @@ class _CreateResourceState extends State<CreateResource> {
   final List<bool> _selectedHealthFocus =
       List<bool>.filled(healthFocusOptions.length, false);
   List<String> selectedHealthFocusOptions = [];
+
+  // used to store selected resource cost options
+  final List<bool> _selectedResourceCost =
+      List<bool>.filled(resourceCostOptions.length, false);
+  List<String> selectedResourceCostOptions = [];
   
   // boolean to track hotline and in person selection
   bool isHotlineSelected = false;
@@ -201,7 +210,7 @@ class _CreateResourceState extends State<CreateResource> {
       if (resourceType == "" ||
           selectedPrivacyOptions.isEmpty ||
           selectedHealthFocusOptions.isEmpty ||
-          resourceCost == "") {
+          selectedResourceCostOptions.isEmpty ) {
         await showMessageDialog(
           context,
           title: "Alert",
@@ -248,7 +257,7 @@ class _CreateResourceState extends State<CreateResource> {
         'resourceType': resourceType,
         'privacy': selectedPrivacyOptions,
         'culturalResponsiveness': culturalResponsiveness,
-        'cost': resourceCost,
+        'cost': selectedResourceCostOptions,
         'healthFocus': selectedHealthFocusOptions,
         'tagline': selectedTags,
         if (resourceSchedule != null) 'schedule': resourceSchedule!.toJson(),
@@ -550,23 +559,28 @@ class _CreateResourceState extends State<CreateResource> {
                 buildTitles("Resource Cost"),
                 ListView(
                   shrinkWrap: true,
-                  children: resourceCostOptions.map((option) {
-                    return RadioListTile(
+                  children: List<Widget>.generate(
+                    _selectedResourceCost.length,
+                    (int index) => CheckboxListTile(
                       title: Text(
-                        option,
+                        resourceCostOptions[index],
                         style: TextStyle(fontSize: 16),
                       ),
-                      value: option,
-                      groupValue: resourceCost,
+                      value: _selectedResourceCost[index],
                       onChanged: (value) => setState(() {
-                        resourceCost = value!;
+                        _selectedResourceCost[index] = value!;
+                        if (value) {
+                          selectedResourceCostOptions.add(resourceCostOptions[index]);
+                        } else {
+                          selectedResourceCostOptions.remove(resourceCostOptions[index]);
+                        }
                       }),
                       controlAffinity: ListTileControlAffinity.leading,
                       dense: true,
                       // focus only on the radio buttons within the list tile, not the entire tile
                       focusNode: FocusNode(skipTraversal: true),
-                    );
-                  }).toList(),
+                    ),
+                  ),
                 ),
 
                 buildTitles("Health Focus"),
