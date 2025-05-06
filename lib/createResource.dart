@@ -167,6 +167,31 @@ class _CreateResourceState extends State<CreateResource> {
   Schedule? resourceSchedule = null;
   List<FileUpload> _attachments = [];
 
+  late TextEditingController _nameController;
+  late TextEditingController _locationController;
+  late TextEditingController _addressController;
+  late TextEditingController _bldgController;
+  late TextEditingController _cityController;
+  late TextEditingController _stateController;
+  late TextEditingController _zipController;
+  late TextEditingController _phoneController;
+  late TextEditingController _descriptionController;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController();
+    _locationController = TextEditingController();
+    _addressController = TextEditingController();
+    _bldgController = TextEditingController();
+    _cityController = TextEditingController();
+    _stateController = TextEditingController();
+    _zipController = TextEditingController();
+    _phoneController = TextEditingController();
+    _descriptionController = TextEditingController();
+    // uploading files????
+  }
+
   // Tags created stored in tag array
   List<dynamic> selectedTags = [];
 
@@ -331,6 +356,19 @@ class _CreateResourceState extends State<CreateResource> {
         message: successMessage,
       );
 
+      _nameController.clear();
+      _locationController.clear();
+      _addressController.clear();
+      _bldgController.clear();
+      _cityController.clear();
+      _stateController.clear();
+      _zipController.clear();
+      _phoneController.clear();
+      _descriptionController.clear();
+      _tagsController.clear();
+      selectedTags.clear();
+
+
       // Return to origin page after successful document creation.
       // This avoid issues with stale form values from previous submissions.
       Navigator.pop(context);
@@ -350,12 +388,13 @@ class _CreateResourceState extends State<CreateResource> {
 
   // widget to build a text field based on name and if visible
   Widget buildTextFieldContainer(
-      String label, bool isVisible, Function(String) onChangedCallback) {
+    String label, bool isVisible, Function(String) onChangedCallback, {TextEditingController? controller}) {
     return Container(
       margin: EdgeInsets.symmetric(vertical: isVisible ? 8.0 : 0.0),
       child: Visibility(
         visible: isVisible,
         child: TextField(
+          controller: controller,
           obscureText: false,
           decoration: InputDecoration(
             border: OutlineInputBorder(),
@@ -436,6 +475,7 @@ class _CreateResourceState extends State<CreateResource> {
                   (text) {
                     resourceName = text;
                   },
+                  controller: _nameController,
                 ),
                 buildTextFieldContainer(
                   'Link to the Resource',
@@ -443,6 +483,7 @@ class _CreateResourceState extends State<CreateResource> {
                   (text) {
                     resourceLocation = text;
                   },
+                  controller: _locationController,
                 ),
                 buildTextFieldContainer(
                   'Address',
@@ -450,6 +491,7 @@ class _CreateResourceState extends State<CreateResource> {
                   (text) {
                     resourceAddress = text;
                   },
+                  controller: _addressController,
                 ),
                 buildTextFieldContainer(
                   'Apartment, building, floor, etc.',
@@ -457,6 +499,7 @@ class _CreateResourceState extends State<CreateResource> {
                   (text) {
                     resourceBldg = text;
                   },
+                  controller: _bldgController,
                 ),
                 buildTextFieldContainer(
                   'City',
@@ -464,6 +507,7 @@ class _CreateResourceState extends State<CreateResource> {
                   (text) {
                     resourceCity = text;
                   },
+                  controller: _cityController,
                 ),
                 buildTextFieldContainer(
                   'State',
@@ -471,6 +515,7 @@ class _CreateResourceState extends State<CreateResource> {
                   (text) {
                     resourceState = text;
                   },
+                  controller: _stateController,
                 ),
                 buildTextFieldContainer(
                   'Zip Code',
@@ -478,6 +523,7 @@ class _CreateResourceState extends State<CreateResource> {
                   (text) {
                     resourceZip = text;
                   },
+                  controller: _zipController
                 ),
                 buildTextFieldContainer(
                   'Phone Number',
@@ -485,6 +531,7 @@ class _CreateResourceState extends State<CreateResource> {
                   (text) {
                     resourcePhoneNumber = text;
                   },
+                  controller: _phoneController,
                 ),
                 buildTextFieldContainer(
                   'Description of the Resource',
@@ -492,6 +539,7 @@ class _CreateResourceState extends State<CreateResource> {
                   (text) {
                     resourceDescription = text;
                   },
+                  controller: _descriptionController,
                 ),
                 Container(
                   padding: EdgeInsets.symmetric(vertical: 8.0),
@@ -736,6 +784,15 @@ class _CreateResourceState extends State<CreateResource> {
   @override
   void dispose() {
     _tagsController.dispose();
+    _nameController.dispose();
+    _locationController.dispose();
+    _addressController.dispose();
+    _bldgController.dispose();
+    _cityController.dispose();
+    _stateController.dispose();
+    _zipController.dispose();
+    _phoneController.dispose();
+    _descriptionController.dispose();
     super.dispose();
   }
 }
