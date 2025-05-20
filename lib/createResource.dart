@@ -188,9 +188,6 @@ class _CreateResourceState extends State<CreateResource> {
   // used to store selected resource cost options
   final Set<String> _selectedCostOptions = {};
 
-  // convert list of stored values to list of labels
-  List<String> get selectedResourceCostOptions => 
-    _selectedCostOptions.map((key) => Resource.resourceCostLabels[key]!).toList();
     
   // boolean to track hotline and in person selection
   bool isHotlineSelected = false;
@@ -253,7 +250,7 @@ class _CreateResourceState extends State<CreateResource> {
       if (resourceType == "" ||
           selectedPrivacyOptions.isEmpty ||
           selectedHealthFocusOptions.isEmpty ||
-          selectedResourceCostOptions.isEmpty ) {
+          _selectedCostOptions.isEmpty ) {
         await showMessageDialog(
           context,
           title: "Alert",
@@ -601,7 +598,7 @@ class _CreateResourceState extends State<CreateResource> {
                 ),
                 buildTitles("Resource Cost"),
                 CustomCheckboxList(
-                  options: Resource.resourceCostLabels,
+                  options: Resource.getCategoryLabelMap("cost"),
                   selectedOptions: _selectedCostOptions,
                   onChanged: (key) => setState(() {
                     if ( _selectedCostOptions.contains(key) ) {
@@ -641,7 +638,7 @@ class _CreateResourceState extends State<CreateResource> {
 
                 buildTitles("Cultural Responsiveness"),
                 CustomRadioList(
-                  options: Resource.culturalResponsivenessLabels,
+                  options: Resource.getCategoryLabelMap("culturalRespoonsiveness"),
                   selectedValue: culturalResponsiveness,
                   onChanged: (value) => setState(() {
                     culturalResponsiveness = value!;

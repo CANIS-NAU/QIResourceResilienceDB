@@ -121,19 +121,15 @@ class ResourceDetail extends StatelessWidget {
     }
   }
 
-  String costListToLabel() {
-    final value = resource['cost'];
-    final List<String> options = [];
-    if (value is List) {
-      value.forEach( (entry) {
-        options.add(Resource.resourceCostLabels[entry] ?? "cost option not found");
-      });
-      return options.join(', ');
-    } else {
-      // don't know what type this is so just 'toString' it.
-      return value.toString();
-    }
-  
+  String? fieldLabel(String name, dynamic value) {
+   if (value == null) return "Error, unspecified";
+
+   else if (value is List){
+    final options = (value as List).map((entry) => Resource.getLabel(name, entry)).toList();
+    return options.isNotEmpty ? options.join(', ') : 'Error, unspecified';
+   }
+
+   return Resource.getLabel(name, value.toString());
   }
 
   Widget field(String label, Widget valueWidget) {
@@ -206,13 +202,13 @@ class ResourceDetail extends StatelessWidget {
                 if (fieldDefined('culturalResponsiveness'))
                   field(
                     'Cultural Responsiveness',
-                    Text(Resource.culturalResponsivenessLabels[resource['culturalResponsiveness']] ?? "cultural responsiveness not found"),
+                    Text(Resource.getLabel("culturalResponsiveness", resource["culturalResponsiveness"]))
                   ),
                 if (fieldDefined('cost')) //
                   field(
                     'Cost',
                     Flexible(
-                      child: Text(costListToLabel()),
+                      child: Text(fieldLabel("cost", resource["cost"]) ?? "Cost not found"),
                     ),
                   ),
                 if (fieldDefined('healthFocus'))
