@@ -105,6 +105,47 @@ class CustomRadioList<T> extends StatelessWidget {
     );
   }
 }
+class CustomCheckboxList extends StatelessWidget {
+  final Map<String, String> options;
+  final Set<String> selectedOptions;
+  final ValueChanged<String> onChanged; 
+  final TextStyle? labelStyle;
+  final FocusNode? focusNode;
+
+  const CustomCheckboxList(
+    {
+      super.key,
+      required this.options,
+      required this.selectedOptions,
+      required this.onChanged,
+      this.labelStyle,
+      this.focusNode
+    }
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: options.entries.map( (entry) {
+        final key = entry.key;
+        final label = entry.value;
+
+        return CheckboxListTile(
+          title: Text(
+            label, 
+            style: labelStyle,
+          ),
+          value: selectedOptions.contains(key),
+          onChanged: (bool? value) {
+            if (value != null) onChanged(key);
+          },
+          controlAffinity: ListTileControlAffinity.leading,
+          focusNode: focusNode ?? FocusNode(skipTraversal: true),
+        );
+      }).toList()
+    );
+  }
+}
 
 class _CreateResourceState extends State<CreateResource> {
   CollectionReference resourceCollection =
@@ -145,10 +186,12 @@ class _CreateResourceState extends State<CreateResource> {
   List<String> selectedHealthFocusOptions = [];
 
   // used to store selected resource cost options
-  final List<bool> _selectedResourceCost =
-      List<bool>.filled(resourceCostOptions.length, false);
-  List<String> selectedResourceCostOptions = [];
-  
+  final Set<String> _selectedCostOptions = {};
+
+  // convert list of stored values to list of labels
+  List<String> get selectedResourceCostOptions => 
+    _selectedCostOptions.map((key) => Resource.resourceCostLabels[key]!).toList();
+    
   // boolean to track hotline and in person selection
   bool isHotlineSelected = false;
   bool isInPersonSelected = false;
@@ -257,7 +300,7 @@ class _CreateResourceState extends State<CreateResource> {
         'resourceType': resourceType,
         'privacy': selectedPrivacyOptions,
         'culturalResponsiveness': culturalResponsiveness,
-        'cost': selectedResourceCostOptions,
+        'cost': _selectedCostOptions.toList(),
         'healthFocus': selectedHealthFocusOptions,
         'tagline': selectedTags,
         if (resourceSchedule != null) 'schedule': resourceSchedule!.toJson(),
@@ -557,30 +600,17 @@ class _CreateResourceState extends State<CreateResource> {
                   ),
                 ),
                 buildTitles("Resource Cost"),
-                ListView(
-                  shrinkWrap: true,
-                  children: List<Widget>.generate(
-                    _selectedResourceCost.length,
-                    (int index) => CheckboxListTile(
-                      title: Text(
-                        resourceCostOptions[index],
-                        style: TextStyle(fontSize: 16),
-                      ),
-                      value: _selectedResourceCost[index],
-                      onChanged: (value) => setState(() {
-                        _selectedResourceCost[index] = value!;
-                        if (value) {
-                          selectedResourceCostOptions.add(resourceCostOptions[index]);
-                        } else {
-                          selectedResourceCostOptions.remove(resourceCostOptions[index]);
-                        }
-                      }),
-                      controlAffinity: ListTileControlAffinity.leading,
-                      dense: true,
-                      // focus only on the radio buttons within the list tile, not the entire tile
-                      focusNode: FocusNode(skipTraversal: true),
-                    ),
-                  ),
+                CustomCheckboxList(
+                  options: Resource.resourceCostLabels,
+                  selectedOptions: _selectedCostOptions,
+                  onChanged: (key) => setState(() {
+                    if ( _selectedCostOptions.contains(key) ) {
+                      _selectedCostOptions.remove(key);
+                    } else{
+                      _selectedCostOptions.add(key);
+                    }
+                  }),
+                  labelStyle: TextStyle(fontSize: 16),
                 ),
 
                 buildTitles("Health Focus"),

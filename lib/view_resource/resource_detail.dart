@@ -121,6 +121,21 @@ class ResourceDetail extends StatelessWidget {
     }
   }
 
+  String costListToLabel() {
+    final value = resource['cost'];
+    final List<String> options = [];
+    if (value is List) {
+      value.forEach( (entry) {
+        options.add(Resource.resourceCostLabels[entry] ?? "cost option not found");
+      });
+      return options.join(', ');
+    } else {
+      // don't know what type this is so just 'toString' it.
+      return value.toString();
+    }
+  
+  }
+
   Widget field(String label, Widget valueWidget) {
     return Padding(
       padding: fieldPadding,
@@ -196,9 +211,9 @@ class ResourceDetail extends StatelessWidget {
                 if (fieldDefined('cost')) //
                   field(
                     'Cost',
-                    Flexible( child: 
-                      Text(fieldString('cost')!)
-                    )
+                    Flexible(
+                      child: Text(costListToLabel()),
+                    ),
                   ),
                 if (fieldDefined('healthFocus'))
                   field('Health Focus',
