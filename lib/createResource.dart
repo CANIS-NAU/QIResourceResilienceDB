@@ -638,7 +638,7 @@ class _CreateResourceState extends State<CreateResource> {
 
                 buildTitles("Cultural Responsiveness"),
                 CustomRadioList(
-                  options: Resource.getCategoryLabelMap("culturalRespoonsiveness"),
+                  options: Resource.getCategoryLabelMap("culturalResponsiveness"),
                   selectedValue: culturalResponsiveness,
                   onChanged: (value) => setState(() {
                     culturalResponsiveness = value!;
