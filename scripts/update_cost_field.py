@@ -16,7 +16,8 @@ COST_MAPPING = {
     'Subscription': 'subscription', 
     'One-time fee': 'fee', 
     'Free trial period': 'free_trial', 
-    'Fees associated': 'fee'
+    'Fees associated': 'fee',
+    'Covered by Insurance': 'insurance_covered'
 }
 
 #function definition
@@ -46,6 +47,7 @@ def modify_resource():
         # convert all values to list
         if type(current_value) != list:
             current_value = [current_value]
+            values_changed = True
     
         # loop through cost field
         for entry in current_value:
@@ -60,7 +62,7 @@ def modify_resource():
                 values_changed = True
 
             else:
-                print(f"Error, unrecognized cost value. Document: {doc.id}")
+                print(f"Error, unrecognized cost value {entry}. Document: {doc.id}")
 
         # check if changes need to be applied, double check not empty
         if values_changed and update_data["cost"]:
