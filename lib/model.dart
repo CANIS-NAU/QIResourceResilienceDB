@@ -104,6 +104,7 @@ class Resource {
   final List<String>? privacy;
   final String? resourceType;
   final Rubric? rubric;
+  final Schedule? schedule;
   final String? state;
   final List<String>? tagline;
   final bool verified;
@@ -138,6 +139,7 @@ class Resource {
     this.privacy = const [],
     this.resourceType,
     this.rubric,
+    this.schedule,
     this.state,
     this.tagline = const [],
     this.verified = false,
@@ -169,6 +171,9 @@ class Resource {
       rubric: json["rubric"] != null
         ? Rubric.fromJson( Map<String, dynamic>.from( json["rubric"] ) )
         : null,
+      schedule: json["schedule"] != null
+        ? Schedule.fromJson( Map<String, dynamic>.from( json["schedule"] ) )
+        : null,
       state: json["state"],
       tagline: json["tagline"],
     );
@@ -194,12 +199,14 @@ class Resource {
       "privacy": privacy,
       "resourceType": resourceType,
       "rubric": rubric.toJson(),
+      "schedule": schedule.toJson(),
       "state": state,
       "tagline": tagline,
     };
   }
   
   // TODO: add validation
+    // Check field common to all resources
   
   static const Map<String, String> culturalResponsivenessLabels = {
     'none': 'Not culturally specific to Hopi or Indigenous communities',
