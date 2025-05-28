@@ -15,7 +15,6 @@ import 'package:web_app/util.dart';
 import 'package:web_app/Analytics.dart';
 import 'package:web_app/model.dart';
 
-
 //List of ages for dropdown
 const List<String> ageItems = [
   'Under 18',
@@ -56,7 +55,7 @@ const List<String> resourceCostOptions = [
   'Free trial period'
 ];
 
-const List<String>healthFocusOptions = [
+const List<String> healthFocusOptions = [
   'Anxiety',
   'Depression',
   'Stress Management',
@@ -160,43 +159,26 @@ class _CreateResourceState extends State<CreateResource> {
   String resourceZip = "";
   String resourcePhoneNumber = "";
   String resourceDescription = "";
-  String resourceLocationBoxText = "Link to the resource";
   String resourceType = "";
   String culturalResponsiveness = "";
   String _ageRange = ageItems.first;
   Schedule? resourceSchedule = null;
   List<FileUpload> _attachments = [];
 
-  late TextEditingController _nameController;
-  late TextEditingController _locationController;
-  late TextEditingController _addressController;
-  late TextEditingController _bldgController;
-  late TextEditingController _cityController;
-  late TextEditingController _stateController;
-  late TextEditingController _zipController;
-  late TextEditingController _phoneController;
-  late TextEditingController _descriptionController;
-
-  @override
-  void initState() {
-    super.initState();
-    _nameController = TextEditingController();
-    _locationController = TextEditingController();
-    _addressController = TextEditingController();
-    _bldgController = TextEditingController();
-    _cityController = TextEditingController();
-    _stateController = TextEditingController();
-    _zipController = TextEditingController();
-    _phoneController = TextEditingController();
-    _descriptionController = TextEditingController();
-    // uploading files????
-  }
+  // Controllers for all text inputs.
+  final _nameController = TextEditingController();
+  final _locationController = TextEditingController();
+  final _addressController = TextEditingController();
+  final _bldgController = TextEditingController();
+  final _cityController = TextEditingController();
+  final _stateController = TextEditingController();
+  final _zipController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  final _tagsController = TextEditingController();
 
   // Tags created stored in tag array
   List<dynamic> selectedTags = [];
-
-  // For tags text input.
-  final _tagsController = TextEditingController();
 
   bool bypassVerification = false;
 
@@ -368,7 +350,6 @@ class _CreateResourceState extends State<CreateResource> {
       _tagsController.clear();
       selectedTags.clear();
 
-
       // Return to origin page after successful document creation.
       // This avoid issues with stale form values from previous submissions.
       Navigator.pop(context);
@@ -523,7 +504,7 @@ class _CreateResourceState extends State<CreateResource> {
                   (text) {
                     resourceZip = text;
                   },
-                  controller: _zipController
+                  controller: _zipController,
                 ),
                 buildTextFieldContainer(
                   'Phone Number',
@@ -783,7 +764,6 @@ class _CreateResourceState extends State<CreateResource> {
 
   @override
   void dispose() {
-    _tagsController.dispose();
     _nameController.dispose();
     _locationController.dispose();
     _addressController.dispose();
@@ -793,6 +773,7 @@ class _CreateResourceState extends State<CreateResource> {
     _zipController.dispose();
     _phoneController.dispose();
     _descriptionController.dispose();
+    _tagsController.dispose();
     super.dispose();
   }
 }
