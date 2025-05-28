@@ -46,9 +46,14 @@ const List<String> resourcePrivacy = [
 // list of strings for resource cost
 const List<String> resourceCostOptions = [
   'Free',
-  'Covered by Insurance',
+  'Covered by insurance',
+  'Covered by insurance with copay',
+  'Sliding scale (income-based)',
+  'Pay what you can/donation-based',
+  'Payment plans available',
   'Subscription',
-  'Fees associated'
+  'One-time fee',
+  'Free trial period'
 ];
 
 const List<String>healthFocusOptions = [
@@ -100,6 +105,47 @@ class CustomRadioList<T> extends StatelessWidget {
     );
   }
 }
+class CustomCheckboxList extends StatelessWidget {
+  final Map<String, String> options;
+  final Set<String> selectedOptions;
+  final ValueChanged<String> onChanged; 
+  final TextStyle? labelStyle;
+  final FocusNode? focusNode;
+
+  const CustomCheckboxList(
+    {
+      super.key,
+      required this.options,
+      required this.selectedOptions,
+      required this.onChanged,
+      this.labelStyle,
+      this.focusNode
+    }
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: options.entries.map( (entry) {
+        final key = entry.key;
+        final label = entry.value;
+
+        return CheckboxListTile(
+          title: Text(
+            label, 
+            style: labelStyle,
+          ),
+          value: selectedOptions.contains(key),
+          onChanged: (bool? value) {
+            if (value != null) onChanged(key);
+          },
+          controlAffinity: ListTileControlAffinity.leading,
+          focusNode: focusNode ?? FocusNode(skipTraversal: true),
+        );
+      }).toList()
+    );
+  }
+}
 
 class _CreateResourceState extends State<CreateResource> {
   CollectionReference resourceCollection =
@@ -115,7 +161,6 @@ class _CreateResourceState extends State<CreateResource> {
   String resourcePhoneNumber = "";
   String resourceDescription = "";
   String resourceLocationBoxText = "Link to the resource";
-  String resourceCost = "";
   String resourceType = "";
   String culturalResponsiveness = "";
   String _ageRange = ageItems.first;
@@ -139,7 +184,11 @@ class _CreateResourceState extends State<CreateResource> {
   final List<bool> _selectedHealthFocus =
       List<bool>.filled(healthFocusOptions.length, false);
   List<String> selectedHealthFocusOptions = [];
-  
+
+  // used to store selected resource cost options
+  final Set<String> _selectedCostOptions = {};
+
+    
   // boolean to track hotline and in person selection
   bool isHotlineSelected = false;
   bool isInPersonSelected = false;
@@ -201,7 +250,7 @@ class _CreateResourceState extends State<CreateResource> {
       if (resourceType == "" ||
           selectedPrivacyOptions.isEmpty ||
           selectedHealthFocusOptions.isEmpty ||
-          resourceCost == "") {
+          _selectedCostOptions.isEmpty ) {
         await showMessageDialog(
           context,
           title: "Alert",
@@ -248,7 +297,7 @@ class _CreateResourceState extends State<CreateResource> {
         'resourceType': resourceType,
         'privacy': selectedPrivacyOptions,
         'culturalResponsiveness': culturalResponsiveness,
-        'cost': resourceCost,
+        'cost': _selectedCostOptions.toList(),
         'healthFocus': selectedHealthFocusOptions,
         'tagline': selectedTags,
         if (resourceSchedule != null) 'schedule': resourceSchedule!.toJson(),
@@ -548,25 +597,17 @@ class _CreateResourceState extends State<CreateResource> {
                   ),
                 ),
                 buildTitles("Resource Cost"),
-                ListView(
-                  shrinkWrap: true,
-                  children: resourceCostOptions.map((option) {
-                    return RadioListTile(
-                      title: Text(
-                        option,
-                        style: TextStyle(fontSize: 16),
-                      ),
-                      value: option,
-                      groupValue: resourceCost,
-                      onChanged: (value) => setState(() {
-                        resourceCost = value!;
-                      }),
-                      controlAffinity: ListTileControlAffinity.leading,
-                      dense: true,
-                      // focus only on the radio buttons within the list tile, not the entire tile
-                      focusNode: FocusNode(skipTraversal: true),
-                    );
-                  }).toList(),
+                CustomCheckboxList(
+                  options: Resource.getCategoryLabelMap("cost"),
+                  selectedOptions: _selectedCostOptions,
+                  onChanged: (key) => setState(() {
+                    if ( _selectedCostOptions.contains(key) ) {
+                      _selectedCostOptions.remove(key);
+                    } else{
+                      _selectedCostOptions.add(key);
+                    }
+                  }),
+                  labelStyle: TextStyle(fontSize: 16),
                 ),
 
                 buildTitles("Health Focus"),
@@ -597,7 +638,7 @@ class _CreateResourceState extends State<CreateResource> {
 
                 buildTitles("Cultural Responsiveness"),
                 CustomRadioList(
-                  options: Resource.culturalResponsivenessLabels,
+                  options: Resource.getCategoryLabelMap("culturalResponsiveness"),
                   selectedValue: culturalResponsiveness,
                   onChanged: (value) => setState(() {
                     culturalResponsiveness = value!;

@@ -78,7 +78,7 @@ final categories = UnmodifiableListView<FilterCategory>([
         "Podcast",
       ]))),
   FilterCategory("Cultural Responsiveness", "culturalResponsiveness",
-      values: UnmodifiableMapView(Resource.culturalResponsivenessLabels)),
+      values: UnmodifiableMapView(Resource.getCategoryLabelMap("culturalResponsiveness"))),
   FilterCategory("Privacy", "privacy",
       values: listToMap(UnmodifiableListView([
         "HIPAA Compliant",
