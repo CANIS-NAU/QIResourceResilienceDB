@@ -176,6 +176,7 @@ class Resource {
         : null,
       state: json["state"],
       tagline: json["tagline"],
+      zipcode: json["zipcode"],
     );
   }
   // dart => firestore
@@ -202,11 +203,39 @@ class Resource {
       "schedule": schedule.toJson(),
       "state": state,
       "tagline": tagline,
+      "zipcode": zipcode,
     };
   }
   
-  // TODO: add validation
-    // Check field common to all resources
+  // returns list of errors, if empty, resource is valid
+  List<String> validateResource(){
+    final List<String> errors = [];
+
+    // fields common to all resources
+    if (name == "") errors.add("Resource name is required.");
+    if (description == "") errors.add("Resource description is required.");
+    if (location == "") errors.add("Resource link is required.");
+    if (resourceType == "") errors.add("Resource type is required.");
+
+    if (privacy.isEmpty) errors.add("At least one privacy option must be selected.");
+    if (cost.isEmpty) errors.add("At least one cost option must be selected.");
+
+    // resource type specific fields
+    if (resourceType == "In Person"){
+      if (address == "") errors.add("An address is required for in person resources.");
+      if (city == "") errors.add("A city is required for in person resources.");
+      if (state == "") errors.add("A state is required for in person resources.");
+      if (zip == "") errors.add("A zip code is required for in person resources.");
+    }
+
+    if (resourceType == "Hotline" || resourceType == "In Person"){
+      if (phoneNumber == "") errors.add("A phone number is requred for in person/hotline resources.");
+    }
+
+    if (resourceType == "Event" && schedule == null) errors.add("A schedule is required for events.");
+
+    return errors;
+  }
   
   static const Map<String, String> culturalResponsivenessLabels = {
     'none': 'Not culturally specific to Hopi or Indigenous communities',
