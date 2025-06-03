@@ -120,7 +120,8 @@ class ResourceDetail extends StatelessWidget {
       return null;
     }
   }
-
+// TODO: Remove once refactored with new model file
+/*
   String? fieldLabel(String name, dynamic value) {
    if (value == null) return "Error, unspecified";
 
@@ -131,6 +132,7 @@ class ResourceDetail extends StatelessWidget {
 
    return Resource.getLabel(name, value.toString());
   }
+*/
 
   Widget field(String label, Widget valueWidget) {
     return Padding(
@@ -202,13 +204,15 @@ class ResourceDetail extends StatelessWidget {
                 if (fieldDefined('culturalResponsiveness'))
                   field(
                     'Cultural Responsiveness',
-                    Text(Resource.getLabel("culturalResponsiveness", resource["culturalResponsiveness"]))
+                    Text(Resource.culturalResponsivenessLabels[fieldString('culturalResponsiveness')]
+                    ?? "Cultural responsiveness not found")
                   ),
                 if (fieldDefined('cost')) //
                   field(
                     'Cost',
                     Flexible(
-                      child: Text(fieldLabel("cost", resource["cost"]) ?? "Cost not found"),
+                      child: Text(Resource.costLabels[fieldString('cost')]
+                      ?? 'Cost not found'),
                     ),
                   ),
                 if (fieldDefined('healthFocus'))

@@ -1,3 +1,6 @@
+import 'package:web_app/file_attachments.dart';
+import 'package:web_app/events/schedule.dart';
+
 class Rubric {
   final int? accurate;
   final String? additionalComments;
@@ -80,7 +83,7 @@ class Rubric {
       "socialSupport": socialSupport,
       "totalScore": totalScore,
       "trustworthySource": trustworthySource,
-    }
+    };
   }
 }
 
@@ -91,7 +94,7 @@ class Resource {
   final Attachment? attachments;
   final String? building;
   final String? city;
-  final List<String>? cost;
+  final List<String> cost;
   final String? createdBy;
   final DateTime? createdTime;
   final String? culturalResponsiveness;
@@ -101,7 +104,7 @@ class Resource {
   final String? location;
   final String? name;
   final String? phoneNumber;
-  final List<String>? privacy;
+  final List<String> privacy;
   final String? resourceType;
   final Rubric? rubric;
   final Schedule? schedule;
@@ -132,7 +135,7 @@ class Resource {
     this.culturalResponsiveness,
     this.dateAdded,
     this.description,
-    this.isVisable,
+    this.isVisable = false,
     this.location,
     this.name,
     this.phoneNumber,
@@ -184,7 +187,7 @@ class Resource {
     return {
       "address": address,
       "agerange": agerange,
-      "attachments": attachments.toJson(),
+      "attachments": attachments?.toJson(),
       "building": building,
       "city": city,
       "cost": cost,
@@ -199,8 +202,8 @@ class Resource {
       "phoneNumber": phoneNumber,
       "privacy": privacy,
       "resourceType": resourceType,
-      "rubric": rubric.toJson(),
-      "schedule": schedule.toJson(),
+      "rubric": rubric?.toJson(),
+      "schedule": schedule?.toJson(),
       "state": state,
       "tagline": tagline,
       "zipcode": zipcode,
@@ -225,7 +228,7 @@ class Resource {
       if (address == "") errors.add("An address is required for in person resources.");
       if (city == "") errors.add("A city is required for in person resources.");
       if (state == "") errors.add("A state is required for in person resources.");
-      if (zip == "") errors.add("A zip code is required for in person resources.");
+      if (zipcode == "") errors.add("A zip code is required for in person resources.");
     }
 
     if (resourceType == "Hotline" || resourceType == "In Person"){
@@ -255,6 +258,6 @@ class Resource {
     'subscription': 'Subscription',
     'fee': 'One-time fee',
     'free_trial': 'Free trial period'
-  }
+  };
 
 }
