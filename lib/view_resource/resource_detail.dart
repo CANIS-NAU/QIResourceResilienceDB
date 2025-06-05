@@ -120,19 +120,6 @@ class ResourceDetail extends StatelessWidget {
       return null;
     }
   }
-// TODO: Remove once refactored with new model file
-/*
-  String? fieldLabel(String name, dynamic value) {
-   if (value == null) return "Error, unspecified";
-
-   else if (value is List){
-    final options = (value as List).map((entry) => Resource.getLabel(name, entry)).toList();
-    return options.isNotEmpty ? options.join(', ') : 'Error, unspecified';
-   }
-
-   return Resource.getLabel(name, value.toString());
-  }
-*/
 
   Widget field(String label, Widget valueWidget) {
     return Padding(

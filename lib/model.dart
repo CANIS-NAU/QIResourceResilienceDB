@@ -165,7 +165,7 @@ class Resource {
       culturalResponsiveness: json["culturalResponsiveness"],
       dateAdded: json["dateAdded"],
       description: json["description"],
-      isVisable: json["isVisible"],
+      isVisable: json["isVisable"],
       location: json["location"],
       name: json["name"],
       phoneNumber: json["phoneNumber"],
@@ -240,15 +240,15 @@ class Resource {
     return errors;
   }
   
-  static const Map<String, String> culturalResponsivenessLabels = {
+  static Map<String, String> culturalResponsivenessLabels = Map.unmodifiable({
     'none': 'Not culturally specific to Hopi or Indigenous communities',
     'low': 'Low Cultural Responsiveness',
     'some': 'Some Cultural Responsiveness',
     'good': 'Good Cultural Responsiveness',
     'high': 'Specific resource for Hopi community'
-  };
+  });
 
-  static const Map<String, String> costLabels = {
+  static Map<String, String> costLabels = Map.unmodifiable({
     'free': 'Free',
     'insurance_covered': 'Covered by insurance',
     'insurance_copay': 'Covered by insurance with copay',
@@ -258,6 +258,6 @@ class Resource {
     'subscription': 'Subscription',
     'fee': 'One-time fee',
     'free_trial': 'Free trial period'
-  };
+  });
 
 }
