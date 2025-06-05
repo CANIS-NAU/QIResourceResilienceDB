@@ -627,7 +627,7 @@ class _CreateResourceState extends State<CreateResource> {
                 ),
                 buildTitles("Resource Cost"),
                 CustomCheckboxList(
-                  options: Resource.getCategoryLabelMap("cost"),
+                  options: Resource.costLabels,
                   selectedOptions: _selectedCostOptions,
                   onChanged: (key) => setState(() {
                     if ( _selectedCostOptions.contains(key) ) {
@@ -667,7 +667,7 @@ class _CreateResourceState extends State<CreateResource> {
 
                 buildTitles("Cultural Responsiveness"),
                 CustomRadioList(
-                  options: Resource.getCategoryLabelMap("culturalResponsiveness"),
+                  options: Resource.culturalResponsivenessLabels,
                   selectedValue: culturalResponsiveness,
                   onChanged: (value) => setState(() {
                     culturalResponsiveness = value!;

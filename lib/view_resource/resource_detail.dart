@@ -121,17 +121,6 @@ class ResourceDetail extends StatelessWidget {
     }
   }
 
-  String? fieldLabel(String name, dynamic value) {
-   if (value == null) return "Error, unspecified";
-
-   else if (value is List){
-    final options = (value as List).map((entry) => Resource.getLabel(name, entry)).toList();
-    return options.isNotEmpty ? options.join(', ') : 'Error, unspecified';
-   }
-
-   return Resource.getLabel(name, value.toString());
-  }
-
   Widget field(String label, Widget valueWidget) {
     return Padding(
       padding: fieldPadding,
@@ -202,13 +191,15 @@ class ResourceDetail extends StatelessWidget {
                 if (fieldDefined('culturalResponsiveness'))
                   field(
                     'Cultural Responsiveness',
-                    Text(Resource.getLabel("culturalResponsiveness", resource["culturalResponsiveness"]))
+                    Text(Resource.culturalResponsivenessLabels[fieldString('culturalResponsiveness')]
+                    ?? "Cultural responsiveness not found")
                   ),
                 if (fieldDefined('cost')) //
                   field(
                     'Cost',
                     Flexible(
-                      child: Text(fieldLabel("cost", resource["cost"]) ?? "Cost not found"),
+                      child: Text(Resource.costLabels[fieldString('cost')]
+                      ?? 'Cost not found'),
                     ),
                   ),
                 if (fieldDefined('healthFocus'))
