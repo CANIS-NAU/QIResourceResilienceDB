@@ -71,6 +71,10 @@ class ResourceDetail extends StatelessWidget {
 
   final DocumentSnapshot resource;
 
+  Resource get resourceModel =>
+      Resource.fromJson(resource.data() as Map<String, dynamic>);
+
+
   String? addressString() {
     try {
       return filterJoin([
@@ -136,6 +140,7 @@ class ResourceDetail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    
     List<Attachment> attachments = getAttachmentsFromResource(resource);
     String? fullAddress = formatResourceAddress(resource);
     Uri? url =
@@ -191,15 +196,13 @@ class ResourceDetail extends StatelessWidget {
                 if (fieldDefined('culturalResponsiveness'))
                   field(
                     'Cultural Responsiveness',
-                    Text(Resource.culturalResponsivenessLabels[fieldString('culturalResponsiveness')]
-                    ?? "Cultural responsiveness not found")
+                    Text(resourceModel.culturalResponsivenessLabel),
                   ),
                 if (fieldDefined('cost')) //
                   field(
                     'Cost',
                     Flexible(
-                      child: Text(Resource.costLabels[fieldString('cost')]
-                      ?? 'Cost not found'),
+                      child: Text(resourceModel.costLabel),
                     ),
                   ),
                 if (fieldDefined('healthFocus'))

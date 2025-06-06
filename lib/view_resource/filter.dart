@@ -8,20 +8,6 @@ import 'package:web_app/model.dart';
 // Time
 import 'package:web_app/common.dart';
 
-// function for converting list to map with duplicate keys/values
-UnmodifiableMapView<String, String> listToMap(UnmodifiableListView<String> list){
-  // init variables
-  Map<String, String> workingMap = {};
-
-  // loop through list items
-  for( final item in list ){
-    workingMap[item] = item;
-  }
-  // set return map
-  return UnmodifiableMapView(workingMap);
-}
-
-
 class FilterItem<T> {
   FilterItem(this.category, this.value, this.label);
 
@@ -69,48 +55,28 @@ class FilterCategory {
 /// All available resource filter categories, their values, and other useful metadata.
 final categories = UnmodifiableListView<FilterCategory>([
   FilterCategory("Type", "resourceType",
-      values: listToMap(UnmodifiableListView([
-        "Online",
-        "In Person",
-        "App",
-        "Hotline",
-        "Event",
-        "Podcast",
-      ]))),
+      values: UnmodifiableMapView(Resource.resourceTypeLabels)),
+
   FilterCategory("Cultural Responsiveness", "culturalResponsiveness",
       values: UnmodifiableMapView(Resource.culturalResponsivenessLabels)),
+
   FilterCategory("Privacy", "privacy",
-      values: listToMap(UnmodifiableListView([
-        "HIPAA Compliant",
-        "Anonymous",
-        "Mandatory Reporting",
-        "None Stated",
-      ])),
+      values: UnmodifiableMapView(Resource.privacyLabels),
       canHaveMultiple: true),
+
   FilterCategory("Age Range", "agerange",
-      values: listToMap(UnmodifiableListView([
-      'Under 18',
-      '18-24',
-      '24-65',
-      '65+',
-      'All ages'
-      ]))),
+      values: UnmodifiableMapView(Resource.ageLabels)),
+
    FilterCategory("Health Focus", "healthFocus",
-      values: listToMap(UnmodifiableListView([
-      'Anxiety',
-      'Depression',
-      'Stress Management',
-      'Substance Abuse',
-      'Grief and Loss',
-      'Trama and PTSD',
-      'Suicide Prevention',
-      ])), canHaveMultiple: true ),
+      values: UnmodifiableMapView(Resource.healthFocusLabels), 
+      canHaveMultiple: true),
+
   FilterCategory("Event happening in the next", "nextDate",
-      values: listToMap(UnmodifiableListView([
-        "Week",
-        "Month",
-        "3 Months",
-      ]))),
+      values: UnmodifiableMapView({
+        "Week": "Week",
+        "Month": "Month",
+        "3 Months": "3 Months",
+      })),
 ]);
 
 /// Represents a complete resource filter query.

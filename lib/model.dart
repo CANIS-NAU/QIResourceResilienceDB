@@ -1,5 +1,6 @@
 import 'package:web_app/file_attachments.dart';
 import 'package:web_app/events/schedule.dart';
+import 'dart:collection';
 
 class Rubric {
   final int? accurate;
@@ -91,7 +92,7 @@ class Resource {
   // data fields
   final String? address;
   final String? agerange;
-  final Attachment? attachments;
+  final List<Attachment>? attachments;
   final String? building;
   final String? city;
   final List<String> cost;
@@ -100,6 +101,7 @@ class Resource {
   final String? culturalResponsiveness;
   final String? dateAdded;
   final String? description;
+  final List<String?> healthFocus;
   final bool isVisable;
   final String? location;
   final String? name;
@@ -119,14 +121,33 @@ class Resource {
     ?? "Unrecognized Cultural Responsiveness value, no label found";
 
   String get costLabel =>
-    costLabels[cost]
+    cost.map((x) => costLabels[x] ?? "Unrecognized Cost value").join(", ")
     ?? "Unrecognized Cost value, no label found";
+
+  String get resourceTypeLabel =>
+    resourceTypeLabels[resourceType]
+    ?? "Unrecognized Resource Type value, no label found";
+
+  String get ageLabel => 
+    ageLabels[agerange]
+    ?? "Unrecognized Age Range value, no label found";
+
+  String get privacyLabel =>
+    privacy.map((x) => privacyLabels[x] ?? "Unrecognized Privacy value").join(", ")
+    ?? "Unrecognized Privacy value, no label found";
+
+  String get healthFocusLabel =>
+    healthFocus.map((x) => healthFocusLabels[x] ?? "Unrecognized Health Focus value").join(", ")
+    ?? "Unrecognized Health Focus value, no label found";
+
+  String get fullAddress =>
+    "$address, $building, $city, $state, $zipcode";
 
   // default constructor
   Resource({
     this.address,
     this.agerange,
-    this.attachments,
+    this.attachments = const [],
     this.building,
     this.city,
     this.cost = const [],
@@ -135,7 +156,8 @@ class Resource {
     this.culturalResponsiveness,
     this.dateAdded,
     this.description,
-    this.isVisable = false,
+    this.healthFocus = const [],
+    this.isVisable = true,
     this.location,
     this.name,
     this.phoneNumber,
@@ -154,9 +176,9 @@ class Resource {
     return Resource(
       address: json["address"],
       agerange: json["agerange"],
-      attachments: json["attachments"] != null 
-        ? Attachment.fromJson( Map<String, dynamic>.from( json["attachments"] ) )
-        : null,
+      attachments: (json["attachments"] as List<dynamic>? ?? [])
+        .map((item) => Attachment.fromJson(Map<String, dynamic>.from(item)))
+        .toList(),
       building: json["building"],
       city: json["city"],
       cost: List<String>.from( json["cost"] ?? [] ),
@@ -165,6 +187,7 @@ class Resource {
       culturalResponsiveness: json["culturalResponsiveness"],
       dateAdded: json["dateAdded"],
       description: json["description"],
+      healthFocus: List<String>.from( json["healthFocus"] ?? [] ),
       isVisable: json["isVisable"],
       location: json["location"],
       name: json["name"],
@@ -178,7 +201,10 @@ class Resource {
         ? Schedule.fromJson( Map<String, dynamic>.from( json["schedule"] ) )
         : null,
       state: json["state"],
-      tagline: json["tagline"],
+      tagline: (json["tagline"] != null)
+        ? List<String>.from(json["tagline"])
+        : null,
+      verified: json["verified"] ?? false,
       zipcode: json["zipcode"],
     );
   }
@@ -187,7 +213,7 @@ class Resource {
     return {
       "address": address,
       "agerange": agerange,
-      "attachments": attachments?.toJson(),
+      "attachments": (attachments ?? []).map((a) => a.toJson()).toList(),
       "building": building,
       "city": city,
       "cost": cost,
@@ -208,6 +234,95 @@ class Resource {
       "tagline": tagline,
       "zipcode": zipcode,
     };
+  }
+
+  // gives a set of strings representing text fields to be shown given a resource type
+  Set<String> visibleFields(){
+    final fields = <String>{};
+
+    switch (resourceType){
+
+      case 'in_person':
+        fields.addAll([
+          "name",
+          "location",
+          "address",
+          "building",
+          "city",
+          "state",
+          "zipcode",
+          "phone",
+          "description",
+          ]);
+        break;
+
+      case 'hotline':
+        fields.addAll([
+          "name",
+          "location",
+          "phone",
+          "description",
+        ]);
+        break;
+
+      case 'online':
+        fields.addAll([
+          "name",
+          "location",
+          "description",
+        ]);
+        break;
+
+      case 'podcast':
+        fields.addAll([
+          "name",
+          "location",
+          "description",
+        ]);
+        break;
+
+      case 'app':
+        fields.addAll([
+          "name",
+          "location",
+          "description",
+        ]);
+        break;
+
+      case 'event':
+        fields.addAll([
+          "name",
+          "location",
+          "description",
+        ]); 
+        break;
+
+      case 'pdf':
+        fields.addAll([
+          "name",
+          "location",
+          "description",
+        ]);
+        break;
+
+      case 'game':
+        fields.addAll([
+          "name",
+          "location",
+          "description",
+        ]);
+        break;
+
+      case 'movement':
+        fields.addAll([
+          "name",
+          "location",
+          "description",
+        ]);
+        break;
+    }
+
+    return fields;
   }
   
   // returns list of errors, if empty, resource is valid
@@ -259,5 +374,42 @@ class Resource {
     'fee': 'One-time fee',
     'free_trial': 'Free trial period'
   });
+  static const Map<String, String> resourceTypeLabels = {
+    'In Person': 'In Person',
+    'Hotline': 'Hotline',
+    'Online': 'Online',
+    'Podcast': 'Podcast',
+    'App': 'App',
+    'Event': 'Event',
+    'PDF': 'PDF',
+    'Game': 'Game',
+    'Movement-based Activity': 'Movement-based Activity',
+  };
+
+  //List of ages for dropdown
+  static const Map<String, String> ageLabels = {
+    'Under 18': 'Under 18',
+    '18-24': '18-24',
+    '24-65': '24-65',
+    '65+': '65+',
+    'All ages': 'All ages'
+  };
+  // list of privacy options
+  static const Map<String, String> privacyLabels = {
+    'HIPAA Compliant': 'HIPAA Compliant',
+    'Anonymous': 'Anonymous',
+    'Mandatory Reporting': 'Mandatory Reporting',
+    'None Stated': 'None Stated',
+  };
+
+  static const Map<String, String> healthFocusLabels = {
+    'Anxiety': 'Anxiety',
+    'Depression': 'Depression',
+    'Stress Management': 'Stress Management',
+    'Substance Abuse': 'Substance Abuse',
+    'Grief and Loss': 'Grief and Loss',
+    'Trama and PTSD': 'Trama and PTSD',
+    'Suicide Prevention': 'Suicide Prevention',
+  };
 
 }
