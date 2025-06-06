@@ -15,55 +15,6 @@ import 'package:web_app/util.dart';
 import 'package:web_app/Analytics.dart';
 import 'package:web_app/model.dart';
 
-//List of ages for dropdown
-const List<String> ageItems = [
-  'Under 18',
-  '18-24',
-  '24-65',
-  '65+',
-  'All ages'
-];
-
-//List of strings for resource type
-const List<String> resourceTypeOptions = [
-  'In Person',
-  'Hotline',
-  'Online',
-  'Podcast',
-  'App',
-  'Event',
-];
-
-// list of privacy options
-const List<String> resourcePrivacy = [
-  'HIPAA Compliant',
-  'Anonymous',
-  'Mandatory Reporting',
-  'None Stated',
-];
-
-// list of strings for resource cost
-const List<String> resourceCostOptions = [
-  'Free',
-  'Covered by insurance',
-  'Covered by insurance with copay',
-  'Sliding scale (income-based)',
-  'Pay what you can/donation-based',
-  'Payment plans available',
-  'Subscription',
-  'One-time fee',
-  'Free trial period'
-];
-
-const List<String> healthFocusOptions = [
-  'Anxiety',
-  'Depression',
-  'Stress Management',
-  'Substance Abuse',
-  'Grief and Loss',
-  'Trama and PTSD',
-  'Suicide Prevention',
-];
 
 // Create resource page
 class CreateResource extends StatefulWidget {
@@ -161,7 +112,7 @@ class _CreateResourceState extends State<CreateResource> {
   String resourceDescription = "";
   String resourceType = "";
   String culturalResponsiveness = "";
-  String _ageRange = ageItems.first;
+  String _ageRange = Resource.ageLabels["All ages"] ?? "Age Range not found";
   Schedule? resourceSchedule = null;
   List<FileUpload> _attachments = [];
 
@@ -183,14 +134,16 @@ class _CreateResourceState extends State<CreateResource> {
   bool bypassVerification = false;
 
   // Used to store selected privacy options
-  final List<bool> _selectedPrivacy =
-      List<bool>.filled(resourcePrivacy.length, false);
-  List<String> selectedPrivacyOptions = [];
+  /*final List<bool> _selectedPrivacy =
+      List<bool>.filled(Resource.privacyLabels.length, false);
+  List<String> selectedPrivacyOptions = [];*/
+  final Set<String> _selectedPrivacy = {};
 
   // used to store health focus options
-  final List<bool> _selectedHealthFocus =
-      List<bool>.filled(healthFocusOptions.length, false);
-  List<String> selectedHealthFocusOptions = [];
+  /*final List<bool> _selectedHealthFocus =
+      List<bool>.filled(Resource.healthFocusLabels.length, false);
+  List<String> selectedHealthFocusOptions = [];*/
+  final Set<String> _selectedHealthFocus = {};
 
   // used to store selected resource cost options
   final Set<String> _selectedCostOptions = {};
@@ -255,8 +208,8 @@ class _CreateResourceState extends State<CreateResource> {
 
       // Check if any of the type, privacy, or cost options are not selected.
       if (resourceType == "" ||
-          selectedPrivacyOptions.isEmpty ||
-          selectedHealthFocusOptions.isEmpty ||
+          _selectedPrivacy.isEmpty ||
+          _selectedHealthFocus.isEmpty ||
           _selectedCostOptions.isEmpty ) {
         await showMessageDialog(
           context,
@@ -302,10 +255,10 @@ class _CreateResourceState extends State<CreateResource> {
         'isVisable': true,
         'verified': bypassVerification,
         'resourceType': resourceType,
-        'privacy': selectedPrivacyOptions,
+        'privacy': _selectedPrivacy.toList(),
         'culturalResponsiveness': culturalResponsiveness,
         'cost': _selectedCostOptions.toList(),
-        'healthFocus': selectedHealthFocusOptions,
+        'healthFocus': _selectedHealthFocus.toList(),
         'tagline': selectedTags,
         if (resourceSchedule != null) 'schedule': resourceSchedule!.toJson(),
         'attachments': attachments.map((x) => x.toJson()),
@@ -427,28 +380,16 @@ class _CreateResourceState extends State<CreateResource> {
               padding: EdgeInsets.only(right: 16.0),
               children: [
                 buildTitles("Resource Type"),
-                ListView(
-                  shrinkWrap: true,
-                  children: resourceTypeOptions.map((option) {
-                    return RadioListTile(
-                      title: Text(
-                        option,
-                        style: TextStyle(fontSize: 16),
-                      ),
-                      value: option,
-                      groupValue: resourceType,
-                      onChanged: (value) => setState(() {
-                        resourceType = value!;
-                        isHotlineSelected = (value == "Hotline");
-                        isInPersonSelected = (value == "In Person");
-                        isEventSelected = (value == "Event");
-                      }),
-                      controlAffinity: ListTileControlAffinity.leading,
-                      dense: true,
-                      // focus only on the radio buttons within the list tile, not the entire tile
-                      focusNode: FocusNode(skipTraversal: true),
-                    );
-                  }).toList(),
+                CustomRadioList(
+                  options: Resource.resourceTypeLabels,
+                  selectedValue: resourceType,
+                  onChanged: (value) => setState(() {
+                    resourceType = value!;
+                    isHotlineSelected = (value == "Hotline");
+                    isInPersonSelected = (value == "In Person");
+                    isEventSelected = (value == "Event");
+                  }),
+                  labelStyle: TextStyle(fontSize: 16),
                 ),
                 buildTextFieldContainer(
                   'Name of the Resource',
@@ -600,6 +541,7 @@ class _CreateResourceState extends State<CreateResource> {
                 ),
 
                 buildTitles("Privacy Protections"),
+                /*
                 ListView(
                   shrinkWrap: true,
                   children: List<Widget>.generate(
@@ -625,6 +567,20 @@ class _CreateResourceState extends State<CreateResource> {
                     ),
                   ),
                 ),
+                */
+
+                CustomCheckboxList(
+                  options: Resource.privacyLabels,
+                  selectedOptions: _selectedPrivacy,
+                  onChanged: (key) => setState(() {
+                    if ( _selectedPrivacy.contains(key) ){
+                      _selectedPrivacy.remove(key);
+                    } else {
+                      _selectedPrivacy.add(key);
+                    }
+                  }),
+                  labelStyle: TextStyle(fontSize: 16),
+                ),
                 buildTitles("Resource Cost"),
                 CustomCheckboxList(
                   options: Resource.costLabels,
@@ -640,6 +596,7 @@ class _CreateResourceState extends State<CreateResource> {
                 ),
 
                 buildTitles("Health Focus"),
+                /*
                 ListView(
                   shrinkWrap: true,
                   children: List<Widget>.generate(
@@ -664,6 +621,19 @@ class _CreateResourceState extends State<CreateResource> {
                     ),
                   ),
                 ),
+                */
+                CustomCheckboxList(
+                  options: Resource.healthFocusLabels,
+                  selectedOptions: _selectedHealthFocus,
+                  onChanged: (key) => setState((){
+                    if ( _selectedHealthFocus.contains(key) ) {
+                      _selectedHealthFocus.remove(key);
+                    } else {
+                      _selectedHealthFocus.add(key);
+                    }
+                  }),
+                  labelStyle: TextStyle(fontSize: 16),
+                ),
 
                 buildTitles("Cultural Responsiveness"),
                 CustomRadioList(
@@ -684,7 +654,7 @@ class _CreateResourceState extends State<CreateResource> {
                           _ageRange = newValue!;
                         });
                       },
-                      items: ageItems
+                      items: Resource.ageLabels.keys.toList()
                           .map<DropdownMenuItem<String>>((String value) {
                         return DropdownMenuItem<String>(
                           value: value,

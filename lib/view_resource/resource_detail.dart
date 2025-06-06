@@ -71,37 +71,9 @@ class ResourceDetail extends StatelessWidget {
 
   final DocumentSnapshot resource;
 
-  String? addressString() {
-    try {
-      return filterJoin([
-        resource['address'],
-        resource['building'],
-        resource['city'],
-        resource['state'],
-        resource['zipcode'],
-      ], emptyValue: null);
-    } on StateError {
-      return null;
-    }
-  }
+  Resource get resourceModel =>
+      Resource.fromJson(resource.data() as Map<String, dynamic>);
 
-  bool fieldDefined(String name) {
-    try {
-      final value = resource[name];
-      if (value == null) {
-        return false;
-      } else if (value is String) {
-        return value.isNotEmpty;
-      } else if (value is List) {
-        return value.isNotEmpty;
-      } else {
-        // don't know what type this is so just assume it's set
-        return true;
-      }
-    } on StateError {
-      return false;
-    }
-  }
 
   String? fieldString(String name) {
     try {
@@ -127,8 +99,14 @@ class ResourceDetail extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('$label: '),
-          valueWidget,
+          Text(
+            '$label: ',
+            softWrap: true,
+            overflow: TextOverflow.visible,
+          ),
+          Expanded(
+            child: valueWidget,
+          ),
         ],
       ),
     );
@@ -136,12 +114,59 @@ class ResourceDetail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    List<Attachment> attachments = getAttachmentsFromResource(resource);
-    String? fullAddress = formatResourceAddress(resource);
+    
+    List<Attachment> attachments = resourceModel.attachments ?? [];
+    String? fullAddress = resourceModel.fullAddress;
     Uri? url =
-        fieldDefined('location') ? Uri.parse(fieldString('location')!) : null;
+        resourceModel.location != null ? Uri.parse(resourceModel.location!) : null;
 
     PdfDownload pdfDownload = PdfDownload();
+
+    final fieldBuilders = <String, Widget Function()>{
+      'description': () => field('Description', Text(resourceModel.description ?? '')),
+      'resourceType': () => field('Type', Text(resourceModel.resourceTypeLabel)),
+      'schedule': () => resourceModel.schedule != null
+        ? field('Schedule', ScheduleView(schedule: resourceModel.schedule!))
+        : SizedBox.shrink(),
+      'privacy': () => field('Privacy', Text(resourceModel.privacyLabel)),
+      'culturalResponsiveness': () => field('Cultural Responsiveness', Text(resourceModel.culturalResponsivenessLabel)),
+      'cost': () => field('Cost', Text(resourceModel.costLabel)),
+      'healthFocus': () => field('Health Focus', Text(resourceModel.healthFocusLabel)),
+      'address': () => fullAddress != null
+        ? field('Address', DetailLink(type: "address", text: fullAddress, uriText: fullAddress, resourceId: resource.id))
+        : SizedBox.shrink(),
+      'phoneNumber': () => resourceModel.phoneNumber != null
+        ? field('Phone Number', DetailLink(type: "phone", text: resourceModel.phoneNumber!, uriText: resourceModel.phoneNumber!, resourceId: resource.id))
+        : SizedBox.shrink(),
+      'url': () => resourceModel.location != null
+        ? field(
+          'URL',
+          DetailLink(
+          type: "url",
+          text: 'link to website here',
+          uriText: resourceModel.location!,
+          resourceId: resource.id,
+          ),
+        )
+        : SizedBox.shrink(),
+      'attachments': () => attachments.isNotEmpty
+        ? Padding(
+          padding: fieldPadding,
+          child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Attachments: '),
+            AttachmentsList(attachments: attachments, resourceId: resource.id),
+          ],
+          ),
+        )
+        : SizedBox.shrink(),
+    };
+    final visible = resourceModel.visibleFields();
+    final fieldsToShow = [
+      for (final fieldName in visible)
+        if (fieldBuilders.containsKey(fieldName)) fieldBuilders[fieldName]!(),
+    ];
     return SimpleDialog(
       key: ObjectKey(resource.id),
       titlePadding: EdgeInsets.fromLTRB(16, 16, 16, 0),
@@ -150,7 +175,7 @@ class ResourceDetail extends StatelessWidget {
         Expanded(
           child:
             Text(
-            '${resource['name']}',
+            resourceModel.name!,
             style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
         ),
@@ -170,84 +195,9 @@ class ResourceDetail extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (fieldDefined('description'))
-                  field(
-                    'Description',
-                    Flexible(
-                      child: Text(resource['description']),
-                    ),
-                  ),
-                if (fieldDefined('resourceType'))
-                  field('Type', Text(resource['resourceType'])),
-                if (fieldDefined('schedule'))
-                  field(
-                    'Schedule',
-                    ScheduleView(
-                      schedule: Schedule.fromJson(resource['schedule']),
-                    ),
-                  ),
-                if (fieldDefined('privacy')) //
-                  field('Privacy', Text(fieldString('privacy')!)),
-                if (fieldDefined('culturalResponsiveness'))
-                  field(
-                    'Cultural Responsiveness',
-                    Text(Resource.culturalResponsivenessLabels[fieldString('culturalResponsiveness')]
-                    ?? "Cultural responsiveness not found")
-                  ),
-                if (fieldDefined('cost')) //
-                  field(
-                    'Cost',
-                    Flexible(
-                      child: Text(Resource.costLabels[fieldString('cost')]
-                      ?? 'Cost not found'),
-                    ),
-                  ),
-                if (fieldDefined('healthFocus'))
-                  field('Health Focus',
-                    Flexible( child:
-                      Text(fieldString('healthFocus')!)
-                    )
-                   ),
-                  
-                if (fullAddress != null)
-                  field(
-                      'Address',
-                      DetailLink(
-                          type: "address",
-                          text: fullAddress,
-                          uriText: fullAddress,
-                          resourceId: resource.id,)),
-                if (fieldDefined('phoneNumber'))
-                  field(
-                      'Phone Number',
-                      DetailLink(
-                          type: "phone",
-                          text: fieldString('phoneNumber')!,
-                          uriText: fieldString('phoneNumber')!,
-                          resourceId: resource.id,)),
-                if (url != null)
-                  field(
-                      'URL',
-                      DetailLink(
-                          type: "url",
-                          text: 'link to website here',
-                          uriText: url.toString(),
-                          resourceId: resource.id)),
-                if (attachments.length > 0)
-                  Padding(
-                    padding: fieldPadding,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Attachments: '),
-                        AttachmentsList(
-                          attachments: attachments, resourceId: resource.id),
-                      ],
-                    ),
-                  ),
+                ...fieldsToShow,
                 Padding(
                   padding: fieldPadding,
-                  // button to download resource pdf
                   child: ElevatedButton(
                     onPressed: () async {
                       Map<String, dynamic>? resourceData = resource.data() as Map<String, dynamic>?;
@@ -265,7 +215,6 @@ class ResourceDetail extends StatelessWidget {
                               fullAddress,
                               fieldString('phoneNumber'),
                               url);
-
                       // download PDF
                       pdfDownload.downloadPdf(pdfBytes, resource['name']);
                     },
@@ -275,7 +224,6 @@ class ResourceDetail extends StatelessWidget {
                 if (url != null)
                   Padding(
                     padding: fieldPadding,
-                    // button to share resource
                     child: ElevatedButton(
                       onPressed: () {
                         pdfDownload.shareResourceLink(
