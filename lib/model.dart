@@ -140,8 +140,13 @@ class Resource {
     healthFocus.map((x) => healthFocusLabels[x] ?? "Unrecognized Health Focus value").join(", ")
     ?? "Unrecognized Health Focus value, no label found";
 
-  String get fullAddress =>
-    "$address, $building, $city, $state, $zipcode";
+  String? get fullAddress {
+    final parts = [address, building, city, state, zipcode]
+        .where((part) => part != null && part.toString().trim().isNotEmpty)
+        .toList();
+    if (parts.isEmpty) return null;
+    return parts.join(', ');
+  }
 
   // default constructor
   Resource({
@@ -237,87 +242,85 @@ class Resource {
   }
 
   // gives a set of strings representing text fields to be shown given a resource type
-  Set<String> visibleFields(){
+  Set<String> visibleFields() {
     final fields = <String>{};
 
-    switch (resourceType){
-
-      case 'in_person':
+    switch (resourceType) {
+      case 'In Person':
         fields.addAll([
-          "name",
-          "location",
+          "description",
+          "resourceType",
+          "schedule",
+          "privacy",
+          "culturalResponsiveness",
+          "cost",
+          "healthFocus",
           "address",
-          "building",
-          "city",
-          "state",
-          "zipcode",
-          "phone",
-          "description",
-          ]);
-        break;
-
-      case 'hotline':
-        fields.addAll([
-          "name",
-          "location",
-          "phone",
-          "description",
+          "phoneNumber",
+          "url",        
+          "attachments",
         ]);
         break;
 
-      case 'online':
+      case 'Hotline':
         fields.addAll([
-          "name",
-          "location",
           "description",
+          "resourceType",
+          "privacy",
+          "culturalResponsiveness",
+          "cost",
+          "healthFocus",
+          "phoneNumber",
+          "url",
+          "attachments",
         ]);
         break;
 
-      case 'podcast':
+      case 'Online':
+      case 'Podcast':
+      case 'App':
+      case 'PDF':
+      case 'Game':
+      case 'Movement-based Activity':
         fields.addAll([
-          "name",
-          "location",
           "description",
+          "resourceType",
+          "privacy",
+          "culturalResponsiveness",
+          "cost",
+          "healthFocus",
+          "url",
+          "attachments",
         ]);
         break;
 
-      case 'app':
+      case 'Event':
         fields.addAll([
-          "name",
-          "location",
           "description",
+          "resourceType",
+          "schedule",
+          "privacy",
+          "culturalResponsiveness",
+          "cost",
+          "healthFocus",
+          "address",
+          "url",
+          "attachments",
         ]);
         break;
 
-      case 'event':
+      default:
         fields.addAll([
-          "name",
-          "location",
           "description",
-        ]); 
-        break;
-
-      case 'pdf':
-        fields.addAll([
-          "name",
-          "location",
-          "description",
-        ]);
-        break;
-
-      case 'game':
-        fields.addAll([
-          "name",
-          "location",
-          "description",
-        ]);
-        break;
-
-      case 'movement':
-        fields.addAll([
-          "name",
-          "location",
-          "description",
+          "resourceType",
+          "privacy",
+          "culturalResponsiveness",
+          "cost",
+          "healthFocus",
+          "address",
+          "phoneNumber",
+          "url",
+          "attachments",
         ]);
         break;
     }
