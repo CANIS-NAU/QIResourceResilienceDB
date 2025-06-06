@@ -75,38 +75,6 @@ class ResourceDetail extends StatelessWidget {
       Resource.fromJson(resource.data() as Map<String, dynamic>);
 
 
-  String? addressString() {
-    try {
-      return filterJoin([
-        resource['address'],
-        resource['building'],
-        resource['city'],
-        resource['state'],
-        resource['zipcode'],
-      ], emptyValue: null);
-    } on StateError {
-      return null;
-    }
-  }
-
-  bool fieldDefined(String name) {
-    try {
-      final value = resource[name];
-      if (value == null) {
-        return false;
-      } else if (value is String) {
-        return value.isNotEmpty;
-      } else if (value is List) {
-        return value.isNotEmpty;
-      } else {
-        // don't know what type this is so just assume it's set
-        return true;
-      }
-    } on StateError {
-      return false;
-    }
-  }
-
   String? fieldString(String name) {
     try {
       final value = resource[name];
@@ -155,7 +123,7 @@ class ResourceDetail extends StatelessWidget {
     PdfDownload pdfDownload = PdfDownload();
 
     final fieldBuilders = <String, Widget Function()>{
-      'description': () => field('Description', Flexible(child: Text(resourceModel.description ?? ''))),
+      'description': () => field('Description', Text(resourceModel.description ?? '')),
       'resourceType': () => field('Type', Text(resourceModel.resourceTypeLabel)),
       'schedule': () => resourceModel.schedule != null
         ? field('Schedule', ScheduleView(schedule: resourceModel.schedule!))
@@ -199,8 +167,6 @@ class ResourceDetail extends StatelessWidget {
       for (final fieldName in visible)
         if (fieldBuilders.containsKey(fieldName)) fieldBuilders[fieldName]!(),
     ];
-    print('visibleFields: $visible');
-    print('fieldBuilders keys: ${fieldBuilders.keys.toList()}');
     return SimpleDialog(
       key: ObjectKey(resource.id),
       titlePadding: EdgeInsets.fromLTRB(16, 16, 16, 0),
@@ -229,81 +195,6 @@ class ResourceDetail extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                /*
-                if (fieldDefined('description'))
-                  field(
-                    'Description',
-                    Flexible(
-                      child: Text(resource['description']),
-                    ),
-                  ),
-                if (fieldDefined('resourceType'))
-                  field('Type', Text(resource['resourceType'])),
-                if (fieldDefined('schedule'))
-                  field(
-                    'Schedule',
-                    ScheduleView(
-                      schedule: Schedule.fromJson(resource['schedule']),
-                    ),
-                  ),
-                if (fieldDefined('privacy')) //
-                  field('Privacy', Text(fieldString('privacy')!)),
-                if (fieldDefined('culturalResponsiveness'))
-                  field(
-                    'Cultural Responsiveness',
-                    Text(resourceModel.culturalResponsivenessLabel),
-                  ),
-                if (fieldDefined('cost')) //
-                  field(
-                    'Cost',
-                    Flexible(
-                      child: Text(resourceModel.costLabel),
-                    ),
-                  ),
-                if (fieldDefined('healthFocus'))
-                  field('Health Focus',
-                    Flexible( child:
-                      Text(fieldString('healthFocus')!)
-                    )
-                   ),
-                  
-                if (fullAddress != null)
-                  field(
-                      'Address',
-                      DetailLink(
-                          type: "address",
-                          text: fullAddress,
-                          uriText: fullAddress,
-                          resourceId: resource.id,)),
-                if (fieldDefined('phoneNumber'))
-                  field(
-                      'Phone Number',
-                      DetailLink(
-                          type: "phone",
-                          text: fieldString('phoneNumber')!,
-                          uriText: fieldString('phoneNumber')!,
-                          resourceId: resource.id,)),
-                if (url != null)
-                  field(
-                      'URL',
-                      DetailLink(
-                          type: "url",
-                          text: 'link to website here',
-                          uriText: url.toString(),
-                          resourceId: resource.id)),
-                if (attachments.length > 0)
-                  Padding(
-                    padding: fieldPadding,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Attachments: '),
-                        AttachmentsList(
-                          attachments: attachments, resourceId: resource.id),
-                      ],
-                    ),
-                  ),
-                */
                 ...fieldsToShow,
                 Padding(
                   padding: fieldPadding,
