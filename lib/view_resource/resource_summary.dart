@@ -15,6 +15,9 @@ final typeIcon = const {
   'Hotline': Icons.phone,
   'Event': Icons.calendar_month,
   'Podcast': Icons.podcasts,
+  'PDF': Icons.picture_as_pdf,
+  'Game': Icons.casino,
+  'Movement-based Activity': Icons.directions_run,
 };
 
 /// Summary view of a resource as a ListTile, suitable for display

@@ -364,7 +364,7 @@ class Resource {
     'fee': 'One-time fee',
     'free_trial': 'Free trial period'
   });
-  static const Map<String, String> resourceTypeLabels = {
+  static Map<String, String> resourceTypeLabels = Map.unmodifiable({
     'In Person': 'In Person',
     'Hotline': 'Hotline',
     'Online': 'Online',
@@ -374,26 +374,26 @@ class Resource {
     'PDF': 'PDF',
     'Game': 'Game',
     'Movement-based Activity': 'Movement-based Activity',
-  };
+  });
 
   //List of ages for dropdown
-  static const Map<String, String> ageLabels = {
+  static Map<String, String> ageLabels = Map.unmodifiable({
     "" : "", // for no age range
     'Under 18': 'Under 18',
     '18-24': '18-24',
     '24-65': '24-65',
     '65+': '65+',
     'All ages': 'All ages'
-  };
+  });
   // list of privacy options
-  static const Map<String, String> privacyLabels = {
+  static Map<String, String> privacyLabels = Map.unmodifiable({
     'HIPAA Compliant': 'HIPAA Compliant',
     'Anonymous': 'Anonymous',
     'Mandatory Reporting': 'Mandatory Reporting',
     'None Stated': 'None Stated',
-  };
+  });
 
-  static const Map<String, String> healthFocusLabels = {
+  static Map<String, String> healthFocusLabels = Map.unmodifiable({
     'Anxiety': 'Anxiety',
     'Depression': 'Depression',
     'Stress Management': 'Stress Management',
@@ -401,6 +401,6 @@ class Resource {
     'Grief and Loss': 'Grief and Loss',
     'Trama and PTSD': 'Trama and PTSD',
     'Suicide Prevention': 'Suicide Prevention',
-  };
+  });
 
 }
