@@ -112,7 +112,7 @@ class _CreateResourceState extends State<CreateResource> {
   String resourceDescription = "";
   String resourceType = "";
   String culturalResponsiveness = "";
-  String _ageRange = Resource.ageLabels["All ages"] ?? "Age Range not found";
+  String _ageRange = "";
   Schedule? resourceSchedule = null;
   List<FileUpload> _attachments = [];
 

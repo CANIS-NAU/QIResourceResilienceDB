@@ -391,6 +391,7 @@ class Resource {
 
   //List of ages for dropdown
   static const Map<String, String> ageLabels = {
+    "" : "", // for no age range
     'Under 18': 'Under 18',
     '18-24': '18-24',
     '24-65': '24-65',
