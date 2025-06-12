@@ -181,8 +181,8 @@ class Resource {
     return Resource(
       address: json["address"],
       agerange: json["agerange"],
-      attachments: (json["attachments"] as List<dynamic>? ?? [])
-        .map((item) => Attachment.fromJson(Map<String, dynamic>.from(item)))
+      attachments: List.from(json["attachments"] ?? [])
+        .map((x) => Attachment.fromJson(x))
         .toList(),
       building: json["building"],
       city: json["city"],
@@ -206,9 +206,9 @@ class Resource {
         ? Schedule.fromJson( Map<String, dynamic>.from( json["schedule"] ) )
         : null,
       state: json["state"],
-      tagline: (json["tagline"] != null)
-        ? List<String>.from(json["tagline"])
-        : null,
+      tagline: List<String>.from(json["tagline"] ?? [])
+        .map((x) => x.toString())
+        .toList(),
       verified: json["verified"] ?? false,
       zipcode: json["zipcode"],
     );
