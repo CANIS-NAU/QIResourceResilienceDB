@@ -6,6 +6,7 @@ import 'package:web_app/util.dart';
 import 'package:web_app/view_resource/resource_detail.dart';
 import 'package:provider/provider.dart';
 import 'package:web_app/Analytics.dart';
+import 'package:web_app/model.dart';
 
 final typeIcon = const {
   'Online': Icons.wifi,
@@ -14,6 +15,9 @@ final typeIcon = const {
   'Hotline': Icons.phone,
   'Event': Icons.calendar_month,
   'Podcast': Icons.podcasts,
+  'PDF': Icons.picture_as_pdf,
+  'Game': Icons.casino,
+  'Movement-based Activity': Icons.directions_run,
 };
 
 /// Summary view of a resource as a ListTile, suitable for display
@@ -23,15 +27,17 @@ class ResourceSummary extends StatelessWidget {
       {super.key, required this.resource, required this.isSmallScreen});
 
   final QueryDocumentSnapshot resource;
+  Resource get resourceModel => 
+    Resource.fromJson(resource.data() as Map<String, dynamic>);
   final bool isSmallScreen;
 
   @override
   Widget build(BuildContext context) {
     User? user = FirebaseAuth.instance.currentUser;
 
-    var description = resource['description'];
-    if (resource['resourceType'] == 'Event') {
-      final schedule = Schedule.fromJson(resource['schedule']);
+    var description = resourceModel.description!;
+    if (resourceModel.resourceType == 'Event') {
+      final schedule = resourceModel.schedule!;
       final next = schedule.getNextDate(
         // Get 'next' date from yesterday, so that events
         // that are happening today are shown as today.
@@ -81,7 +87,7 @@ class ResourceSummary extends StatelessWidget {
       );
     }
 
-    final visable = (resource['isVisable'] ?? true) || user != null;
+    final visable = (resourceModel.isVisable ?? true) || user != null;
     if (!visable) {
       return SizedBox.shrink();
     } else {
