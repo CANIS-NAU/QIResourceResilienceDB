@@ -93,7 +93,16 @@ class ResourceDetail extends StatelessWidget {
     }
   }
 
-  Widget field(String label, Widget valueWidget) {
+  Widget field(String label, dynamic value, {Widget Function(dynamic value)? builder}) {
+    // if value is blank or null, dont render the field 
+    if (value == null || (value is String && value.isEmpty)
+        || (value is List && value.isEmpty)) {
+      return SizedBox.shrink();
+    }
+    final valueWidget = builder != null // Check if a builder is provided, else use Text widget
+        ? builder(value)
+        : Text(value);
+
     return Padding(
       padding: fieldPadding,
       child: Row(
@@ -123,44 +132,55 @@ class ResourceDetail extends StatelessWidget {
     PdfDownload pdfDownload = PdfDownload();
 
     final fieldBuilders = <String, Widget Function()>{
-      'description': () => field('Description', Text(resourceModel.description ?? '')),
-      'resourceType': () => field('Type', Text(resourceModel.resourceTypeLabel)),
-      'schedule': () => resourceModel.schedule != null
-        ? field('Schedule', ScheduleView(schedule: resourceModel.schedule!))
-        : SizedBox.shrink(),
-      'privacy': () => field('Privacy', Text(resourceModel.privacyLabel)),
-      'culturalResponsiveness': () => field('Cultural Responsiveness', Text(resourceModel.culturalResponsivenessLabel)),
-      'cost': () => field('Cost', Text(resourceModel.costLabel)),
-      'healthFocus': () => field('Health Focus', Text(resourceModel.healthFocusLabel)),
-      'address': () => fullAddress != null
-        ? field('Address', DetailLink(type: "address", text: fullAddress, uriText: fullAddress, resourceId: resource.id))
-        : SizedBox.shrink(),
-      'phoneNumber': () => resourceModel.phoneNumber != null
-        ? field('Phone Number', DetailLink(type: "phone", text: resourceModel.phoneNumber!, uriText: resourceModel.phoneNumber!, resourceId: resource.id))
-        : SizedBox.shrink(),
-      'url': () => resourceModel.location != null
-        ? field(
-          'URL',
-          DetailLink(
-          type: "url",
-          text: 'link to website here',
-          uriText: resourceModel.location!,
+      'description': () => field('Description', resourceModel.description),
+      'resourceType': () => field('Type', resourceModel.resourceTypeLabel),
+      'schedule': () => field(
+        'Schedule',
+        resourceModel.schedule,
+        builder: (value) => ScheduleView(schedule: value)),
+      'privacy': () => field('Privacy', resourceModel.privacyLabel),
+      'culturalResponsiveness': () => field('Cultural Responsiveness', resourceModel.culturalResponsivenessLabel),
+      'cost': () => field('Cost', resourceModel.costLabel),
+      'healthFocus': () => field('Health Focus', resourceModel.healthFocusLabel),
+      'address': () => field(
+        'Address',
+        fullAddress,
+        builder: (value) => DetailLink(
+          type: "address",
+          text: value,
+          uriText: value,
           resourceId: resource.id,
+        )),
+      'phoneNumber': () => field(
+        'Phone Number',
+        resourceModel.phoneNumber!,
+        builder: (value) => DetailLink(
+          type: "phone",
+          text: value,
+          uriText: resourceModel.phoneNumber!,
+          resourceId: resource.id,
+        )),
+      'url': () => field(
+          'URL',
+          resourceModel.location,
+          builder: (value) => DetailLink(
+            type: "url",
+            text: 'link to website here',
+            uriText: value!,
+            resourceId: resource.id,
           ),
-        )
-        : SizedBox.shrink(),
-      'attachments': () => attachments.isNotEmpty
-        ? Padding(
-          padding: fieldPadding,
-          child: Column(
+        ),
+      'attachments': () => field(
+        'Attachments',
+        attachments,
+        builder: (value) => Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Attachments: '),
-            AttachmentsList(attachments: attachments, resourceId: resource.id),
+            Text('Attachments:'),
+            AttachmentsList(attachments: value, resourceId: resource.id),
           ],
-          ),
-        )
-        : SizedBox.shrink(),
+        ),
+      ),
     };
     final visible = resourceModel.visibleFields();
     final fieldsToShow = [
@@ -206,17 +226,18 @@ class ResourceDetail extends StatelessWidget {
                       // generate PDF
                       List<int> pdfBytes =
                           await pdfDownload.generateResourcePdf(
-                              resource['name'],
-                              resource['description'],
-                              resource['resourceType'],
-                              resource['privacy'],
+                              resourceModel.name!,
+                              resourceModel.description!,
+                              resourceModel.resourceTypeLabel,
+                              resourceModel.privacy,
                               healthFocus,
-                              resource['culturalResponsiveness'],
+                              resourceModel.culturalResponsivenessLabel,
                               fullAddress,
                               fieldString('phoneNumber'),
                               url);
+                           
                       // download PDF
-                      pdfDownload.downloadPdf(pdfBytes, resource['name']);
+                      pdfDownload.downloadPdf(pdfBytes, resourceModel.name!);
                     },
                     child: Text('Download PDF'),
                   ),
