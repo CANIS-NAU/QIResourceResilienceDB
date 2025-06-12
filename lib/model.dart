@@ -243,11 +243,9 @@ class Resource {
 
   // gives a set of strings representing text fields to be shown given a resource type
   Set<String> visibleFields() {
-    final fields = <String>{};
-
     switch (resourceType) {
       case 'In Person':
-        fields.addAll([
+        return {
           "description",
           "resourceType",
           "schedule",
@@ -257,13 +255,11 @@ class Resource {
           "healthFocus",
           "address",
           "phoneNumber",
-          "url",        
+          "url",
           "attachments",
-        ]);
-        break;
-
+        };
       case 'Hotline':
-        fields.addAll([
+        return {
           "description",
           "resourceType",
           "privacy",
@@ -273,16 +269,14 @@ class Resource {
           "phoneNumber",
           "url",
           "attachments",
-        ]);
-        break;
-
+        };
       case 'Online':
       case 'Podcast':
       case 'App':
       case 'PDF':
       case 'Game':
       case 'Movement-based Activity':
-        fields.addAll([
+        return {
           "description",
           "resourceType",
           "privacy",
@@ -291,11 +285,9 @@ class Resource {
           "healthFocus",
           "url",
           "attachments",
-        ]);
-        break;
-
+        };
       case 'Event':
-        fields.addAll([
+        return {
           "description",
           "resourceType",
           "schedule",
@@ -306,11 +298,9 @@ class Resource {
           "address",
           "url",
           "attachments",
-        ]);
-        break;
-
+        };
       default:
-        fields.addAll([
+        return {
           "description",
           "resourceType",
           "privacy",
@@ -321,11 +311,8 @@ class Resource {
           "phoneNumber",
           "url",
           "attachments",
-        ]);
-        break;
+        };
     }
-
-    return fields;
   }
   
   // returns list of errors, if empty, resource is valid
