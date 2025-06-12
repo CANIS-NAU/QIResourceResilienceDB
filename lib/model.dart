@@ -121,24 +121,26 @@ class Resource {
     ?? "Unrecognized Cultural Responsiveness value, no label found";
 
   String get costLabel =>
-    cost.map((x) => costLabels[x] ?? "Unrecognized Cost value").join(", ")
-    ?? "Unrecognized Cost value, no label found";
+    cost.where((x) => x != null && costLabels.containsKey(x))
+        .map((x) => costLabels[x] ?? "Unrecognized Cost value")
+        .join(", ");
 
   String get resourceTypeLabel =>
     resourceTypeLabels[resourceType]
     ?? "Unrecognized Resource Type value, no label found";
 
-  String get ageLabel => 
+  String get ageLabel =>
     ageLabels[agerange]
     ?? "Unrecognized Age Range value, no label found";
 
   String get privacyLabel =>
-    privacy.map((x) => privacyLabels[x] ?? "Unrecognized Privacy value").join(", ")
-    ?? "Unrecognized Privacy value, no label found";
+    privacy.where((x) => x != null && privacyLabels.containsKey(x))
+           .map((x) => privacyLabels[x]!)
+           .join(", ");
 
   String get healthFocusLabel =>
-    healthFocus.map((x) => healthFocusLabels[x] ?? "Unrecognized Health Focus value").join(", ")
-    ?? "Unrecognized Health Focus value, no label found";
+    healthFocus.where((x) => x != null && healthFocusLabels.containsKey(x))
+                .map((x) => healthFocusLabels[x]!).join(", ");
 
   String? get fullAddress {
     final parts = [address, building, city, state, zipcode]
