@@ -102,6 +102,7 @@ class Resource {
   final String? dateAdded;
   final String? description;
   final List<String?> healthFocus;
+  final String id;
   final bool isVisable;
   final String? location;
   final String? name;
@@ -164,6 +165,7 @@ class Resource {
     this.dateAdded,
     this.description,
     this.healthFocus = const [],
+    this.id = "",
     this.isVisable = true,
     this.location,
     this.name,
@@ -179,7 +181,7 @@ class Resource {
   });
 
   // firestore => dart
-  factory Resource.fromJson( Map<String, dynamic> json ) {
+  factory Resource.fromJson( Map<String, dynamic> json, String id ) {
     return Resource(
       address: json["address"],
       agerange: json["agerange"],
@@ -195,6 +197,7 @@ class Resource {
       dateAdded: json["dateAdded"],
       description: json["description"],
       healthFocus: List<String>.from( json["healthFocus"] ?? [] ),
+      id: id, // assuming 'id' is the document ID in Firestore
       isVisable: json["isVisable"],
       location: json["location"],
       name: json["name"],
@@ -229,6 +232,8 @@ class Resource {
       "culturalResponsiveness": culturalResponsiveness,
       "dateAdded": dateAdded,
       "description": description,
+      "healthFocus": healthFocus,
+      "id": id,
       "isVisable": isVisable,
       "location": location,
       "name": name,

@@ -31,24 +31,21 @@ class PdfDownload {
       // loop the resource list
       for (final resource in resources)
       {
-        if(resource['resourceType'] == "In Person")
+        if(resource.resourceType == "In Person")
           {
-            // get the full address
-            final String? fullAddress = formatResourceAddress(resource);
-
             // add full address to pdf
-            addRow(grid, resource['name'], fullAddress);
+            addRow(grid, resource.name, resource.fullAddress);
           }
-        else if(resource['resourceType'] == "Hotline")
+        else if(resource.resourceType == "Hotline")
           {
             // add phone number to pdf
-            addRow(grid, resource['name'], resource['phoneNumber']);
+            addRow(grid, resource.name, resource.phoneNumber);
           }
         else
           {
             // add link to pdf
             // TODO: shorten link
-            addRow(grid, resource['name'], resource['location']);
+            addRow(grid, resource.name, resource.location);
           }
       }
 
@@ -74,8 +71,8 @@ class PdfDownload {
     String name,
     String description,
     String resourceType,
-    List<dynamic> privacy,
-    List<dynamic> healthFocus,
+    String privacy,
+    String healthFocus,
     String culturalResponsiveness,
     String? fullAddress,
     String? phoneNumber,
@@ -102,8 +99,8 @@ class PdfDownload {
       addRow(grid, 'Name', name);
       addRow(grid, 'Description', description);
       addRow(grid, 'Type', resourceType);
-      addRow(grid, 'Privacy', privacy.map((e) => e.toString()).join(', '));
-      addRow(grid, 'Health Focus', healthFocus.isNotEmpty ? healthFocus.map((e) => e.toString()).join(', ') : 'N/A');
+      addRow(grid, 'Privacy', privacy);;
+      addRow(grid, 'Health Focus', healthFocus);
       addRow(grid, 'Cultural Responsiveness', culturalResponsiveness);
 
       if (fullAddress != null) {

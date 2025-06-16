@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'view_resource/resource_detail.dart';
+import 'model.dart';
 
 class Top10Resources extends StatefulWidget {
   @override
@@ -232,7 +233,7 @@ class _TopResourceTileState extends State<TopResourceTile> {
         showDialog(
           context: context,
           builder: (context) => ResourceDetail(
-            resource: resourceSnapshot,
+            resourceModel: Resource.fromJson(resourceSnapshot.data() as Map<String, dynamic>, resourceSnapshot.id),
           ),
         );
       } else {

@@ -15,6 +15,7 @@ import 'package:web_app/pdfDownload.dart';
 import 'package:web_app/util.dart';
 import 'package:provider/provider.dart';
 import 'package:web_app/Analytics.dart';
+import 'package:web_app/model.dart';
 
 /// The home page main widget
 class MyHomePage extends StatefulWidget {
@@ -224,7 +225,9 @@ class _MyHomePageState extends State<MyHomePage> {
                       //Get the snapshot data and filter
                       final data = snapshot.requireData;
                       final docs = data.docs.where(filterFunction).toList();
-    
+                      // convert the documents to Resource objects to pass down to the ResourceSummary widget
+                      final resourceModels = docs.map((doc) => Resource.fromJson(doc.data() as Map<String, dynamic>, doc.id)).toList();
+
                       //Return a list of the data (resources)
                       if (data.size == 0) {
                         return Text('No resources');
@@ -240,7 +243,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                     itemCount: docs.length,
                                     itemBuilder: (context, index) {
                                       return ResourceSummary(
-                                        resource: docs[index],
+                                        resourceModel: resourceModels[index],
                                         isSmallScreen: isSmallScreen,
                                       );
                                     }),
@@ -253,10 +256,10 @@ class _MyHomePageState extends State<MyHomePage> {
                               child: ElevatedButton(
                                   onPressed: () async {
                                     // get only resources that are visible
-                                    List<QueryDocumentSnapshot> unarchivedDocs =
-                                        docs
+                                    List<Resource> unarchivedDocs =
+                                        resourceModels
                                             .where(
-                                                (doc) => doc['isVisable'] ?? true)
+                                                (resource) => resource.isVisable)
                                             .toList();
                                     if (unarchivedDocs.isNotEmpty) {
                                       // create pdf of visible resources currently being filtered
