@@ -5,6 +5,8 @@ name, description, link, address (if in person),
 phone number (if hotline or in person), type, privacy,
 cost, cultural responsiveness, and age range.
 */
+
+// TODO: fix tagging system 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
