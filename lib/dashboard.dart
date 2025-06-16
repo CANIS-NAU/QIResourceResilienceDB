@@ -53,7 +53,7 @@ class _DashboardState extends State<Dashboard>
     'Clicks to Offsite Links': ['url', 'phone', 'address'],
     'Age Range Searches': ['Under 18', '18-24', '24-65', '65+', 'All ages'],
     'Health Focus Searches': ['Anxiety', 'Depression', 'Stress Management', 'Substance Abuse', 'Grief and Loss', 'Trama and PTSD', 'Suicide Prevention'],
-    'Resource Type Searches': ['Online', 'In Person', 'App', 'Hotline', 'Event', 'Podcast'],
+    'Resource Type Searches': ['Online', 'In Person', 'App', 'Hotline', 'Event', 'Podcast', 'PDF', 'Game', 'Movement-based Activity'],
   };
 
   // create a predefined list of distinct colors for graphs

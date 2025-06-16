@@ -176,7 +176,6 @@ class ResourceDetail extends StatelessWidget {
         builder: (value) => Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Attachments:'),
             AttachmentsList(attachments: value, resourceId: resource.id),
           ],
         ),

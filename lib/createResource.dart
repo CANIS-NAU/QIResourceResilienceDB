@@ -541,34 +541,6 @@ class _CreateResourceState extends State<CreateResource> {
                 ),
 
                 buildTitles("Privacy Protections"),
-                /*
-                ListView(
-                  shrinkWrap: true,
-                  children: List<Widget>.generate(
-                    _selectedPrivacy.length,
-                    (int index) => CheckboxListTile(
-                      title: Text(
-                        resourcePrivacy[index],
-                        style: TextStyle(fontSize: 16),
-                      ),
-                      value: _selectedPrivacy[index],
-                      onChanged: (value) => setState(() {
-                        _selectedPrivacy[index] = value!;
-                        if (value) {
-                          selectedPrivacyOptions.add(resourcePrivacy[index]);
-                        } else {
-                          selectedPrivacyOptions.remove(resourcePrivacy[index]);
-                        }
-                      }),
-                      controlAffinity: ListTileControlAffinity.leading,
-                      dense: true,
-                      // focus only on the radio buttons within the list tile, not the entire tile
-                      focusNode: FocusNode(skipTraversal: true),
-                    ),
-                  ),
-                ),
-                */
-
                 CustomCheckboxList(
                   options: Resource.privacyLabels,
                   selectedOptions: _selectedPrivacy,
@@ -596,32 +568,6 @@ class _CreateResourceState extends State<CreateResource> {
                 ),
 
                 buildTitles("Health Focus"),
-                /*
-                ListView(
-                  shrinkWrap: true,
-                  children: List<Widget>.generate(
-                    _selectedHealthFocus.length,
-                    (int index) => CheckboxListTile(
-                      title: Text(
-                        healthFocusOptions[index],
-                        style: TextStyle(fontSize: 16),
-                      ),
-                      value: _selectedHealthFocus[index],
-                      onChanged: (value) => setState(() {
-                        _selectedHealthFocus[index] = value!;
-                        if (value) {
-                          selectedHealthFocusOptions.add(healthFocusOptions[index]);
-                        } else {
-                          selectedHealthFocusOptions.remove(healthFocusOptions[index]);
-                        }
-                      }),
-                      controlAffinity: ListTileControlAffinity.leading,
-                      dense: true,
-                      focusNode: FocusNode(skipTraversal: true),
-                    ),
-                  ),
-                ),
-                */
                 CustomCheckboxList(
                   options: Resource.healthFocusLabels,
                   selectedOptions: _selectedHealthFocus,
