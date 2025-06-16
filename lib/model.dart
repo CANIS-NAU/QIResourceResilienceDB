@@ -244,6 +244,7 @@ class Resource {
       "schedule": schedule?.toJson(),
       "state": state,
       "tagline": tagline,
+      "verified": verified,
       "zipcode": zipcode,
     };
   }
