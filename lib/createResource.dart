@@ -170,7 +170,7 @@ class _CreateResourceState extends State<CreateResource> {
       }
 
       // Form validation:
-      // Check if any of text boxes are empty based on the type of resource
+      // TODO: add validation logic using the Resource model's validateResource method
       /*
       if (resourceName == "" ||
           resourceDescription == "" ||
@@ -229,7 +229,6 @@ class _CreateResourceState extends State<CreateResource> {
 
       // Create a new Resource object with updated properties
       final updatedResource = Resource(
-        id: resourceRef.id,
         address: _addressController.text,
         agerange: _ageRange,
         attachments: attachments,
