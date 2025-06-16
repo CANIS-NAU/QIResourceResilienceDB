@@ -95,19 +95,19 @@ class Resource {
   final List<Attachment>? attachments;
   final String? building;
   final String? city;
-  final List<String> cost;
+  final List<String>? cost;
   final String? createdBy;
   final DateTime? createdTime;
   final String? culturalResponsiveness;
   final String? dateAdded;
   final String? description;
-  final List<String?> healthFocus;
+  final List<String>? healthFocus;
   final String id;
   final bool isVisable;
   final String? location;
   final String? name;
   final String? phoneNumber;
-  final List<String> privacy;
+  final List<String>? privacy;
   final String? resourceType;
   final Rubric? rubric;
   final Schedule? schedule;
@@ -117,31 +117,44 @@ class Resource {
   final String? zipcode;
 
   // labels for display
-  String get culturalResponsivenessLabel => 
-    culturalResponsivenessLabels[culturalResponsiveness]
-    ?? "Unrecognized Cultural Responsiveness value, no label found";
+  String get culturalResponsivenessLabel =>
+    culturalResponsiveness != null && culturalResponsivenessLabels.containsKey(culturalResponsiveness)
+      ? culturalResponsivenessLabels[culturalResponsiveness]!
+      : "Unrecognized Cultural Responsiveness value, no label found";
 
   String get costLabel =>
-    cost.where((x) => x != null && costLabels.containsKey(x))
-        .map((x) => costLabels[x] ?? "Unrecognized Cost value")
-        .join(", ");
+    (cost != null && cost!.isNotEmpty)
+      ? cost!
+          .where((x) => x != null && costLabels.containsKey(x))
+          .map((x) => costLabels[x] ?? "Unrecognized Cost value")
+          .join(", ")
+      : "";
 
   String get resourceTypeLabel =>
-    resourceTypeLabels[resourceType]
-    ?? "Unrecognized Resource Type value, no label found";
+    resourceType != null && resourceTypeLabels.containsKey(resourceType)
+      ? resourceTypeLabels[resourceType]!
+      : "Unrecognized Resource Type value, no label found";
 
   String get ageLabel =>
-    ageLabels[agerange]
-    ?? "Unrecognized Age Range value, no label found";
+    agerange != null && ageLabels.containsKey(agerange)
+      ? ageLabels[agerange]!
+      : "Unrecognized Age Range value, no label found";
 
   String get privacyLabel =>
-    privacy.where((x) => x != null && privacyLabels.containsKey(x))
-           .map((x) => privacyLabels[x]!)
-           .join(", ");
+    (privacy != null && privacy!.isNotEmpty)
+      ? privacy!
+          .where((x) => x != null && privacyLabels.containsKey(x))
+          .map((x) => privacyLabels[x]!)
+          .join(", ")
+      : "";
 
   String get healthFocusLabel =>
-    healthFocus.where((x) => x != null && healthFocusLabels.containsKey(x))
-                .map((x) => healthFocusLabels[x]!).join(", ");
+    (healthFocus != null && healthFocus!.isNotEmpty)
+      ? healthFocus!
+          .where((x) => x != null && healthFocusLabels.containsKey(x))
+          .map((x) => healthFocusLabels[x]!)
+          .join(", ")
+      : "";
 
   String? get fullAddress {
     final parts = [address, building, city, state, zipcode]
@@ -256,14 +269,13 @@ class Resource {
         return {
           "description",
           "resourceType",
-          "schedule",
           "privacy",
           "culturalResponsiveness",
           "cost",
           "healthFocus",
           "address",
           "phoneNumber",
-          "url",
+          "location",
           "attachments",
         };
       case 'Hotline':
@@ -275,7 +287,7 @@ class Resource {
           "cost",
           "healthFocus",
           "phoneNumber",
-          "url",
+          "location",
           "attachments",
         };
       case 'Online':
@@ -291,7 +303,7 @@ class Resource {
           "culturalResponsiveness",
           "cost",
           "healthFocus",
-          "url",
+          "location",
           "attachments",
         };
       case 'Event':
@@ -304,7 +316,7 @@ class Resource {
           "cost",
           "healthFocus",
           "address",
-          "url",
+          "location",
           "attachments",
         };
       default:
@@ -317,7 +329,7 @@ class Resource {
           "healthFocus",
           "address",
           "phoneNumber",
-          "url",
+          "location",
           "attachments",
         };
     }
@@ -333,8 +345,8 @@ class Resource {
     if (location == "") errors.add("Resource link is required.");
     if (resourceType == "") errors.add("Resource type is required.");
 
-    if (privacy.isEmpty) errors.add("At least one privacy option must be selected.");
-    if (cost.isEmpty) errors.add("At least one cost option must be selected.");
+    if (privacy!.isEmpty) errors.add("At least one privacy option must be selected.");
+    if (cost!.isEmpty) errors.add("At least one cost option must be selected.");
 
     // resource type specific fields
     if (resourceType == "In Person"){
