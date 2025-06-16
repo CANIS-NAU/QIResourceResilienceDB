@@ -1,5 +1,6 @@
 import 'package:web_app/file_attachments.dart';
 import 'package:web_app/events/schedule.dart';
+import 'dart:collection';
 
 class Rubric {
   final int? accurate;
@@ -91,7 +92,7 @@ class Resource {
   // data fields
   final String? address;
   final String? agerange;
-  final Attachment? attachments;
+  final List<Attachment>? attachments;
   final String? building;
   final String? city;
   final List<String> cost;
@@ -100,6 +101,7 @@ class Resource {
   final String? culturalResponsiveness;
   final String? dateAdded;
   final String? description;
+  final List<String?> healthFocus;
   final bool isVisable;
   final String? location;
   final String? name;
@@ -119,14 +121,40 @@ class Resource {
     ?? "Unrecognized Cultural Responsiveness value, no label found";
 
   String get costLabel =>
-    costLabels[cost]
-    ?? "Unrecognized Cost value, no label found";
+    cost.where((x) => x != null && costLabels.containsKey(x))
+        .map((x) => costLabels[x] ?? "Unrecognized Cost value")
+        .join(", ");
+
+  String get resourceTypeLabel =>
+    resourceTypeLabels[resourceType]
+    ?? "Unrecognized Resource Type value, no label found";
+
+  String get ageLabel =>
+    ageLabels[agerange]
+    ?? "Unrecognized Age Range value, no label found";
+
+  String get privacyLabel =>
+    privacy.where((x) => x != null && privacyLabels.containsKey(x))
+           .map((x) => privacyLabels[x]!)
+           .join(", ");
+
+  String get healthFocusLabel =>
+    healthFocus.where((x) => x != null && healthFocusLabels.containsKey(x))
+                .map((x) => healthFocusLabels[x]!).join(", ");
+
+  String? get fullAddress {
+    final parts = [address, building, city, state, zipcode]
+        .where((part) => part != null && part.toString().trim().isNotEmpty)
+        .toList();
+    if (parts.isEmpty) return null;
+    return parts.join(', ');
+  }
 
   // default constructor
   Resource({
     this.address,
     this.agerange,
-    this.attachments,
+    this.attachments = const [],
     this.building,
     this.city,
     this.cost = const [],
@@ -135,7 +163,8 @@ class Resource {
     this.culturalResponsiveness,
     this.dateAdded,
     this.description,
-    this.isVisable = false,
+    this.healthFocus = const [],
+    this.isVisable = true,
     this.location,
     this.name,
     this.phoneNumber,
@@ -154,9 +183,9 @@ class Resource {
     return Resource(
       address: json["address"],
       agerange: json["agerange"],
-      attachments: json["attachments"] != null 
-        ? Attachment.fromJson( Map<String, dynamic>.from( json["attachments"] ) )
-        : null,
+      attachments: List.from(json["attachments"] ?? [])
+        .map((x) => Attachment.fromJson(x))
+        .toList(),
       building: json["building"],
       city: json["city"],
       cost: List<String>.from( json["cost"] ?? [] ),
@@ -165,6 +194,7 @@ class Resource {
       culturalResponsiveness: json["culturalResponsiveness"],
       dateAdded: json["dateAdded"],
       description: json["description"],
+      healthFocus: List<String>.from( json["healthFocus"] ?? [] ),
       isVisable: json["isVisable"],
       location: json["location"],
       name: json["name"],
@@ -178,7 +208,10 @@ class Resource {
         ? Schedule.fromJson( Map<String, dynamic>.from( json["schedule"] ) )
         : null,
       state: json["state"],
-      tagline: json["tagline"],
+      tagline: List<String>.from(json["tagline"] ?? [])
+        .map((x) => x.toString())
+        .toList(),
+      verified: json["verified"] ?? false,
       zipcode: json["zipcode"],
     );
   }
@@ -187,7 +220,7 @@ class Resource {
     return {
       "address": address,
       "agerange": agerange,
-      "attachments": attachments?.toJson(),
+      "attachments": (attachments ?? []).map((a) => a.toJson()).toList(),
       "building": building,
       "city": city,
       "cost": cost,
@@ -208,6 +241,80 @@ class Resource {
       "tagline": tagline,
       "zipcode": zipcode,
     };
+  }
+
+  // gives a set of strings representing text fields to be shown given a resource type
+  Set<String> visibleFields() {
+    switch (resourceType) {
+      case 'In Person':
+        return {
+          "description",
+          "resourceType",
+          "schedule",
+          "privacy",
+          "culturalResponsiveness",
+          "cost",
+          "healthFocus",
+          "address",
+          "phoneNumber",
+          "url",
+          "attachments",
+        };
+      case 'Hotline':
+        return {
+          "description",
+          "resourceType",
+          "privacy",
+          "culturalResponsiveness",
+          "cost",
+          "healthFocus",
+          "phoneNumber",
+          "url",
+          "attachments",
+        };
+      case 'Online':
+      case 'Podcast':
+      case 'App':
+      case 'PDF':
+      case 'Game':
+      case 'Movement-based Activity':
+        return {
+          "description",
+          "resourceType",
+          "privacy",
+          "culturalResponsiveness",
+          "cost",
+          "healthFocus",
+          "url",
+          "attachments",
+        };
+      case 'Event':
+        return {
+          "description",
+          "resourceType",
+          "schedule",
+          "privacy",
+          "culturalResponsiveness",
+          "cost",
+          "healthFocus",
+          "address",
+          "url",
+          "attachments",
+        };
+      default:
+        return {
+          "description",
+          "resourceType",
+          "privacy",
+          "culturalResponsiveness",
+          "cost",
+          "healthFocus",
+          "address",
+          "phoneNumber",
+          "url",
+          "attachments",
+        };
+    }
   }
   
   // returns list of errors, if empty, resource is valid
@@ -258,6 +365,44 @@ class Resource {
     'subscription': 'Subscription',
     'fee': 'One-time fee',
     'free_trial': 'Free trial period'
+  });
+  static Map<String, String> resourceTypeLabels = Map.unmodifiable({
+    'In Person': 'In Person',
+    'Hotline': 'Hotline',
+    'Online': 'Online',
+    'Podcast': 'Podcast',
+    'App': 'App',
+    'Event': 'Event',
+    'PDF': 'PDF',
+    'Game': 'Game',
+    'Movement-based Activity': 'Movement-based Activity',
+  });
+
+  //List of ages for dropdown
+  static Map<String, String> ageLabels = Map.unmodifiable({
+    "" : "", // for no age range
+    'Under 18': 'Under 18',
+    '18-24': '18-24',
+    '24-65': '24-65',
+    '65+': '65+',
+    'All ages': 'All ages'
+  });
+  // list of privacy options
+  static Map<String, String> privacyLabels = Map.unmodifiable({
+    'HIPAA Compliant': 'HIPAA Compliant',
+    'Anonymous': 'Anonymous',
+    'Mandatory Reporting': 'Mandatory Reporting',
+    'None Stated': 'None Stated',
+  });
+
+  static Map<String, String> healthFocusLabels = Map.unmodifiable({
+    'Anxiety': 'Anxiety',
+    'Depression': 'Depression',
+    'Stress Management': 'Stress Management',
+    'Substance Abuse': 'Substance Abuse',
+    'Grief and Loss': 'Grief and Loss',
+    'Trama and PTSD': 'Trama and PTSD',
+    'Suicide Prevention': 'Suicide Prevention',
   });
 
 }
