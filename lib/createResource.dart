@@ -170,22 +170,6 @@ class _CreateResourceState extends State<CreateResource> {
         return;
       }
 
-      // Get a newly generated ID for this resource.
-      final resourceRef = resourceCollection.doc();
-
-      // Upload attachments
-      List<Attachment> attachments = _attachments.isEmpty
-          ? []
-          : await uploadAttachments(
-              resourceRef.id, // use resource document ID as the file path
-              _attachments,
-              onProgress: (ratio) {
-                setState(() {
-                  _uploadProgress = ratio;
-                });
-              },
-            );
-
       // Create the resource document JSON.
       final now = DateTime.now();
 
@@ -193,7 +177,7 @@ class _CreateResourceState extends State<CreateResource> {
       final updatedResource = Resource(
         address: _addressController.text,
         agerange: _ageRange,
-        attachments: attachments,
+        attachments: _attachments,
         building: _bldgController.text,
         city: _cityController.text,
         cost: _selectedCostOptions.toList(),
@@ -225,6 +209,24 @@ class _CreateResourceState extends State<CreateResource> {
         );
         return;
       }
+
+      // Get a newly generated ID for this resource.
+      final resourceRef = resourceCollection.doc();
+
+      // Upload attachments
+      List<Attachment> attachments = _attachments.isEmpty
+          ? []
+          : await uploadAttachments(
+              resourceRef.id, // use resource document ID as the file path
+              _attachments,
+              onProgress: (ratio) {
+                setState(() {
+                  _uploadProgress = ratio;
+                });
+              },
+            );
+
+      
       // Submit to admin submission if object not null
       userSubmission?.submittedResource(updatedResource.name!, updatedResource.resourceType!);
 

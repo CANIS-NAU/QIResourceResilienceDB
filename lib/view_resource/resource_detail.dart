@@ -123,7 +123,7 @@ class ResourceDetail extends StatelessWidget {
           uriText: resourceModel.phoneNumber!,
           resourceId: resourceModel.id,
         )),
-      'url': () => field(
+      'location': () => field(
           'URL',
           resourceModel.location,
           builder: (value) => DetailLink(
