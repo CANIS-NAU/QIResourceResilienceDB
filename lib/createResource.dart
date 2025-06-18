@@ -112,7 +112,6 @@ class _CreateResourceState extends State<CreateResource> {
   String? culturalResponsiveness = Resource.culturalResponsivenessLabels.keys.first;
 
   // Resource type selected by user, initialized to the first type in the map.
-  // This is used to determine which fields are visible in the form.
   String resourceType = Resource.resourceTypeLabels.keys.first;
 
   // Controllers for all text inputs.
@@ -343,6 +342,7 @@ class _CreateResourceState extends State<CreateResource> {
   // Create resource UI
   @override
   Widget build(BuildContext context) {
+    // Create a temporary resource object to determine visible fields
     final tempResource = Resource(resourceType: resourceType ?? '', /* other fields can be null */);
     final visibleFields = tempResource.visibleFields();
     
@@ -380,7 +380,7 @@ class _CreateResourceState extends State<CreateResource> {
                 ),
                 buildTextFieldContainer(
                   'Name of the Resource',
-                  true,
+                  true, // Name entry is always visible
                   controller: _nameController,
                 ),
                 buildTextFieldContainer(

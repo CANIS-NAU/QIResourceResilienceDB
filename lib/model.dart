@@ -89,7 +89,7 @@ class Rubric {
 }
 
 class Resource {
-  // data fields
+
   final String? address;
   final String? agerange;
   final List<Attachment>? attachments;
@@ -116,55 +116,7 @@ class Resource {
   final bool verified;
   final String? zipcode;
 
-  // labels for display
-  String get culturalResponsivenessLabel =>
-    culturalResponsiveness != null && culturalResponsivenessLabels.containsKey(culturalResponsiveness)
-      ? culturalResponsivenessLabels[culturalResponsiveness]!
-      : "Unrecognized Cultural Responsiveness value, no label found";
-
-  String get costLabel =>
-    (cost != null && cost!.isNotEmpty)
-      ? cost!
-          .where((x) => x != null && costLabels.containsKey(x))
-          .map((x) => costLabels[x] ?? "Unrecognized Cost value")
-          .join(", ")
-      : "";
-
-  String get resourceTypeLabel =>
-    resourceType != null && resourceTypeLabels.containsKey(resourceType)
-      ? resourceTypeLabels[resourceType]!
-      : "Unrecognized Resource Type value, no label found";
-
-  String get ageLabel =>
-    agerange != null && ageLabels.containsKey(agerange)
-      ? ageLabels[agerange]!
-      : "Unrecognized Age Range value, no label found";
-
-  String get privacyLabel =>
-    (privacy != null && privacy!.isNotEmpty)
-      ? privacy!
-          .where((x) => x != null && privacyLabels.containsKey(x))
-          .map((x) => privacyLabels[x]!)
-          .join(", ")
-      : "";
-
-  String get healthFocusLabel =>
-    (healthFocus != null && healthFocus!.isNotEmpty)
-      ? healthFocus!
-          .where((x) => x != null && healthFocusLabels.containsKey(x))
-          .map((x) => healthFocusLabels[x]!)
-          .join(", ")
-      : "";
-
-  String? get fullAddress {
-    final parts = [address, building, city, state, zipcode]
-        .where((part) => part != null && part.toString().trim().isNotEmpty)
-        .toList();
-    if (parts.isEmpty) return null;
-    return parts.join(', ');
-  }
-
-  // default constructor
+  // Deafault constructor
   Resource({
     this.address,
     this.agerange,
@@ -193,46 +145,47 @@ class Resource {
     this.zipcode,
   });
 
-  // firestore => dart
-  factory Resource.fromJson( Map<String, dynamic> json, String id ) {
+  // Serialize from JSON
+  factory Resource.fromJson(Map<String, dynamic> json, String id) {
     return Resource(
       address: json["address"],
       agerange: json["agerange"],
       attachments: List.from(json["attachments"] ?? [])
-        .map((x) => Attachment.fromJson(x))
-        .toList(),
+          .map((x) => Attachment.fromJson(x))
+          .toList(),
       building: json["building"],
       city: json["city"],
-      cost: List<String>.from( json["cost"] ?? [] ),
+      cost: List<String>.from(json["cost"] ?? []),
       createdBy: json["createdBy"],
       createdTime: json["createdTime"]?.toDate(),
       culturalResponsiveness: json["culturalResponsiveness"],
       dateAdded: json["dateAdded"],
       description: json["description"],
-      healthFocus: List<String>.from( json["healthFocus"] ?? [] ),
-      id: id, // assuming 'id' is the document ID in Firestore
+      healthFocus: List<String>.from(json["healthFocus"] ?? []),
+      id: id,
       isVisable: json["isVisable"],
       location: json["location"],
       name: json["name"],
       phoneNumber: json["phoneNumber"],
-      privacy: List<String>.from( json["privacy"] ?? [] ),
+      privacy: List<String>.from(json["privacy"] ?? []),
       resourceType: json["resourceType"],
       rubric: json["rubric"] != null
-        ? Rubric.fromJson( Map<String, dynamic>.from( json["rubric"] ) )
-        : null,
+          ? Rubric.fromJson(Map<String, dynamic>.from(json["rubric"]))
+          : null,
       schedule: json["schedule"] != null
-        ? Schedule.fromJson( Map<String, dynamic>.from( json["schedule"] ) )
-        : null,
+          ? Schedule.fromJson(Map<String, dynamic>.from(json["schedule"]))
+          : null,
       state: json["state"],
       tagline: List<String>.from(json["tagline"] ?? [])
-        .map((x) => x.toString())
-        .toList(),
+          .map((x) => x.toString())
+          .toList(),
       verified: json["verified"] ?? false,
       zipcode: json["zipcode"],
     );
   }
-  // dart => firestore
-  Map<String, dynamic> toJson(){
+
+  // Serialize to JSON
+  Map<String, dynamic> toJson() {
     return {
       "address": address,
       "agerange": agerange,
@@ -262,7 +215,70 @@ class Resource {
     };
   }
 
-  // gives a set of strings representing text fields to be shown given a resource type
+  // Computed properties
+  String get fullAddress =>
+      "${address ?? ""}, ${building ?? ""}, ${city ?? ""}, ${state ?? ""} ${zipcode ?? ""}".trim();
+
+  // Labels for string values
+  String get resourceTypeLabel =>
+      getLabelFromString(resourceType, resourceTypeLabels) ?? "";
+
+  String get ageLabel => getLabelFromString(agerange, ageLabels) ?? "";
+
+  String get culturalResponsivenessLabel =>
+      getLabelFromString(culturalResponsiveness, culturalResponsivenessLabels) ??
+      "";
+
+  // Labels for list values
+  String get costLabel => getLabelFromList(cost, costLabels) ?? "";
+
+  String get privacyLabel => getLabelFromList(privacy, privacyLabels) ?? "";
+
+  String get healthFocusLabel => getLabelFromList(healthFocus, healthFocusLabels) ?? "";
+
+  // Helper methods to get labels from string or list values
+  String? getLabelFromString(String? value, Map<String, String> labels) {
+    if (value == null || value.isEmpty) return null;
+    return labels[value] ?? "Unrecognized value";
+  }
+
+  String? getLabelFromList(List<String>? values, Map<String, String> labels) {
+    if (values == null || values.isEmpty) return null;
+    return values.map((v) => labels[v] ?? "Unrecognized value").join(", ");
+  }
+
+  // Validate the resource fields
+  /// Returns a list of error messages for any invalid fields.
+  List<String> validateResource() {
+    final List<String> errors = [];
+
+    // fields common to all resources
+    if (name == "") errors.add("Resource name is required.");
+    if (description == "") errors.add("Resource description is required.");
+    if (location == "") errors.add("Resource link is required.");
+    if (resourceType == "") errors.add("Resource type is required.");
+
+    if (privacy!.isEmpty) errors.add("At least one privacy option must be selected.");
+    if (cost!.isEmpty) errors.add("At least one cost option must be selected.");
+
+    // resource type specific fields
+    if (resourceType == "In Person") {
+      if (address == "") errors.add("An address is required for in person resources.");
+      if (city == "") errors.add("A city is required for in person resources.");
+      if (state == "") errors.add("A state is required for in person resources.");
+      if (zipcode == "") errors.add("A zip code is required for in person resources.");
+    }
+
+    if (resourceType == "Hotline" || resourceType == "In Person") {
+      if (phoneNumber == "") errors.add("A phone number is requred for in person/hotline resources.");
+    }
+
+    if (resourceType == "Event" && schedule == null) errors.add("A schedule is required for events.");
+
+    return errors;
+  }
+
+  // Returns a set of visible fields based on the resource type.
   Set<String> visibleFields() {
     switch (resourceType) {
       case 'In Person':
@@ -338,37 +354,8 @@ class Resource {
         };
     }
   }
-  
-  // returns list of errors, if empty, resource is valid
-  List<String> validateResource(){
-    final List<String> errors = [];
 
-    // fields common to all resources
-    if (name == "") errors.add("Resource name is required.");
-    if (description == "") errors.add("Resource description is required.");
-    if (location == "") errors.add("Resource link is required.");
-    if (resourceType == "") errors.add("Resource type is required.");
-
-    if (privacy!.isEmpty) errors.add("At least one privacy option must be selected.");
-    if (cost!.isEmpty) errors.add("At least one cost option must be selected.");
-
-    // resource type specific fields
-    if (resourceType == "In Person"){
-      if (address == "") errors.add("An address is required for in person resources.");
-      if (city == "") errors.add("A city is required for in person resources.");
-      if (state == "") errors.add("A state is required for in person resources.");
-      if (zipcode == "") errors.add("A zip code is required for in person resources.");
-    }
-
-    if (resourceType == "Hotline" || resourceType == "In Person"){
-      if (phoneNumber == "") errors.add("A phone number is requred for in person/hotline resources.");
-    }
-
-    if (resourceType == "Event" && schedule == null) errors.add("A schedule is required for events.");
-
-    return errors;
-  }
-  
+  // Maps for associating string values with front-facing labels
   static Map<String, String> culturalResponsivenessLabels = Map.unmodifiable({
     'none': 'Not culturally specific to Hopi or Indigenous communities',
     'low': 'Low Cultural Responsiveness',
@@ -388,6 +375,7 @@ class Resource {
     'fee': 'One-time fee',
     'free_trial': 'Free trial period'
   });
+
   static Map<String, String> resourceTypeLabels = Map.unmodifiable({
     'In Person': 'In Person',
     'Hotline': 'Hotline',
@@ -400,16 +388,15 @@ class Resource {
     'Movement-based Activity': 'Movement-based Activity',
   });
 
-  //List of ages for dropdown
   static Map<String, String> ageLabels = Map.unmodifiable({
-    "" : "", // for no age range
+    "": "",
     'Under 18': 'Under 18',
     '18-24': '18-24',
     '24-65': '24-65',
     '65+': '65+',
     'All ages': 'All ages'
   });
-  // list of privacy options
+
   static Map<String, String> privacyLabels = Map.unmodifiable({
     'HIPAA Compliant': 'HIPAA Compliant',
     'Anonymous': 'Anonymous',
@@ -426,5 +413,4 @@ class Resource {
     'Trama and PTSD': 'Trama and PTSD',
     'Suicide Prevention': 'Suicide Prevention',
   });
-
 }
