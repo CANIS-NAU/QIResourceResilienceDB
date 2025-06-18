@@ -170,45 +170,6 @@ class _CreateResourceState extends State<CreateResource> {
         return;
       }
 
-      // Form validation:
-      // TODO: add validation logic using the Resource model's validateResource method
-      /*
-      if (resourceName == "" ||
-          resourceDescription == "" ||
-          resourceLocation == "" ||
-          (isInPersonSelected &&
-              (resourceAddress == "" ||
-                  resourceCity == "" ||
-                  resourceState == "" ||
-                  resourceZip == "")) ||
-          ((isInPersonSelected || isHotlineSelected) &&
-              resourcePhoneNumber == "") ||
-          (isEventSelected && (resourceSchedule == null))) {
-        await showMessageDialog(
-          context,
-          title: "Alert",
-          message:
-              "One or more of the mandatory fields are blank. Please fill out all of the fields before submitting.",
-        );
-        return;
-      }
-
-      // Check if any of the type, privacy, or cost options are not selected.
-      if (resourceType == "" ||
-          _selectedPrivacy.isEmpty ||
-          _selectedHealthFocus.isEmpty ||
-          _selectedCostOptions.isEmpty ) {
-        await showMessageDialog(
-          context,
-          title: "Alert",
-          message:
-              "Please select a resource type, privacy option, and cost before submitting.",
-        );
-        return;
-      }
-      */
-
-      // Otherwise, all fields are filled out correctly: continue.
       // Get a newly generated ID for this resource.
       final resourceRef = resourceCollection.doc();
 
@@ -254,6 +215,16 @@ class _CreateResourceState extends State<CreateResource> {
         zipcode: _zipController.text,
       );
 
+      // Form validation:
+      final errors = updatedResource.validateResource();
+      if (errors.isNotEmpty) {
+        await showMessageDialog(
+          context,
+          title: "Alert",
+          message: "-${errors.join('\n-')}",
+        );
+        return;
+      }
       // Submit to admin submission if object not null
       userSubmission?.submittedResource(updatedResource.name!, updatedResource.resourceType!);
 
