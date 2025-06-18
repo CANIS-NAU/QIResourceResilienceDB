@@ -23,7 +23,8 @@ class CreateResource extends StatefulWidget {
   @override
   State<CreateResource> createState() => _CreateResourceState();
 }
-
+// Custom radio list widget to display a list of radio buttons with labels
+// This widget allows single selection from a list of options.
 class CustomRadioList<T> extends StatelessWidget {
   final Map<T, String> options;
   final T? selectedValue;
@@ -57,6 +58,9 @@ class CustomRadioList<T> extends StatelessWidget {
     );
   }
 }
+
+// Custom checkbox list widget to display a list of checkboxes with labels
+// This widget allows multiple selections from a list of options.
 class CustomCheckboxList extends StatelessWidget {
   final Map<String, String> options;
   final Set<String> selectedOptions;
@@ -102,7 +106,6 @@ class CustomCheckboxList extends StatelessWidget {
 class _CreateResourceState extends State<CreateResource> {
   CollectionReference resourceCollection =
       FirebaseFirestore.instance.collection('resources');
-  Resource resource = Resource();
 
   String _ageRange = "";
   Schedule? resourceSchedule = null;
@@ -113,6 +116,16 @@ class _CreateResourceState extends State<CreateResource> {
 
   // Resource type selected by user, initialized to the first type in the map.
   String resourceType = Resource.resourceTypeLabels.keys.first;
+
+  // Used to store selected privacy options
+  final Set<String> _selectedPrivacy = {};
+
+  // used to store selected health focus options
+  final Set<String> _selectedHealthFocus = {};
+
+  // used to store selected resource cost options
+  final Set<String> _selectedCostOptions = {};
+
 
   // Controllers for all text inputs.
   final _nameController = TextEditingController();
@@ -130,15 +143,6 @@ class _CreateResourceState extends State<CreateResource> {
   List<String> selectedTags = [];
 
   bool bypassVerification = false;
-
-  // Used to store selected privacy options
-  final Set<String> _selectedPrivacy = {};
-
-  // used to store selected health focus options
-  final Set<String> _selectedHealthFocus = {};
-
-  // used to store selected resource cost options
-  final Set<String> _selectedCostOptions = {};
 
   // Form submission status/progress.
   var _isSubmitted = false;
