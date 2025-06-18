@@ -217,6 +217,7 @@ class _CreateResourceState extends State<CreateResource> {
         resourceType: resourceType,
         state: _stateController.text,
         schedule: resourceSchedule,
+        tags: selectedTags,
         verified: bypassVerification,
         zipcode: _zipController.text,
       );
