@@ -181,7 +181,7 @@ class _CreateResourceState extends State<CreateResource> {
         building: _bldgController.text,
         city: _cityController.text,
         cost: _selectedCostOptions.toList(),
-        createdBy: user.email ?? "",
+        createdBy: user.email,
         createdTime: now,
         culturalResponsiveness: culturalResponsiveness,
         dateAdded: "${now.month}/${now.day}/${now.year}",
