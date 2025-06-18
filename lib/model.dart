@@ -116,7 +116,7 @@ class Resource {
   final bool verified;
   final String? zipcode;
 
-  // Deafault constructor
+  // Default constructor
   Resource({
     this.address,
     this.agerange,
@@ -216,8 +216,11 @@ class Resource {
   }
 
   // Computed properties
-  String get fullAddress =>
-      "${address ?? ""}, ${building ?? ""}, ${city ?? ""}, ${state ?? ""} ${zipcode ?? ""}".trim();
+  String get fullAddress {
+    final parts = [address, building, city, state, zipcode]
+      .where((part) => part != null && part!.isNotEmpty).toList();
+    return parts.join(', ');
+  }
 
   // Labels for string values
   String get resourceTypeLabel =>
