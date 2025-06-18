@@ -93,7 +93,8 @@ class ResourceDetail extends StatelessWidget {
         resourceModel.location != null ? Uri.parse(resourceModel.location!) : null;
 
     PdfDownload pdfDownload = PdfDownload();
-
+    // Create a map of field names to their corresponding widgets
+    // Allows for the dynamic generation of fields based on the resource model
     final fieldBuilders = <String, Widget Function()>{
       'description': () => field('Description', resourceModel.description),
       'resourceType': () => field('Type', resourceModel.resourceTypeLabel),
@@ -144,7 +145,10 @@ class ResourceDetail extends StatelessWidget {
         ),
       ),
     };
+
+    // Create a list of text widgets to show based what fields are visible
     final visible = resourceModel.visibleFields();
+
     final fieldsToShow = [
       for (final fieldName in visible)
         if (fieldBuilders.containsKey(fieldName)) fieldBuilders[fieldName]!(),
