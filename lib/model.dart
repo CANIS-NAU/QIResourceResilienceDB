@@ -258,8 +258,8 @@ class Resource {
     if (location == "") errors.add("Resource link is required.");
     if (resourceType == "") errors.add("Resource type is required.");
 
-    if (privacy!.isEmpty) errors.add("At least one privacy option must be selected.");
-    if (cost!.isEmpty) errors.add("At least one cost option must be selected.");
+    if (privacy?.isEmpty ?? true) errors.add("At least one privacy option must be selected.");
+    if (cost?.isEmpty ?? true) errors.add("At least one cost option must be selected.");
 
     // resource type specific fields
     if (resourceType == "In Person") {
