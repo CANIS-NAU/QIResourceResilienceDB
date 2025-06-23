@@ -5,6 +5,8 @@ name, description, link, address (if in person),
 phone number (if hotline or in person), type, privacy,
 cost, cultural responsiveness, and age range.
 */
+
+// TODO: fix tagging system 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -21,7 +23,8 @@ class CreateResource extends StatefulWidget {
   @override
   State<CreateResource> createState() => _CreateResourceState();
 }
-
+// Custom radio list widget to display a list of radio buttons with labels
+// This widget allows single selection from a list of options.
 class CustomRadioList<T> extends StatelessWidget {
   final Map<T, String> options;
   final T? selectedValue;
@@ -55,6 +58,9 @@ class CustomRadioList<T> extends StatelessWidget {
     );
   }
 }
+
+// Custom checkbox list widget to display a list of checkboxes with labels
+// This widget allows multiple selections from a list of options.
 class CustomCheckboxList extends StatelessWidget {
   final Map<String, String> options;
   final Set<String> selectedOptions;
@@ -101,20 +107,25 @@ class _CreateResourceState extends State<CreateResource> {
   CollectionReference resourceCollection =
       FirebaseFirestore.instance.collection('resources');
 
-  String resourceName = "";
-  String resourceLocation = "";
-  String resourceAddress = "";
-  String resourceBldg = "";
-  String resourceCity = "";
-  String resourceState = "";
-  String resourceZip = "";
-  String resourcePhoneNumber = "";
-  String resourceDescription = "";
-  String resourceType = "";
-  String culturalResponsiveness = "";
   String _ageRange = "";
   Schedule? resourceSchedule = null;
   List<FileUpload> _attachments = [];
+
+  // Stores the selected cultural responsiveness value
+  String? culturalResponsiveness = Resource.culturalResponsivenessLabels.keys.first;
+
+  // Resource type selected by user, initialized to the first type in the map.
+  String resourceType = Resource.resourceTypeLabels.keys.first;
+
+  // Used to store selected privacy options
+  final Set<String> _selectedPrivacy = {};
+
+  // used to store selected health focus options
+  final Set<String> _selectedHealthFocus = {};
+
+  // used to store selected resource cost options
+  final Set<String> _selectedCostOptions = {};
+
 
   // Controllers for all text inputs.
   final _nameController = TextEditingController();
@@ -129,30 +140,9 @@ class _CreateResourceState extends State<CreateResource> {
   final _tagsController = TextEditingController();
 
   // Tags created stored in tag array
-  List<dynamic> selectedTags = [];
+  List<String> selectedTags = [];
 
   bool bypassVerification = false;
-
-  // Used to store selected privacy options
-  /*final List<bool> _selectedPrivacy =
-      List<bool>.filled(Resource.privacyLabels.length, false);
-  List<String> selectedPrivacyOptions = [];*/
-  final Set<String> _selectedPrivacy = {};
-
-  // used to store health focus options
-  /*final List<bool> _selectedHealthFocus =
-      List<bool>.filled(Resource.healthFocusLabels.length, false);
-  List<String> selectedHealthFocusOptions = [];*/
-  final Set<String> _selectedHealthFocus = {};
-
-  // used to store selected resource cost options
-  final Set<String> _selectedCostOptions = {};
-
-    
-  // boolean to track hotline and in person selection
-  bool isHotlineSelected = false;
-  bool isInPersonSelected = false;
-  bool isEventSelected = false;
 
   // Form submission status/progress.
   var _isSubmitted = false;
@@ -184,52 +174,16 @@ class _CreateResourceState extends State<CreateResource> {
         return;
       }
 
-      // Form validation:
-      // Check if any of text boxes are empty based on the type of resource
-      if (resourceName == "" ||
-          resourceDescription == "" ||
-          resourceLocation == "" ||
-          (isInPersonSelected &&
-              (resourceAddress == "" ||
-                  resourceCity == "" ||
-                  resourceState == "" ||
-                  resourceZip == "")) ||
-          ((isInPersonSelected || isHotlineSelected) &&
-              resourcePhoneNumber == "") ||
-          (isEventSelected && (resourceSchedule == null))) {
-        await showMessageDialog(
-          context,
-          title: "Alert",
-          message:
-              "One or more of the mandatory fields are blank. Please fill out all of the fields before submitting.",
-        );
-        return;
-      }
+      
 
-      // Check if any of the type, privacy, or cost options are not selected.
-      if (resourceType == "" ||
-          _selectedPrivacy.isEmpty ||
-          _selectedHealthFocus.isEmpty ||
-          _selectedCostOptions.isEmpty ) {
-        await showMessageDialog(
-          context,
-          title: "Alert",
-          message:
-              "Please select a resource type, privacy option, and cost before submitting.",
-        );
-        return;
-      }
-
-      // Otherwise, all fields are filled out correctly: continue.
       // Get a newly generated ID for this resource.
       final resourceRef = resourceCollection.doc();
-      final resourceId = resourceRef.id;
 
       // Upload attachments
       List<Attachment> attachments = _attachments.isEmpty
           ? []
           : await uploadAttachments(
-              resourceId, // use resource document ID as the file path
+              resourceRef.id, // use resource document ID as the file path
               _attachments,
               onProgress: (ratio) {
                 setState(() {
@@ -240,38 +194,49 @@ class _CreateResourceState extends State<CreateResource> {
 
       // Create the resource document JSON.
       final now = DateTime.now();
-      final date = "${now.month}/${now.day}/${now.year}";
-      final resource = {
-        'name': resourceName,
-        'location': resourceLocation,
-        'address': resourceAddress,
-        'building': resourceBldg,
-        'city': resourceCity,
-        'state': resourceState,
-        'zipcode': resourceZip,
-        'phoneNumber': resourcePhoneNumber,
-        'description': resourceDescription,
-        'agerange': _ageRange,
-        'isVisable': true,
-        'verified': bypassVerification,
-        'resourceType': resourceType,
-        'privacy': _selectedPrivacy.toList(),
-        'culturalResponsiveness': culturalResponsiveness,
-        'cost': _selectedCostOptions.toList(),
-        'healthFocus': _selectedHealthFocus.toList(),
-        'tagline': selectedTags,
-        if (resourceSchedule != null) 'schedule': resourceSchedule!.toJson(),
-        'attachments': attachments.map((x) => x.toJson()),
-        'dateAdded': date,
-        'createdBy': user.email,
-        'createdTime': FieldValue.serverTimestamp(),
-      };
 
+      // Create a new Resource object with updated properties
+      final updatedResource = Resource(
+        address: _addressController.text,
+        agerange: _ageRange,
+        attachments: attachments,
+        building: _bldgController.text,
+        city: _cityController.text,
+        cost: _selectedCostOptions.toList(),
+        createdBy: user.email,
+        createdTime: now,
+        culturalResponsiveness: culturalResponsiveness,
+        dateAdded: "${now.month}/${now.day}/${now.year}",
+        description: _descriptionController.text,
+        healthFocus: _selectedHealthFocus.toList(),
+        isVisable: true,
+        location: _locationController.text,
+        name: _nameController.text,
+        phoneNumber: _phoneController.text,
+        privacy: _selectedPrivacy.toList(),
+        resourceType: resourceType,
+        state: _stateController.text,
+        schedule: resourceSchedule,
+        tags: selectedTags,
+        verified: bypassVerification,
+        zipcode: _zipController.text,
+      );
+
+      // Form validation:
+      final errors = updatedResource.validateResource();
+      if (errors.isNotEmpty) {
+        await showMessageDialog(
+          context,
+          title: "Alert",
+          message: "-${errors.join('\n-')}",
+        );
+        return;
+      }
       // Submit to admin submission if object not null
-      userSubmission?.submittedResource(resourceName, resourceType);
+      userSubmission?.submittedResource(updatedResource.name!, updatedResource.resourceType!);
 
       // Set the data of the document.
-      await resourceRef.set(resource);
+      await resourceRef.set(updatedResource.toJson());
 
       setState(() {
         // Just to make sure the progress bar shows full,
@@ -279,7 +244,7 @@ class _CreateResourceState extends State<CreateResource> {
         _uploadProgress = 1.0;
       });
 
-      debugPrint("Created resource ${resourceId}");
+      debugPrint("Created resource ${updatedResource.id}");
 
       String successMessage = bypassVerification
           ? "Resource submitted and auto-verified."
@@ -322,7 +287,7 @@ class _CreateResourceState extends State<CreateResource> {
 
   // widget to build a text field based on name and if visible
   Widget buildTextFieldContainer(
-    String label, bool isVisible, Function(String) onChangedCallback, {TextEditingController? controller}) {
+    String label, bool isVisible, {TextEditingController? controller}) {
     return Container(
       margin: EdgeInsets.symmetric(vertical: isVisible ? 8.0 : 0.0),
       child: Visibility(
@@ -334,7 +299,6 @@ class _CreateResourceState extends State<CreateResource> {
             border: OutlineInputBorder(),
             labelText: label,
           ),
-          onChanged: onChangedCallback,
         ),
       ),
     );
@@ -356,6 +320,10 @@ class _CreateResourceState extends State<CreateResource> {
   // Create resource UI
   @override
   Widget build(BuildContext context) {
+    // Create a temporary resource object to determine visible fields
+    final tempResource = Resource(resourceType: resourceType ?? '', /* other fields can be null */);
+    final visibleFields = tempResource.visibleFields();
+    
     return Scaffold(
       appBar: AppBar(
         title: const Text('Submit Resource'),
@@ -385,82 +353,52 @@ class _CreateResourceState extends State<CreateResource> {
                   selectedValue: resourceType,
                   onChanged: (value) => setState(() {
                     resourceType = value!;
-                    isHotlineSelected = (value == "Hotline");
-                    isInPersonSelected = (value == "In Person");
-                    isEventSelected = (value == "Event");
                   }),
                   labelStyle: TextStyle(fontSize: 16),
                 ),
                 buildTextFieldContainer(
                   'Name of the Resource',
-                  true,
-                  (text) {
-                    resourceName = text;
-                  },
+                  true, // Name entry is always visible
                   controller: _nameController,
                 ),
                 buildTextFieldContainer(
                   'Link to the Resource',
-                  true,
-                  (text) {
-                    resourceLocation = text;
-                  },
+                  visibleFields.contains('location'),
                   controller: _locationController,
                 ),
                 buildTextFieldContainer(
                   'Address',
-                  isInPersonSelected,
-                  (text) {
-                    resourceAddress = text;
-                  },
+                  visibleFields.contains('address'),
                   controller: _addressController,
                 ),
                 buildTextFieldContainer(
                   'Apartment, building, floor, etc.',
-                  isInPersonSelected,
-                  (text) {
-                    resourceBldg = text;
-                  },
+                  visibleFields.contains('building'),
                   controller: _bldgController,
                 ),
                 buildTextFieldContainer(
                   'City',
-                  isInPersonSelected,
-                  (text) {
-                    resourceCity = text;
-                  },
+                  visibleFields.contains('city'),
                   controller: _cityController,
                 ),
                 buildTextFieldContainer(
                   'State',
-                  isInPersonSelected,
-                  (text) {
-                    resourceState = text;
-                  },
+                  visibleFields.contains('state'),
                   controller: _stateController,
                 ),
                 buildTextFieldContainer(
                   'Zip Code',
-                  isInPersonSelected,
-                  (text) {
-                    resourceZip = text;
-                  },
+                  visibleFields.contains('zipcode'),
                   controller: _zipController,
                 ),
                 buildTextFieldContainer(
                   'Phone Number',
-                  isHotlineSelected || isInPersonSelected,
-                  (text) {
-                    resourcePhoneNumber = text;
-                  },
+                  visibleFields.contains('phoneNumber'),
                   controller: _phoneController,
                 ),
                 buildTextFieldContainer(
                   'Description of the Resource',
-                  true,
-                  (text) {
-                    resourceDescription = text;
-                  },
+                  visibleFields.contains('description'),
                   controller: _descriptionController,
                 ),
                 Container(
@@ -475,8 +413,8 @@ class _CreateResourceState extends State<CreateResource> {
                     onSubmitted: (text) {
                       if (text != "") {
                         setState(() {
-                          _tagsController.clear();
                           selectedTags.add(text);
+                          _tagsController.clear();
                         });
                       }
                     },
@@ -527,7 +465,7 @@ class _CreateResourceState extends State<CreateResource> {
                   ),
                 ),
                 Visibility(
-                  visible: isEventSelected,
+                  visible: visibleFields.contains('schedule'),
                   child: Column(children: [
                     buildTitles("Event Schedule"),
                     ScheduleFormFields(

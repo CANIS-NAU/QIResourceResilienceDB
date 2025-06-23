@@ -24,11 +24,9 @@ final typeIcon = const {
 /// in a scrolling list of resources.
 class ResourceSummary extends StatelessWidget {
   ResourceSummary(
-      {super.key, required this.resource, required this.isSmallScreen});
+      {super.key, required this.resourceModel, required this.isSmallScreen});
 
-  final QueryDocumentSnapshot resource;
-  Resource get resourceModel => 
-    Resource.fromJson(resource.data() as Map<String, dynamic>);
+  final Resource resourceModel;
   final bool isSmallScreen;
 
   @override
@@ -51,7 +49,7 @@ class ResourceSummary extends StatelessWidget {
     Future<bool> setVisabilityStatus(bool isVisable) async {
       try {
         final resources = FirebaseFirestore.instance.collection('resources');
-        await resources.doc(resource.id).update({'isVisable': isVisable});
+        await resources.doc(resourceModel.id).update({'isVisable': isVisable});
         return true;
       } catch (error) {
         return false;
@@ -103,7 +101,7 @@ class ResourceSummary extends StatelessWidget {
             contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 30),
             dense: false,
             title: Text(
-              resource['name'],
+              resourceModel.name!, 
               textAlign: TextAlign.left,
               overflow: TextOverflow.ellipsis,
               softWrap: true,
@@ -125,24 +123,24 @@ class ResourceSummary extends StatelessWidget {
             ),
             leading: (user == null)
                 ? Icon(
-                    typeIcon[resource['resourceType']],
+                    typeIcon[resourceModel.resourceType] ?? Icons.help,
                     color: Colors.black,
                   )
-                : managerButton(resource['isVisable']),
+                : managerButton(resourceModel.isVisable),
             trailing: Icon(
               Icons.arrow_forward_rounded,
               color: Colors.black,
             ),
             onTap: () {
               final homeAnalytics = Provider.of<HomeAnalytics>(context, listen: false);
-              homeAnalytics.submitClickedResource(resource.id);
+              homeAnalytics.submitClickedResource(resourceModel.id);
 
              showDialog(
               context: context,
               builder: (dialogContext) {
                 return ChangeNotifierProvider<HomeAnalytics>.value(
                   value: homeAnalytics,
-                  child: ResourceDetail(resource: resource),
+                  child: ResourceDetail(resourceModel: resourceModel),
                 );
               },
             );

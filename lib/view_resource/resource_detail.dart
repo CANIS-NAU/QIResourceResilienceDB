@@ -50,49 +50,13 @@ class DetailLink extends StatelessWidget {
 
 const fieldPadding = EdgeInsets.symmetric(vertical: 8.0);
 
-/// Given a document for a resource that contains address information,
-/// format that address as a single string.
-String? formatResourceAddress(DocumentSnapshot resource) {
-  try {
-    return filterJoin([
-      resource['address'],
-      resource['building'],
-      resource['city'],
-      resource['state'],
-      resource['zipcode'],
-    ], emptyValue: null);
-  } on StateError {
-    return null;
-  }
-}
 
 class ResourceDetail extends StatelessWidget {
-  const ResourceDetail({required this.resource});
+  const ResourceDetail({required this.resourceModel});
 
-  final DocumentSnapshot resource;
+  final Resource resourceModel;
 
-  Resource get resourceModel =>
-      Resource.fromJson(resource.data() as Map<String, dynamic>);
-
-
-  String? fieldString(String name) {
-    try {
-      final value = resource[name];
-      if (value == null) {
-        return null;
-      } else if (value is String) {
-        return value.isNotEmpty ? value : null;
-      } else if (value is List) {
-        return value.isNotEmpty ? value.join(', ') : null;
-      } else {
-        // don't know what type this is so just 'toString' it.
-        return value.toString();
-      }
-    } on StateError {
-      return null;
-    }
-  }
-
+// This widget displays the details of a resource in a dialog.
   Widget field(String label, dynamic value, {Widget Function(dynamic value)? builder}) {
     // if value is blank or null, dont render the field 
     if (value == null || (value is String && value.isEmpty)
@@ -125,12 +89,12 @@ class ResourceDetail extends StatelessWidget {
   Widget build(BuildContext context) {
     
     List<Attachment> attachments = resourceModel.attachments ?? [];
-    String? fullAddress = resourceModel.fullAddress;
     Uri? url =
         resourceModel.location != null ? Uri.parse(resourceModel.location!) : null;
 
     PdfDownload pdfDownload = PdfDownload();
-
+    // Create a map of field names to their corresponding widgets
+    // Allows for the dynamic generation of fields based on the resource model
     final fieldBuilders = <String, Widget Function()>{
       'description': () => field('Description', resourceModel.description),
       'resourceType': () => field('Type', resourceModel.resourceTypeLabel),
@@ -144,12 +108,12 @@ class ResourceDetail extends StatelessWidget {
       'healthFocus': () => field('Health Focus', resourceModel.healthFocusLabel),
       'address': () => field(
         'Address',
-        fullAddress,
+        resourceModel.fullAddress,
         builder: (value) => DetailLink(
           type: "address",
           text: value,
           uriText: value,
-          resourceId: resource.id,
+          resourceId: resourceModel.id,
         )),
       'phoneNumber': () => field(
         'Phone Number',
@@ -158,16 +122,16 @@ class ResourceDetail extends StatelessWidget {
           type: "phone",
           text: value,
           uriText: resourceModel.phoneNumber!,
-          resourceId: resource.id,
+          resourceId: resourceModel.id,
         )),
-      'url': () => field(
+      'location': () => field(
           'URL',
           resourceModel.location,
           builder: (value) => DetailLink(
             type: "url",
             text: 'link to website here',
             uriText: value!,
-            resourceId: resource.id,
+            resourceId: resourceModel.id,
           ),
         ),
       'attachments': () => field(
@@ -176,18 +140,21 @@ class ResourceDetail extends StatelessWidget {
         builder: (value) => Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            AttachmentsList(attachments: value, resourceId: resource.id),
+            AttachmentsList(attachments: value, resourceId: resourceModel.id),
           ],
         ),
       ),
     };
+
+    // Create a list of text widgets to show based what fields are visible
     final visible = resourceModel.visibleFields();
+
     final fieldsToShow = [
       for (final fieldName in visible)
         if (fieldBuilders.containsKey(fieldName)) fieldBuilders[fieldName]!(),
     ];
     return SimpleDialog(
-      key: ObjectKey(resource.id),
+      key: ObjectKey(resourceModel.id),
       titlePadding: EdgeInsets.fromLTRB(16, 16, 16, 0),
       contentPadding: EdgeInsets.all(16),
       title: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
@@ -219,8 +186,6 @@ class ResourceDetail extends StatelessWidget {
                   padding: fieldPadding,
                   child: ElevatedButton(
                     onPressed: () async {
-                      Map<String, dynamic>? resourceData = resource.data() as Map<String, dynamic>?;
-                      List<dynamic> healthFocus = (resourceData != null && resourceData.containsKey('healthFocus')) ? resourceData['healthFocus']: [];
 
                       // generate PDF
                       List<int> pdfBytes =
@@ -228,11 +193,11 @@ class ResourceDetail extends StatelessWidget {
                               resourceModel.name!,
                               resourceModel.description!,
                               resourceModel.resourceTypeLabel,
-                              resourceModel.privacy,
-                              healthFocus,
+                              resourceModel.privacyLabel,
+                              resourceModel.healthFocusLabel,
                               resourceModel.culturalResponsivenessLabel,
-                              fullAddress,
-                              fieldString('phoneNumber'),
+                              resourceModel.fullAddress,
+                              resourceModel.phoneNumber,
                               url);
                            
                       // download PDF
@@ -247,7 +212,7 @@ class ResourceDetail extends StatelessWidget {
                     child: ElevatedButton(
                       onPressed: () {
                         pdfDownload.shareResourceLink(
-                          resource['name'],
+                          resourceModel.name!,
                           url,
                         );
                       },
