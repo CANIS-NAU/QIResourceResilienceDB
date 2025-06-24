@@ -59,6 +59,24 @@ class CustomRadioList<T> extends StatelessWidget {
   }
 }
 
+Widget buildTextFieldContainer(
+    String label, bool isVisible, {TextEditingController? controller}) {
+    return Container(
+      margin: EdgeInsets.symmetric(vertical: isVisible ? 8.0 : 0.0),
+      child: Visibility(
+        visible: isVisible,
+        child: TextField(
+          controller: controller,
+          obscureText: false,
+          decoration: InputDecoration(
+            border: OutlineInputBorder(),
+            labelText: label,
+          ),
+        ),
+      ),
+    );
+  }
+
 // Custom checkbox list widget to display a list of checkboxes with labels
 // This widget allows multiple selections from a list of options.
 class CustomCheckboxList extends StatelessWidget {
@@ -286,23 +304,7 @@ class _CreateResourceState extends State<CreateResource> {
   }
 
   // widget to build a text field based on name and if visible
-  Widget buildTextFieldContainer(
-    String label, bool isVisible, {TextEditingController? controller}) {
-    return Container(
-      margin: EdgeInsets.symmetric(vertical: isVisible ? 8.0 : 0.0),
-      child: Visibility(
-        visible: isVisible,
-        child: TextField(
-          controller: controller,
-          obscureText: false,
-          decoration: InputDecoration(
-            border: OutlineInputBorder(),
-            labelText: label,
-          ),
-        ),
-      ),
-    );
-  }
+  
 
   // widget for building resource option titles
   Widget buildTitles(String title) {
@@ -538,13 +540,20 @@ class _CreateResourceState extends State<CreateResource> {
                           _ageRange = newValue!;
                         });
                       },
-                      items: Resource.ageLabels.keys.toList()
-                          .map<DropdownMenuItem<String>>((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(value),
-                        );
-                      }).toList(),
+                      items: [
+                        // Add an empty item for the default selection
+                        DropdownMenuItem<String>(
+                          value: "",
+                          child: Text("Select Age Range"),
+                        ),
+                        // Generate dropdown items from the age labels
+                        ...Resource.ageLabels.keys.map((value) => 
+                          DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(Resource.ageLabels[value]!),
+                          )
+                        ),
+                      ]
                     ),
                   ),
                 ),
