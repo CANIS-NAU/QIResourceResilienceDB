@@ -58,7 +58,7 @@ class _DashboardState extends State<Dashboard>
 
   // create a predefined list of distinct colors for graphs
   // https://www.simplifiedsciencepublishing.com/resources/best-color-palettes-for-scientific-figures-and-data-visualizations
-  // colors are from the "Eight Color Combinations for Charts", bright colors
+  // colors are from the "Eight Color Combinations for Charts", bright colors, muted colors
   final List<Color> predefinedColors = [
     Color(0xFF003a7d),
     Color(0xFF008dff),
@@ -67,7 +67,8 @@ class _DashboardState extends State<Dashboard>
     Color(0xFF4ecb8d),
     Color(0xFFff9d3a),
     Color(0xFFf9e858),
-    Color(0xFFd83034)
+    Color(0xFFd83034),
+    Color(0xFF0b81a2),
     // add more colors if needed
   ];
 
@@ -811,7 +812,11 @@ class _DashboardState extends State<Dashboard>
     // prepare LineChartData
     LineChartData chartData = LineChartData(
       lineTouchData: LineTouchData(
-        touchTooltipData: LineTouchTooltipData(tooltipBgColor: Colors.grey[300]!),
+        touchTooltipData: LineTouchTooltipData(
+          tooltipBgColor: Colors.grey[300]!,
+          fitInsideVertically: true,
+          fitInsideHorizontally: true,
+        ),
       ),
       lineBarsData: lines,
       titlesData: FlTitlesData(

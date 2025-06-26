@@ -41,19 +41,39 @@ class _ReviewResourceState extends State<ReviewResource> {
                                                 UserReview(currentUser) : null;
 
   // function to verify a resource
-  Future<void> verifyResource(name) {
-    return resourceCollection.doc(name.id).update({"verified": true})
-        .then((value) => showAlertDialog(context, "Resource has been verified."))
-        .catchError((error) => showAlertDialog(context, "Failed to verify resource: $error"));
+  Future<void> verifyResource(name) async {
+    try {
+      await resourceCollection.doc(name.id).update({"verified": true});
+      await showMessageDialog(
+        context,
+        title:'Success',
+        message: "Resource has been verified."
+      );
+    } catch (e) {
+      await showMessageDialog(
+        context,
+        title: 'Error',
+        message: "Failed to verify resource: $e",
+      );
+    }
   }
 
-  // function to deny/delete a resource
-  Future<void> deleteResource(name) {
-    return resourceCollection.doc(name.id).delete()
-        .then((value) => showAlertDialog(context, "Resource has been denied."))
-        .then((value) => Navigator.pushNamed( context, '/dashboard' ))
-        .catchError((error) => showAlertDialog(context, "Failed to delete resource: $error"));
-        //redirect to resource verification page      
+  // function to deny/delete a resourcecontext
+  Future<void> deleteResource(name) async {
+    try {
+      await resourceCollection.doc(name.id).delete();
+      await showMessageDialog(
+        context,
+        title:'Success',
+        message: "Resource has been denied."
+      );
+    } catch (e) {
+      await showMessageDialog(
+        context,
+        title: 'Error',
+        message: "Failed to delete resource: $e",
+      );
+    }
   }
 
   // function to add rubric info to a resource
@@ -346,8 +366,13 @@ class _ReviewResourceState extends State<ReviewResource> {
                 updateRating(newValue as String);
                 if(newValue == 'No')
                 {
-                    deleteResource(widget.resourceData);
-                    Navigator.pushReplacementNamed(context, '/verify');
+                  Future(() async {
+                    await deleteResource(widget.resourceData);
+                    await submitToInbox(widget.resourceData, "Denied", "Resource denied by reviewer.");
+                    if (mounted) {
+                      Navigator.pop(context);
+                    }
+                  });
                     //submitToInbox( widget.resourceData, "Denied", userComments);
                 }
               },
@@ -1140,13 +1165,16 @@ class _ReviewResourceState extends State<ReviewResource> {
                     foregroundColor:
                     MaterialStateProperty.all<Color>(Colors.black),
                   ),
-                  onPressed: () {
-                    verifyResource(widget.resourceData);
-                    updateResourceRubric(widget.resourceData, userComments,
+                  onPressed: () async {
+                    await verifyResource(widget.resourceData);
+                    await updateResourceRubric(widget.resourceData, userComments,
                                                                     totalScore);
-                    submitToInbox( widget.resourceData, "Approved", 
+                    await submitToInbox( widget.resourceData, "Approved",
                                                                  userComments );
-                    Navigator.pushReplacementNamed(context, '/verify');
+                    if (mounted) {
+                      Navigator.pop(context);
+                    }
+                    
                   },
                   child: Text(
                     'Verify',
@@ -1168,10 +1196,12 @@ class _ReviewResourceState extends State<ReviewResource> {
                     foregroundColor:
                     MaterialStateProperty.all<Color>(Colors.black),
                   ),
-                  onPressed: () {
-                    deleteResource(widget.resourceData);
-                    submitToInbox( widget.resourceData, "Denied",userComments );
-                    Navigator.pushReplacementNamed(context, '/verify');
+                  onPressed: () async {
+                    await deleteResource(widget.resourceData);
+                    await submitToInbox(widget.resourceData, "Denied", userComments);
+                    if (mounted) {
+                      Navigator.pop(context);
+                    }
                   },
                   child: Text(
                     'Deny',

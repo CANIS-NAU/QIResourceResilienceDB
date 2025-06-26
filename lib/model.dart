@@ -1,6 +1,5 @@
 import 'package:web_app/file_attachments.dart';
 import 'package:web_app/events/schedule.dart';
-import 'dart:collection';
 
 class Rubric {
   final int? accurate;
@@ -199,7 +198,6 @@ class Resource {
       "dateAdded": dateAdded,
       "description": description,
       "healthFocus": healthFocus,
-      "id": id,
       "isVisable": isVisable,
       "location": location,
       "name": name,
@@ -392,7 +390,6 @@ class Resource {
   });
 
   static Map<String, String> ageLabels = Map.unmodifiable({
-    "": "",
     'Under 18': 'Under 18',
     '18-24': '18-24',
     '24-65': '24-65',
