@@ -547,11 +547,10 @@ class _CreateResourceState extends State<CreateResource> {
                           child: Text("Select Age Range"),
                         ),
                         // Generate dropdown items from the age labels
-                        ...Resource.ageLabels.keys.map((value) => 
+                        ...Resource.ageLabels.entries.map((entry) => 
                           DropdownMenuItem<String>(
-                            value: value,
-                            child: Text(Resource.ageLabels[value]!),
-                          )
+                            value: entry.key,
+                            child: Text(entry.value)),
                         ),
                       ]
                     ),
