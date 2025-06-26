@@ -198,7 +198,6 @@ class Resource {
       "dateAdded": dateAdded,
       "description": description,
       "healthFocus": healthFocus,
-      "id": id,
       "isVisable": isVisable,
       "location": location,
       "name": name,
