@@ -598,6 +598,7 @@ class _CreateResourceState extends State<CreateResource> {
                 Padding(
                   padding: const EdgeInsets.only(top: 16.0),
                   child: CheckboxListTile(
+                    key: Key('autoVerificationCheckbox'),
                     title: Text(
                       "Bypass Verification (Auto-Verify)",
                       style: TextStyle(
