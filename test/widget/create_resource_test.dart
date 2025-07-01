@@ -12,9 +12,9 @@ void main(){
         testWidgets('Widget is visible when visibility is true', (tester) async {
           // Create a text field container with the label and visibility set to true.
           isTextFieldVisable = true;
-          textFieldContainer = buildTextFieldContainer(
-            textFieldLabel,
-            isTextFieldVisable,
+          textFieldContainer = CustomTextFieldContainer(
+            label: textFieldLabel,
+            isVisible: isTextFieldVisable,
           );
           await tester.pumpWidget(
             MaterialApp(
@@ -31,9 +31,9 @@ void main(){
         testWidgets('Widget is not visible when visibility is false', (tester) async {
           // Create a text field container with the label and visibility set to false.
           isTextFieldVisable = false;
-          textFieldContainer = buildTextFieldContainer(
-            textFieldLabel,
-            isTextFieldVisable,
+          textFieldContainer = CustomTextFieldContainer(
+            label: textFieldLabel,
+            isVisible: isTextFieldVisable,
           );
           await tester.pumpWidget(
             MaterialApp(
