@@ -3,13 +3,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:web_app/createResource.dart';
 
 void main(){
-    String textFieldLabel = 'Text Field Label';
-    bool isTextFieldVisable = false;
-    Widget textFieldContainer;
-
     group('Text field container visiblity can be toggled', () {
         // Build our app and trigger a frame.
         testWidgets('Widget is visible when visibility is true', (tester) async {
+          String textFieldLabel = 'Text Field Label';
+          bool isTextFieldVisable = false;
+          Widget textFieldContainer;
+
           // Create a text field container with the label and visibility set to true.
           isTextFieldVisable = true;
           textFieldContainer = CustomTextFieldContainer(
