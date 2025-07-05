@@ -59,23 +59,36 @@ class CustomRadioList<T> extends StatelessWidget {
   }
 }
 
-Widget buildTextFieldContainer(
-    String label, bool isVisible, {TextEditingController? controller}) {
+class CustomTextFieldContainer extends StatelessWidget {
+  final String label;
+  final bool isVisible;
+  final TextEditingController? controller;
+
+  const CustomTextFieldContainer({
+    Key? key,
+    required this.label,
+    required this.isVisible,
+    this.controller,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    if (!isVisible){
+      return SizedBox.shrink();
+    }
     return Container(
       margin: EdgeInsets.symmetric(vertical: isVisible ? 8.0 : 0.0),
-      child: Visibility(
-        visible: isVisible,
-        child: TextField(
-          controller: controller,
-          obscureText: false,
-          decoration: InputDecoration(
-            border: OutlineInputBorder(),
-            labelText: label,
-          ),
+      child: TextField(
+        controller: controller,
+        obscureText: false,
+        decoration: InputDecoration(
+          border: OutlineInputBorder(),
+          labelText: label,
         ),
       ),
     );
   }
+}
 
 // Custom checkbox list widget to display a list of checkboxes with labels
 // This widget allows multiple selections from a list of options.
@@ -358,49 +371,49 @@ class _CreateResourceState extends State<CreateResource> {
                   }),
                   labelStyle: TextStyle(fontSize: 16),
                 ),
-                buildTextFieldContainer(
-                  'Name of the Resource',
-                  true, // Name entry is always visible
+                CustomTextFieldContainer(
+                  label: 'Name of the Resource',
+                  isVisible: true, // Name entry is always visible
                   controller: _nameController,
                 ),
-                buildTextFieldContainer(
-                  'Link to the Resource',
-                  visibleFields.contains('location'),
+                CustomTextFieldContainer(
+                  label: 'Link to the Resource',
+                  isVisible: visibleFields.contains('location'),
                   controller: _locationController,
                 ),
-                buildTextFieldContainer(
-                  'Address',
-                  visibleFields.contains('address'),
+                CustomTextFieldContainer(
+                  label: 'Address',
+                  isVisible: visibleFields.contains('address'),
                   controller: _addressController,
                 ),
-                buildTextFieldContainer(
-                  'Apartment, building, floor, etc.',
-                  visibleFields.contains('building'),
+                CustomTextFieldContainer(
+                  label: 'Apartment, building, floor, etc.',
+                  isVisible: visibleFields.contains('building'),
                   controller: _bldgController,
                 ),
-                buildTextFieldContainer(
-                  'City',
-                  visibleFields.contains('city'),
+                CustomTextFieldContainer(
+                  label: 'City',
+                  isVisible: visibleFields.contains('city'),
                   controller: _cityController,
                 ),
-                buildTextFieldContainer(
-                  'State',
-                  visibleFields.contains('state'),
+                CustomTextFieldContainer(
+                  label: 'State',
+                  isVisible: visibleFields.contains('state'),
                   controller: _stateController,
                 ),
-                buildTextFieldContainer(
-                  'Zip Code',
-                  visibleFields.contains('zipcode'),
+                CustomTextFieldContainer(
+                  label: 'Zip Code',
+                  isVisible: visibleFields.contains('zipcode'),
                   controller: _zipController,
                 ),
-                buildTextFieldContainer(
-                  'Phone Number',
-                  visibleFields.contains('phoneNumber'),
+                CustomTextFieldContainer(
+                  label: 'Phone Number',
+                  isVisible: visibleFields.contains('phoneNumber'),
                   controller: _phoneController,
                 ),
-                buildTextFieldContainer(
-                  'Description of the Resource',
-                  visibleFields.contains('description'),
+                CustomTextFieldContainer(
+                  label: 'Description of the Resource',
+                  isVisible: visibleFields.contains('description'),
                   controller: _descriptionController,
                 ),
                 Container(
