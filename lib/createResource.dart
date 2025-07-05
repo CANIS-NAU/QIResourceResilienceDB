@@ -275,7 +275,7 @@ class _CreateResourceState extends State<CreateResource> {
         _uploadProgress = 1.0;
       });
 
-      debugPrint("Created resource ${updatedResource.id}");
+      debugPrint("Created resource ${resourceRef.id}");
 
       String successMessage = bypassVerification
           ? "Resource submitted and auto-verified."
@@ -364,6 +364,7 @@ class _CreateResourceState extends State<CreateResource> {
               children: [
                 buildTitles("Resource Type"),
                 CustomRadioList(
+                  key: Key('resourceTypeRadioList'),
                   options: Resource.resourceTypeLabels,
                   selectedValue: resourceType,
                   onChanged: (value) => setState(() {
@@ -372,46 +373,55 @@ class _CreateResourceState extends State<CreateResource> {
                   labelStyle: TextStyle(fontSize: 16),
                 ),
                 CustomTextFieldContainer(
+                  key: Key('nameTextField'),
                   label: 'Name of the Resource',
                   isVisible: true, // Name entry is always visible
                   controller: _nameController,
                 ),
                 CustomTextFieldContainer(
+                  key: Key('locationTextField'),
                   label: 'Link to the Resource',
                   isVisible: visibleFields.contains('location'),
                   controller: _locationController,
                 ),
                 CustomTextFieldContainer(
+                  key: Key('addressTextField'),
                   label: 'Address',
                   isVisible: visibleFields.contains('address'),
                   controller: _addressController,
                 ),
                 CustomTextFieldContainer(
+                  key: Key('buildingTextField'),
                   label: 'Apartment, building, floor, etc.',
                   isVisible: visibleFields.contains('building'),
                   controller: _bldgController,
                 ),
                 CustomTextFieldContainer(
+                  key: Key('cityTextField'),
                   label: 'City',
                   isVisible: visibleFields.contains('city'),
                   controller: _cityController,
                 ),
                 CustomTextFieldContainer(
+                  key: Key('stateTextField'),
                   label: 'State',
                   isVisible: visibleFields.contains('state'),
                   controller: _stateController,
                 ),
                 CustomTextFieldContainer(
+                  key: Key('zipTextField'),
                   label: 'Zip Code',
                   isVisible: visibleFields.contains('zipcode'),
                   controller: _zipController,
                 ),
                 CustomTextFieldContainer(
+                  key: Key('phoneTextField'),
                   label: 'Phone Number',
                   isVisible: visibleFields.contains('phoneNumber'),
                   controller: _phoneController,
                 ),
                 CustomTextFieldContainer(
+                  key: Key('descriptionTextField'),
                   label: 'Description of the Resource',
                   isVisible: visibleFields.contains('description'),
                   controller: _descriptionController,
@@ -419,6 +429,7 @@ class _CreateResourceState extends State<CreateResource> {
                 Container(
                   padding: EdgeInsets.symmetric(vertical: 8.0),
                   child: TextField(
+                    key: Key('tagsTextField'),
                     obscureText: false,
                     controller: _tagsController,
                     decoration: InputDecoration(
@@ -484,6 +495,7 @@ class _CreateResourceState extends State<CreateResource> {
                   child: Column(children: [
                     buildTitles("Event Schedule"),
                     ScheduleFormFields(
+                      key: Key('scheduleFormFields'),
                       onChanged: (schedule) {
                         setState(() {
                           resourceSchedule = schedule;
@@ -495,6 +507,7 @@ class _CreateResourceState extends State<CreateResource> {
 
                 buildTitles("Privacy Protections"),
                 CustomCheckboxList(
+                  key: Key('privacyCheckboxList'),
                   options: Resource.privacyLabels,
                   selectedOptions: _selectedPrivacy,
                   onChanged: (key) => setState(() {
@@ -508,6 +521,7 @@ class _CreateResourceState extends State<CreateResource> {
                 ),
                 buildTitles("Resource Cost"),
                 CustomCheckboxList(
+                  key: Key('costCheckboxList'),
                   options: Resource.costLabels,
                   selectedOptions: _selectedCostOptions,
                   onChanged: (key) => setState(() {
@@ -522,6 +536,7 @@ class _CreateResourceState extends State<CreateResource> {
 
                 buildTitles("Health Focus"),
                 CustomCheckboxList(
+                  key: Key('healthFocusCheckboxList'),
                   options: Resource.healthFocusLabels,
                   selectedOptions: _selectedHealthFocus,
                   onChanged: (key) => setState((){
@@ -536,6 +551,7 @@ class _CreateResourceState extends State<CreateResource> {
 
                 buildTitles("Cultural Responsiveness"),
                 CustomRadioList(
+                  key: Key('culturalResponsivenessRadioList'),
                   options: Resource.culturalResponsivenessLabels,
                   selectedValue: culturalResponsiveness,
                   onChanged: (value) => setState(() {
@@ -547,6 +563,7 @@ class _CreateResourceState extends State<CreateResource> {
                 Center(
                   child: new Container(
                     child: DropdownButton(
+                      key: Key('ageRangeDropdown'),
                       value: _ageRange,
                       onChanged: (String? newValue) {
                         setState(() {
@@ -581,6 +598,7 @@ class _CreateResourceState extends State<CreateResource> {
                 Padding(
                   padding: const EdgeInsets.only(top: 16.0),
                   child: CheckboxListTile(
+                    key: Key('autoVerificationCheckbox'),
                     title: Text(
                       "Bypass Verification (Auto-Verify)",
                       style: TextStyle(
@@ -617,6 +635,7 @@ class _CreateResourceState extends State<CreateResource> {
                   padding: EdgeInsets.symmetric(vertical: 48.0),
                   child: Column(children: [
                     ElevatedButton(
+                      key: Key('submitResourceButton'),
                       onPressed: _isSubmitted ? null : trySubmitResource,
                       child: Text('Submit Resource'),
                     ),
