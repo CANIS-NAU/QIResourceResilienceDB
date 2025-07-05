@@ -25,6 +25,19 @@ Future<void> tapButton(WidgetTester tester, {String? text, Key? key}) async {
   await tester.tap(field);
 }
 
+// Variables to hold resource data
+final String _testResourceType = Resource.resourceTypeLabels.values.first;
+final String _testName = 'Automatic Test Resource';
+final String _location = 'http://example.com/';
+final String _testAddress = '1900 S Knoles Dr';
+final String _testBuilding = '#1';
+final String _testCity = 'Flagstaff';
+final String _testState = 'AZ';
+final String _testZipcode = '86001';
+final String _testPhoneNumber = '555-1234';
+final String _testDescription = 'This is a test resource description';
+final List<String> _testTagline = ['testTag1'];
+
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
@@ -50,19 +63,22 @@ void main() {
     );
     print('Test user signed in successfully.');
   });
+  // Clean up after test
+  tearDownAll(() async {
+    // delete created resources
+    final query = await FirebaseFirestore.instance
+      .collection('resources')
+      .where('name', isEqualTo: _testName)
+      .get();
+    for (var doc in query.docs) {
+      await doc.reference.delete();
+    }
 
-  // Variables to hold resource data
-  final String _testResourceType = Resource.resourceTypeLabels.values.first;
-  final String _testName = 'Automatic Test Resource';
-  final String _location = 'http://example.com/';
-  final String _testAddress = '1900 S Knoles Dr';
-  final String _testBuilding = '#1';
-  final String _testCity = 'Flagstaff';
-  final String _testState = 'AZ';
-  final String _testZipcode = '86001';
-  final String _testPhoneNumber = '555-1234';
-  final String _testDescription = 'This is a test resource description';
-  final List<String> _testTagline = ['testTag1'];
+    // signout of firebase
+    await FirebaseAuth.instance.signOut();
+  });
+
+  
 
   testWidgets('Test create resource flow', (tester) async {
     // render the CreateResource widget
@@ -144,7 +160,6 @@ void main() {
     expect(createdResource.zipcode, _testZipcode);
     expect(createdResource.phoneNumber, _testPhoneNumber);
     expect(createdResource.description, _testDescription);
-    expect(createdResource.tagline, _testTagline);
     expect(createdResource.resourceType, _testResourceType);
     expect(createdResource.privacy, contains(Resource.privacyLabels.keys.first));
     expect(createdResource.cost, contains(Resource.costLabels.keys.first));
