@@ -275,7 +275,7 @@ class _CreateResourceState extends State<CreateResource> {
         _uploadProgress = 1.0;
       });
 
-      debugPrint("Created resource ${updatedResource.id}");
+      debugPrint("Created resource ${resourceRef.id}");
 
       String successMessage = bypassVerification
           ? "Resource submitted and auto-verified."
