@@ -30,8 +30,9 @@ void main(){
         
         testWidgets('Widget is not visible when visibility is false', (tester) async {
           // Create a text field container with the label and visibility set to false.
-          isTextFieldVisable = false;
-          textFieldContainer = CustomTextFieldContainer(
+          String textFieldLabel = 'Text Field Label';
+          bool isTextFieldVisable = false;
+          Widget textFieldContainer = CustomTextFieldContainer(
             label: textFieldLabel,
             isVisible: isTextFieldVisable,
           );
