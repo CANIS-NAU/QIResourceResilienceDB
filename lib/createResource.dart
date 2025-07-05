@@ -73,17 +73,17 @@ class CustomTextFieldContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (!isVisible){
+      return SizedBox.shrink();
+    }
     return Container(
       margin: EdgeInsets.symmetric(vertical: isVisible ? 8.0 : 0.0),
-      child: Visibility(
-        visible: isVisible,
-        child: TextField(
-          controller: controller,
-          obscureText: false,
-          decoration: InputDecoration(
-            border: OutlineInputBorder(),
-            labelText: label,
-          ),
+      child: TextField(
+        controller: controller,
+        obscureText: false,
+        decoration: InputDecoration(
+          border: OutlineInputBorder(),
+          labelText: label,
         ),
       ),
     );
