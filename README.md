@@ -51,7 +51,7 @@ Widget testing is primarily done by verifying the presence of widgets within the
 For additional help see the [widget testing documentation](https://docs.flutter.dev/cookbook/testing/widget/introduction).
 
 #### Integration Testing
-Integration testing is similar to widget testing in that you searching for widgets in the build tree but with simulation of user actions. This is accomplished through the use of several methods of the WidgetTester class such as `.tap()`. To setup integration testing download chromedriver according to the instructions [here](https://docs.flutter.dev/cookbook/testing/integration/introduction).<br>
+Integration testing is similar to widget testing in that you searching for widgets in the build tree but with simulation of user actions. This is accomplished through the use of several methods of the WidgetTester class such as `.tap()`. To setup integration testing download chromedriver according to the instructions [here](https://docs.flutter.dev/testing/integration-tests#test-in-a-web-browser).<br>
 
 >**Note:** This will require the user to at least have Node.js v18. It is recommended to have nvm to assist with installations of Node.<br>
 
@@ -63,7 +63,7 @@ Once chrome driver is started use the command:
 
 >`flutter drive --driver=test/test_driver/integration_test.dart --target=path/to/test/file -d chrome`
 
-Set the target to the path of testing file you would like to run. This will run the tests in a chrome browser. In order to run the tests headless replace 'chrome' with 'web-server'. For additional help see flutter's [integration testing documentation](https://docs.flutter.dev/testing/integration-tests#test-in-a-web-browser).
+Set the target to the path of testing file you would like to run. This will run the tests in a chrome browser. In order to run the tests headless replace 'chrome' with 'web-server'. For additional help see flutter's [integration testing documentation](https://docs.flutter.dev/cookbook/testing/integration/introduction).
 
 ## Run Web App Locally
 > Once the installation is complete:
