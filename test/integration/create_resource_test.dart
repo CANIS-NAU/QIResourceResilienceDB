@@ -15,41 +15,33 @@ import 'package:collection/collection.dart';
 Future<void> enterText(
   WidgetTester tester, Key key, String text) async {
   final field = find.byKey(key);
+  // check that widget is found
+  expect(field, findsOneWidget); 
 
-  try { 
-    await tester.ensureVisible(field);
-    await tester.pumpAndSettle();
-    await tester.enterText(field, text);
-  } catch (e) {
-    print('Unable to enter text: $e');
-  }
-
+  await tester.ensureVisible(field);
+  await tester.pumpAndSettle();
+  await tester.enterText(field, text);
 }
 // Helper function to ensure visibility, ensure field exists and tap
 Future<void> tapButton(WidgetTester tester, {String? text, Key? key}) async {
   final field = text != null ? find.text(text) : find.byKey(key!);
+  // check that widget is found  
+  expect(field, findsOneWidget);
 
-  try {
-    await tester.ensureVisible(field);  
-    await tester.pumpAndSettle();
-    await tester.tap(field);
-  } catch(e) {
-    print('Unable to tap button: $e');
-  }
+  await tester.ensureVisible(field);  
+  await tester.pumpAndSettle();
+  await tester.tap(field);
 }
-
 // Helper function to ensure visibility, ensure field exists and tap multiple buttons, provided as a list of strings
 Future<void> tapMultiple(WidgetTester tester, List<String> options) async {
   for (var option in options) {
     Finder field = find.text(option);
+    // check that widget is found
+    expect(field, findsOneWidget);
 
-    try {
-      await tester.ensureVisible(field);  
-      await tester.pumpAndSettle();
-      await tester.tap(field);
-    } catch(e) {
-      print('Unable to tap button: $e');
-    }
+    await tester.ensureVisible(field);  
+    await tester.pumpAndSettle();
+    await tester.tap(field);
   }
 }
 
@@ -124,8 +116,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // select the resource type from radio buttons
-    await tester.tap(find.text(_testResourceType));
-    await tester.pumpAndSettle();
+    await tapButton(tester, text:_testResourceType);
 
     // fill out text fields
 
