@@ -9,7 +9,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:web_app/firebase_options.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:collection/collection.dart';
 
 // Helper function to ensure visibility, ensure field exists and enter text
 Future<void> enterText(
