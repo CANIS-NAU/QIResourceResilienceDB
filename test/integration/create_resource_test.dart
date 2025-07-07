@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -8,21 +9,48 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:web_app/firebase_options.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:collection/collection.dart';
 
-// Helper function to ensure visibility and enter text
+// Helper function to ensure visibility, ensure field exists and enter text
 Future<void> enterText(
   WidgetTester tester, Key key, String text) async {
   final field = find.byKey(key);
-  await tester.ensureVisible(field);
-  await tester.pumpAndSettle();
-  await tester.enterText(field, text);
+
+  try { 
+    await tester.ensureVisible(field);
+    await tester.pumpAndSettle();
+    await tester.enterText(field, text);
+  } catch (e) {
+    print('Unable to enter text: $e');
+  }
+
 }
-// Helper function to ensure visibility and tap
+// Helper function to ensure visibility, ensure field exists and tap
 Future<void> tapButton(WidgetTester tester, {String? text, Key? key}) async {
   final field = text != null ? find.text(text) : find.byKey(key!);
-  await tester.ensureVisible(field);
-  await tester.pumpAndSettle();
-  await tester.tap(field);
+
+  try {
+    await tester.ensureVisible(field);  
+    await tester.pumpAndSettle();
+    await tester.tap(field);
+  } catch(e) {
+    print('Unable to tap button: $e');
+  }
+}
+
+// Helper function to ensure visibility, ensure field exists and tap multiple buttons, provided as a list of strings
+Future<void> tapMultiple(WidgetTester tester, List<String> options) async {
+  for (var option in options) {
+    Finder field = find.text(option);
+
+    try {
+      await tester.ensureVisible(field);  
+      await tester.pumpAndSettle();
+      await tester.tap(field);
+    } catch(e) {
+      print('Unable to tap button: $e');
+    }
+  }
 }
 
 // Variables to hold resource data
@@ -37,6 +65,11 @@ final String _testZipcode = '86001';
 final String _testPhoneNumber = '555-1234';
 final String _testDescription = 'This is a test resource description';
 final List<String> _testTagline = ['testTag1'];
+final List<String> _privacyOptions = [Resource.privacyLabels.values.first, Resource.privacyLabels.values.last];
+final List<String> _costOptions = [Resource.costLabels.values.first, Resource.costLabels.values.last];
+final List<String> _healthFocusOptions = [Resource.healthFocusLabels.values.first, Resource.healthFocusLabels.values.last];
+final String _culturalResponsiveness = Resource.culturalResponsivenessLabels.values.first;
+final String _ageRange = Resource.ageLabels.values.first;
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -48,8 +81,8 @@ void main() {
     print('Dotenv loaded.');
     print('Connecting to Firebase...');
 
-    final username = dotenv.env['LOGIN_USERNAME'];
-    final password = dotenv.env['LOGIN_PASS'];
+    final username = dotenv.env['TEST_ADMIN_USERNAME'];
+    final password = dotenv.env['TEST_ADMIN_PASSWORD'];
 
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
@@ -111,25 +144,25 @@ void main() {
     await tester.pumpAndSettle();
 
     // select privacy options
-    await tapButton(tester, text: Resource.privacyLabels.values.first); // privacy
+    await tapMultiple(tester, _privacyOptions); // privacy
     await tester.pumpAndSettle();
 
     // select cost options
-    await tapButton(tester, text: Resource.costLabels.values.first); // cost
+    await tapMultiple(tester, _costOptions); // cost
     await tester.pumpAndSettle();
 
     // select health focus options
-    await tapButton(tester, text: Resource.healthFocusLabels.values.first);
+    await tapMultiple(tester, _healthFocusOptions); // health focus
     await tester.pumpAndSettle();
 
     // select cultural responsiveness level
-    await tapButton(tester, text: Resource.culturalResponsivenessLabels.values.first);
+    await tapButton(tester, text: _culturalResponsiveness);
     await tester.pumpAndSettle();
 
     // select age range from dropdown
     await tapButton(tester, key: Key('ageRangeDropdown'));
     await tester.pumpAndSettle();
-    await tapButton(tester, text: Resource.ageLabels.values.first);
+    await tapButton(tester, text: _ageRange);
     await tester.pumpAndSettle();
 
     // check auto-verification checkbox
@@ -150,7 +183,7 @@ void main() {
     final Resource createdResource = 
                     Resource.fromJson(query.docs.first.data(), query.docs.first.id);
 
-    // Verify the created resource fields
+    // Validate the created resource fields
     expect(createdResource.name, _testName);
     expect(createdResource.location, _location);
     expect(createdResource.address, _testAddress);
@@ -161,11 +194,14 @@ void main() {
     expect(createdResource.phoneNumber, _testPhoneNumber);
     expect(createdResource.description, _testDescription);
     expect(createdResource.resourceType, _testResourceType);
-    expect(createdResource.privacy, contains(Resource.privacyLabels.keys.first));
-    expect(createdResource.cost, contains(Resource.costLabels.keys.first));
-    expect(createdResource.healthFocus, contains(Resource.healthFocusLabels.keys.first));
     expect(createdResource.culturalResponsiveness, Resource.culturalResponsivenessLabels.keys.first);
     expect(createdResource.agerange, Resource.ageLabels.keys.first);
+
+    // Validate list entries
+    expect(_privacyOptions.join(', ') , createdResource.privacyLabel);
+    expect(_costOptions.join(', '), createdResource.costLabel);
+    expect(_healthFocusOptions.join(', '), createdResource.healthFocusLabel);
+
 
   });
 

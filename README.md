@@ -40,6 +40,31 @@ The firebase CLI provides commands for deploying project components. This can in
 
 First double check that you have updated git to the code you want to deploy, are "use"-ing the correct Firebase project, and that you configured your environment file. Then, all you need to do is `firebase deploy --only hosting`. ("hosting" refers to the web hosting component of Firebase.) If all goes well, this will build the flutter site and then deploy the contents. (You may need to do a complete refresh in your browser to see the changes.)
 
+### Testing
+
+Flutter provides packages for unit, widget and integration testing. All tests and relevant files are located withing the 'test' directory.
+
+#### Widget Testing
+Widget testing is primarily done by verifying the presence of widgets within the build tree. This can be done either by text or by key. Widget tests are located within the directory 'test/widget'. Widget tests can be run either in VS Code's debugging mode or via the CLI. For testing via the CLI, use the command: `flutter test` followed by the location of the testing file. For example:
+>`flutter test test/widget/custom_text_field_test.dart`
+
+For additional help see the [widget testing documentation](https://docs.flutter.dev/cookbook/testing/widget/introduction).
+
+#### Integration Testing
+Integration testing is similar to widget testing in that you searching for widgets in the build tree but with simulation of user actions. This is accomplished through the use of several methods of the WidgetTester class such as `.tap()`. To setup integration testing download chromedriver according to the instructions [here](https://docs.flutter.dev/cookbook/testing/integration/introduction).<br>
+
+>**Note:** This will require the user to at least have Node.js v18. It is recommended to have nvm to assist with installations of Node.<br>
+
+Before starting integration testing run the command:
+
+>`chromedriver --port=4444`
+
+Once chrome driver is started use the command:
+
+>`flutter drive --driver=test/test_driver/integration_test.dart --target=path/to/test/file -d chrome`
+
+Set the target to the path of testing file you would like to run. This will run the tests in a chrome browser. In order to run the tests headless replace 'chrome' with 'web-server'. For additional help see flutter's [integration testing documentation](https://docs.flutter.dev/testing/integration-tests#test-in-a-web-browser).
+
 ## Run Web App Locally
 > Once the installation is complete:
 > 1) Clone or download the repository.
