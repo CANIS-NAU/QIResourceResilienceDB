@@ -5,6 +5,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
+import 'package:web_app/model.dart';
 
 //Shows unverified resources for opportunity to be verified
 class Verify extends StatelessWidget {
@@ -45,16 +46,15 @@ class Verify extends StatelessWidget {
         );
   }
 
-  void reviewResource( dynamic name, String createdBy,
-                                      BuildContext context )
+  void reviewResource( Resource resource, BuildContext context )
   {
     User? user = FirebaseAuth.instance.currentUser;
     if( user != null )
     {
-        if( user.email != createdBy )
+        if( user.email !=  resource.createdBy)
         {  
           Navigator.pushNamed(context, '/reviewresource',
-            arguments: name );
+            arguments: resource );
         }
         else
         {
@@ -107,6 +107,7 @@ class Verify extends StatelessWidget {
 
                       //Get the snapshot data
                       final data = snapshot.requireData;
+                      final docs = data.docs.toList();
 
                       //Return a list of the data, no data if size is 0
                       if( data.size != 0 )
@@ -197,8 +198,7 @@ class Verify extends StatelessWidget {
                                                   ),
                                                   onPressed: () {
                                                     reviewResource(
-                                                      data.docs[index],
-                                                      data.docs[index]['createdBy'],
+                                                      Resource.fromJson(docs[index].data() as Map<String, dynamic>, data.docs[index].id),
                                                       context,
                                                     );
                                                   },
@@ -228,8 +228,7 @@ class Verify extends StatelessWidget {
                                                   ),
                                                   onPressed: () {
                                                     reviewResource( 
-                                                      data.docs[ index ],
-                                                      data.docs[ index ]['createdBy'],
+                                                      Resource.fromJson(docs[index].data() as Map<String, dynamic>, docs[index].id),
                                                       context );
                                                   },
                                                   child: Icon(

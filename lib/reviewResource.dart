@@ -15,9 +15,10 @@ import 'package:web_app/model.dart';
 import 'package:web_app/time.dart';
 import 'package:web_app/util.dart';
 import 'package:web_app/Analytics.dart';
+import 'package:web_app/model.dart';
 
 class ReviewResource extends StatefulWidget {
-  final QueryDocumentSnapshot resourceData;
+  final Resource resourceData;
 
   ReviewResource({Key? key, required this.resourceData})
       : super(key: key);
@@ -41,9 +42,9 @@ class _ReviewResourceState extends State<ReviewResource> {
                                                 UserReview(currentUser) : null;
 
   // function to verify a resource
-  Future<void> verifyResource(name) async {
+  Future<void> verifyResource(resource) async {
     try {
-      await resourceCollection.doc(name.id).update({"verified": true});
+      await resourceCollection.doc(resource.id).update({"verified": true});
       await showMessageDialog(
         context,
         title:'Success',
@@ -59,9 +60,9 @@ class _ReviewResourceState extends State<ReviewResource> {
   }
 
   // function to deny/delete a resourcecontext
-  Future<void> deleteResource(name) async {
+  Future<void> deleteResource(resource) async {
     try {
-      await resourceCollection.doc(name.id).delete();
+      await resourceCollection.doc(resource.id).delete();
       await showMessageDialog(
         context,
         title:'Success',
@@ -110,24 +111,22 @@ class _ReviewResourceState extends State<ReviewResource> {
         .catchError( (error) => print("Error updating document $error"));
   }
 
-  Future<void> submitToInbox( QueryDocumentSnapshot currentResource, 
+  Future<void> submitToInbox( Resource currentResource, 
                                                 String status, String comments )
   {
-    String email = "${currentResource['createdBy']}";
-    String resourceName = "${currentResource['name']}";
+    String email = "${currentResource.createdBy}";
+    String resourceName = "${currentResource.name}";
 
     DateTime currentTime = DateTime.now();
 
     String timestamp = "${currentTime}";
     
     String description = "" +
-      "Cultural Rating part 1: ${ culturalRatingHopi } / 5, " +
-      "Cultural Rating part 2: ${ culturalRatingIndigenous } / 5, "
-      "Experience Rating: ${ experienceRating } / 5, " +
-      "Current Rating: ${ currentRating } / 5, " +
+      "Indigenous Cultural Rating: ${ culturalRatingIndigenous } / 5, "
+      "Hopi Cultural Rating: ${ culturalRatingHopi } / 5, " +
       "Behavioral Health Accuracy Rating: ${ contentAccurate } / 5, " +
       "Behavioral Health Trustworthy Rating: ${ contentTrustworthy } / 5, " +
-      "Current Rating: ${ currentRating } / 5, ";
+      "Behavioral Health Current Rating: ${ contentCurrent } / 5, ";
 
 
     User? currentUser = FirebaseAuth.instance.currentUser;
@@ -571,66 +570,7 @@ class _ReviewResourceState extends State<ReviewResource> {
     String userComments = "";
 
     int totalScore = culturalRatingHopi! + culturalRatingIndigenous!
-                      + currentRating! + contentAccurate! + contentTrustworthy! + currentRating! + contentCurrent!;
-
-    String resourceInfo = 'Name: ${widget.resourceData['name']}\n\n'
-        'Description: ${widget.resourceData['description']}\n\n'
-        'Type: ${widget.resourceData['resourceType']}\n\n';
-
-    resourceInfo += 'Privacy: ${widget.resourceData['privacy'].join(', ')}\n\n'
-        'Cultural Responsiveness: ${Resource.culturalResponsivenessLabels[widget
-        .resourceData['culturalResponsiveness']]}\n';
-
-    if (widget.resourceData['resourceType'] == 'Event') {
-      final schedule = Schedule.fromJson(widget.resourceData['schedule']);
-      if (schedule is ScheduleOnce) {
-        // One-time events info...
-        resourceInfo += "\nOne time event:\n\n";
-        resourceInfo += "Date: ${longDateFormat.format(schedule.date)}";
-        if (schedule.time != null) {
-          resourceInfo += " ${schedule.time!.format(context)} (${schedule.timeZone})";
-        }
-        resourceInfo += "\n";
-      } else if (schedule is ScheduleRecurring) {
-        // Recurring events info...
-        resourceInfo += "\nRecurring event:\n\n";
-        resourceInfo += "Starts: ${longDateFormat.format(schedule.date)}";
-        if (schedule.time != null) {
-          resourceInfo += " ${schedule.time!.format(context)} (${schedule.timeZone})";
-        }
-        resourceInfo += "\n\nFrequency: ${schedule.frequency.name}\n";
-        if (schedule.until != null) {
-          resourceInfo += "\nUntil: ${longDateFormat.format(schedule.until!)}\n";
-        }
-      } else {
-        resourceInfo += "\n(UNHANDLED EVENT SCHEDULE)\n";
-      }
-    }
-
-    // create a full address if it is an in person resource
-    String fullAddress = "";
-    String addressUrl = "";
-    if (widget.resourceData['resourceType'] == 'In Person') {
-      fullAddress = widget.resourceData['address'] + ' ' +
-          widget.resourceData['building']! + ' ' + widget.resourceData['city'] +
-          ' ' + widget.resourceData['state'] +  ' ' + widget.resourceData['zipcode'];
-    }
-
-    // create a phone url if it is a hotline or in person resource
-    String phoneNumStr="";
-    String phoneUrl = "";
-    if (widget.resourceData['resourceType'] == 'Hotline' ||
-        widget.resourceData['resourceType'] == 'In Person') {
-      phoneNumStr = widget.resourceData['phoneNumber'];
-      phoneUrl = "tel:$phoneNumStr";
-    }
-
-    // create a url link
-    String urlStr = widget.resourceData['location'];
-    final Uri url = Uri.parse(urlStr);
-
-    // initialize the data a resource was created
-    String date = '\nDate Added: ${widget.resourceData['dateAdded']}';
+                      + contentAccurate! + contentTrustworthy! + contentCurrent!;
 
     return Scaffold(
         appBar: AppBar(
