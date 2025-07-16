@@ -1,8 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:web_app/common.dart';
-import 'package:web_app/events/schedule.dart';
 import 'package:web_app/events/schedule_view.dart';
 import 'package:web_app/file_attachments.dart';
 import 'package:web_app/pdfDownload.dart';
