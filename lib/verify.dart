@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
 import 'package:web_app/model.dart';
+import 'package:web_app/util.dart';
 
 //Shows unverified resources for opportunity to be verified
 class Verify extends StatelessWidget {
@@ -63,11 +64,30 @@ class Verify extends StatelessWidget {
     }
   }
 
+  // function to deny/delete a resource
+  Future<void> deleteResource(BuildContext context, resource) async {
+    try {
+      await resourceCollection.doc(resource.id).delete();
+      await showMessageDialog(
+        context,
+        title:'Success',
+        message: "Resource has been denied."
+      );
+    } catch (e) {
+      await showMessageDialog(
+        context,
+        title: 'Error',
+        message: "Failed to delete resource: $e",
+      );
+    }
+  }
+
   //Verification UI  
   @override
   Widget build(BuildContext context) {
     final bool isSmallScreen = MediaQuery.of(context).size.width < 800;
     final User? currentUser = FirebaseAuth.instance.currentUser;
+    final parentContext = context;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Verify Resource'),
@@ -227,9 +247,7 @@ class Verify extends StatelessWidget {
                                                             Color>(Colors.black),
                                                   ),
                                                   onPressed: () {
-                                                    reviewResource( 
-                                                      Resource.fromJson(docs[index].data() as Map<String, dynamic>, docs[index].id),
-                                                      context );
+                                                    deleteResource(parentContext, docs[index]);
                                                   },
                                                   child: Icon(
                                                     Icons.delete_outlined,
