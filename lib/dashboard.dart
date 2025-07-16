@@ -813,7 +813,7 @@ class _DashboardState extends State<Dashboard>
     LineChartData chartData = LineChartData(
       lineTouchData: LineTouchData(
         touchTooltipData: LineTouchTooltipData(
-          tooltipBgColor: Colors.grey[300]!,
+          getTooltipColor: (LineBarSpot _) => Colors.grey[300]!,
           fitInsideVertically: true,
           fitInsideHorizontally: true,
         ),
@@ -1065,7 +1065,7 @@ class _DashboardState extends State<Dashboard>
         borderData: FlBorderData(show: true),
         barTouchData: BarTouchData(
           touchTooltipData: BarTouchTooltipData(
-              tooltipBgColor: Colors.grey[300]!,
+              getTooltipColor: (BarChartGroupData _) => Colors.grey[300]!,
               getTooltipItem: (group, groupIndex, rod, rodIndex) {
                 if (rod.toY == 0) {
                   return null;
