@@ -4,7 +4,6 @@ import 'dart:html' as html;
 import 'dart:ui';
 import 'package:share_plus/share_plus.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
-import 'package:web_app/view_resource/resource_detail.dart';
 
 class PdfDownload {
   PdfDownload();

@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:web_app/events/schedule.dart';
 import 'package:web_app/util.dart';
 import 'package:web_app/view_resource/resource_detail.dart';
 import 'package:provider/provider.dart';

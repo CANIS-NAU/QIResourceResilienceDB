@@ -4,7 +4,6 @@ import 'package:web_app/top10resources.dart';
 import 'firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:multi_select_flutter/multi_select_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:timezone/browser.dart' as tz;
 
