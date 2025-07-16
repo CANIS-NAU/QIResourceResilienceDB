@@ -371,18 +371,20 @@ class _ReviewResourceState extends State<ReviewResource> {
                     context: context,
                     builder: (context) => AlertDialog(
                       title: Text("Confirm Resource Rejection"),
-                      content: Text("Are you sure you want to deny this resource?"),
+                      content: Text("Answering 'No' to any preliminary questions will result in the automatic rejection of this resource. Are you sure?"),
                       actions: [
                         TextButton(
-                          child: Text("Cancel"),
+                          child: Text("No, go back"),
+                          style: TextButton.styleFrom(
+                            foregroundColor: Colors.grey,
+                          ),
                           onPressed: () => Navigator.pop(context, false),
                         ),
-                        TextButton(
-                          style: TextButton.styleFrom(
-                            backgroundColor: Colors.red,
-                            foregroundColor: Colors.white,
+                        OutlinedButton(
+                          child: Text("Yes, reject"),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Theme.of(context).primaryColorDark,
                           ),
-                          child: Text("Deny"),
                           onPressed: () => Navigator.pop(context, true),
                         ),
                       ],
