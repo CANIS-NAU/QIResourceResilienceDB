@@ -113,15 +113,9 @@ class _ReviewResourceState extends State<ReviewResource> {
         .catchError( (error) => print("Error updating document $error"));
   }
 
-  Future<void> submitToInbox( Resource currentResource, 
+  Future<void> submitToInbox( Resource resource, 
                                                 String status, String comments )
   {
-    String email = "${currentResource.createdBy}";
-    String resourceName = "${currentResource.name}";
-
-    DateTime currentTime = DateTime.now();
-
-    String timestamp = "${currentTime}";
     
     String description = "" +
       "Indigenous Cultural Rating: ${ culturalRatingIndigenous } / 5, "
@@ -136,12 +130,12 @@ class _ReviewResourceState extends State<ReviewResource> {
 
     final inboxInstance = {
       'reviewedby': reviewer,
-      'email': email,
+      'email': resource.createdBy,
       'status': status,
       'description': description,
-      'submittedName': resourceName,
+      'submittedName': resource.name,
       'comments': comments,
-      'timestamp': timestamp
+      'timestamp': DateTime.now()
     };
 
     return inboxRef.add( inboxInstance ).then( ( value ) => 
