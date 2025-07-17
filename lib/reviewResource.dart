@@ -15,6 +15,7 @@ import 'package:web_app/model.dart';
 import 'package:web_app/time.dart';
 import 'package:web_app/util.dart';
 import 'package:web_app/Analytics.dart';
+import 'package:web_app/createResource.dart';
 
 class ReviewResource extends StatefulWidget {
   final QueryDocumentSnapshot resourceData;
@@ -77,31 +78,36 @@ class _ReviewResourceState extends State<ReviewResource> {
   }
 
   // function to add rubric info to a resource
-  Future<void> updateResourceRubric(resource, userComments, totalScore) {
+  Future<void> updateResourceRubric(resource, userComments) {
     // define rubric and all sub-fields (score, ratings, comments)
-    final rubric = {
-      'avoidRacism': avoidRacism,
-      'avoidStereotyping': avoidStereotyping,
-      'avoidAppropriation': avoidAppropriation,
-      'avoidSexism': avoidSexism,
-      'avoidAgeism': avoidAgeism,
-      'avoidCond' : avoidCond,
-      'avoidLanguage' : avoidLanguage,
-      'appropriate' : appropriate,
-      'totalScore': totalScore,
-      'additionalComments': userComments,
-      'genderBalance': selectedGenderOptions,
-      'ageBalance': selectedAgeRanges,
-      'lifeExperiences': selectedLifeExperiences,
-      'experienceBalance': experienceRating,
-      'contentAccurate' : contentAccurate,
-      'contentTrustworthy' : contentTrustworthy,
-      'contentCurrent' : contentCurrent,
-    };
+    final Rubric rubric = 
+      Rubric(
+        appropriate: appropriate,
+        avoidAgeism: avoidAgeism,
+        avoidAppropriation: avoidAppropriation,
+        avoidCondescension: avoidCondescension,
+        avoidRacism: avoidRacism,
+        avoidSexism: avoidSexism,
+        avoidStereotyping: avoidStereotyping,
+        avoidVulgarity: avoidVulgarity,
 
+        accessibilityFeatures: _selectedAccessibilityFeatures.toList(),
+        additionalComments: userComments,
+        ageBalance: _selectedAge.toList(),
+        genderBalance: _selectedGender.toList(),
+        lifeExperiences: _selectedLifeExperiences.toList(),
+        queerSexualitySpecific: queerSexualitySpecific,
+
+        contentAccurate: contentAccurate,
+        contentCurrent: contentCurrent,
+        contentTrustworthy: contentTrustworthy,
+        culturallyGroundedHopi: culturalRatingHopi,
+        culturallyGroundedIndigenous: culturalRatingIndigenous,
+      ); 
+    
     // Add admin review of a resource
     if(userReview != null) {
-      userReview?.submittedResource(rubric);
+      userReview?.submittedResource(rubric.toJson());
     }
 
   //update the resource with rubric information
@@ -123,11 +129,9 @@ class _ReviewResourceState extends State<ReviewResource> {
     String description = "" +
       "Cultural Rating part 1: ${ culturalRatingHopi } / 5, " +
       "Cultural Rating part 2: ${ culturalRatingIndigenous } / 5, "
-      "Experience Rating: ${ experienceRating } / 5, " +
-      "Current Rating: ${ currentRating } / 5, " +
       "Behavioral Health Accuracy Rating: ${ contentAccurate } / 5, " +
       "Behavioral Health Trustworthy Rating: ${ contentTrustworthy } / 5, " +
-      "Current Rating: ${ currentRating } / 5, ";
+      "Current Rating: ${ contentCurrent } / 5, ";
 
 
     User? currentUser = FirebaseAuth.instance.currentUser;
@@ -150,67 +154,36 @@ class _ReviewResourceState extends State<ReviewResource> {
   }
 
   // initialize all ratings to 0
-  int? culturalRatingIndigenous = 0;
-  int? culturalRatingHopi = 0;
-  int? experienceRating = 0;
-  int? currentRating = 0;
-  String? avoidRacism = '/null';
-  String? avoidStereotyping = '/null';
-  String? avoidAppropriation = '/null';
-  String? avoidLanguage = '/null';
-  String? appropriate = '/null';
-  String? avoidCond = '/null';
-  String? avoidAgeism = '/null';
-  String? avoidSexism = '/null';
-  String? sexuality = '/null';
+  bool? appropriate = null;
+  bool? avoidAgeism = null;
+  bool? avoidAppropriation = null;
+  bool? avoidCondescension = null;
+  bool? avoidRacism = null;
+  bool? avoidSexism = null;
+  bool? avoidStereotyping = null;
+  bool? avoidVulgarity = null;
+
+  List<String>? selectedAccessibilityFeatures = [];
+  String? userComments = null;
+  List<String>? selectedAgeRanges = [];
+  List<String>? selectedGenderOptions = [];
+  List<String>? selectedLifeExperiences = [];
+  bool? queerSexualitySpecific = null;
+
   int? contentAccurate = 0;
-  int? contentTrustworthy = 0;
   int? contentCurrent = 0;
+  int? contentTrustworthy = 0;
+  int? culturalRatingHopi = 0;
+  int? culturalRatingIndigenous = 0;
 
-  // list of possible gender options
-  List<String> genderOptions = [
-    'Female',
-    'Male',
-    'Non-binary',
-    'Other (please specify in comments)',
-  ];
 
-  final List<bool> selectedGenders = List<bool>.filled(4, false);
-  List<String> selectedGenderOptions = [];
+  Set<String> _selectedGender = {};
 
-  // list of possible age ranges
-  List<String> ageRanges = [
-    'Under 18',
-    '18-24',
-    '24-65',
-    '65+',
-  ];
+  Set<String> _selectedAge= {};
 
-  final List<bool> selectedAges = List<bool>.filled(4, false);
-  List<String> selectedAgeRanges = [];
+  Set<String> _selectedLifeExperiences = {};
 
-  // list of possible life experiences
-  List<String> lifeExperiences = [
-    'Specific to houseless or unsheltered relatives',
-    'Specific to parents or guardians',
-    'Specific to grandparents',
-    'Specific to college students',
-    'Specific to people living away from home (e.g., college students or people living away from Hopi)',
-  ];
-
-  final List<bool> selectedExperiences = List<bool>.filled(5, false);
-  List<String> selectedLifeExperiences = [];
-
-  //Potential accessibility features
-  List<String> accessibilityFeatures = [
-    'Resource is accessible to people who are visually impaired.',
-    'Resource is accessible to people who are hearing impaired.',
-    'Resource is accessible for people with mobility challenges (only applicable for in-person resources).',
-    'Resource offers accessibility features for people who are neurodivergent.',
-    'Resource is related to a sober living facility, which has been verified by ADHS and AHCCCS.',
-  ];
-  final List<bool> selectedAccessibility = List<bool>.filled(5, false);
-  List<String> selectedAccessibilityFeatures = [];
+  Set<String> _selectedAccessibilityFeatures = {};
 
   // take in the name of the standard and description and displays it
   Widget buildStandardTitle(title, description) {
@@ -284,7 +257,7 @@ class _ReviewResourceState extends State<ReviewResource> {
   }*/
 
   // builds the radio button ratings for the preliminary questions
-  Widget buildYesNoRating(rating, Function(String) updateRating, screenSize) {
+  Widget buildYesNoRating(rating, Function(bool) updateRating, screenSize) {
 
     double ratingItemWidth;
 
@@ -305,7 +278,8 @@ class _ReviewResourceState extends State<ReviewResource> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: List.generate(2, (index) {
-        final value = ButtonOptions[index];
+        final label = ButtonOptions[index];
+        final value = (label == 'Yes');
         return SizedBox(
           width: ratingItemWidth,
           child: Container(
@@ -314,11 +288,11 @@ class _ReviewResourceState extends State<ReviewResource> {
               title: Row(
                   children: [
                     Expanded(
-                      child: Text("$value"))]),
+                      child: Text("$label"))]),
               value: value,
               groupValue: rating,
               onChanged: (newValue) {
-                updateRating(newValue as String);
+                updateRating(newValue as bool);
               },
               focusNode: FocusNode(skipTraversal: true),
             ),
@@ -329,7 +303,7 @@ class _ReviewResourceState extends State<ReviewResource> {
   }
 
     // builds the radio button ratings for the preliminary questions
-  Widget buildPreliminaryRating(rating, Function(String) updateRating, screenSize) {
+  Widget buildPreliminaryRating(rating, Function(bool) updateRating, screenSize) {
 
     double ratingItemWidth;
 
@@ -350,7 +324,8 @@ class _ReviewResourceState extends State<ReviewResource> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: List.generate(2, (index) {
-        final value = ButtonOptions[index];
+        final label = ButtonOptions[index];
+        final value = (label == 'Yes');
         return SizedBox(
           width: ratingItemWidth,
           child: Container(
@@ -359,12 +334,12 @@ class _ReviewResourceState extends State<ReviewResource> {
               title: Row(
                   children: [
                     Expanded(
-                      child: Text("$value"))]),
+                      child: Text("$label"))]),
               value: value,
               groupValue: rating,
               onChanged: (newValue) {
-                updateRating(newValue as String);
-                if(newValue == 'No')
+                updateRating(newValue as bool);
+                if(newValue == false)
                 {
                   Future(() async {
                     await deleteResource(widget.resourceData);
@@ -570,68 +545,6 @@ class _ReviewResourceState extends State<ReviewResource> {
 
     String userComments = "";
 
-    int totalScore = culturalRatingHopi! + culturalRatingIndigenous!
-                      + currentRating! + contentAccurate! + contentTrustworthy! + currentRating! + contentCurrent!;
-
-    String resourceInfo = 'Name: ${widget.resourceData['name']}\n\n'
-        'Description: ${widget.resourceData['description']}\n\n'
-        'Type: ${widget.resourceData['resourceType']}\n\n';
-
-    resourceInfo += 'Privacy: ${widget.resourceData['privacy'].join(', ')}\n\n'
-        'Cultural Responsiveness: ${Resource.culturalResponsivenessLabels[widget
-        .resourceData['culturalResponsiveness']]}\n';
-
-    if (widget.resourceData['resourceType'] == 'Event') {
-      final schedule = Schedule.fromJson(widget.resourceData['schedule']);
-      if (schedule is ScheduleOnce) {
-        // One-time events info...
-        resourceInfo += "\nOne time event:\n\n";
-        resourceInfo += "Date: ${longDateFormat.format(schedule.date)}";
-        if (schedule.time != null) {
-          resourceInfo += " ${schedule.time!.format(context)} (${schedule.timeZone})";
-        }
-        resourceInfo += "\n";
-      } else if (schedule is ScheduleRecurring) {
-        // Recurring events info...
-        resourceInfo += "\nRecurring event:\n\n";
-        resourceInfo += "Starts: ${longDateFormat.format(schedule.date)}";
-        if (schedule.time != null) {
-          resourceInfo += " ${schedule.time!.format(context)} (${schedule.timeZone})";
-        }
-        resourceInfo += "\n\nFrequency: ${schedule.frequency.name}\n";
-        if (schedule.until != null) {
-          resourceInfo += "\nUntil: ${longDateFormat.format(schedule.until!)}\n";
-        }
-      } else {
-        resourceInfo += "\n(UNHANDLED EVENT SCHEDULE)\n";
-      }
-    }
-
-    // create a full address if it is an in person resource
-    String fullAddress = "";
-    String addressUrl = "";
-    if (widget.resourceData['resourceType'] == 'In Person') {
-      fullAddress = widget.resourceData['address'] + ' ' +
-          widget.resourceData['building']! + ' ' + widget.resourceData['city'] +
-          ' ' + widget.resourceData['state'] +  ' ' + widget.resourceData['zipcode'];
-    }
-
-    // create a phone url if it is a hotline or in person resource
-    String phoneNumStr="";
-    String phoneUrl = "";
-    if (widget.resourceData['resourceType'] == 'Hotline' ||
-        widget.resourceData['resourceType'] == 'In Person') {
-      phoneNumStr = widget.resourceData['phoneNumber'];
-      phoneUrl = "tel:$phoneNumStr";
-    }
-
-    // create a url link
-    String urlStr = widget.resourceData['location'];
-    final Uri url = Uri.parse(urlStr);
-
-    // initialize the data a resource was created
-    String date = '\nDate Added: ${widget.resourceData['dateAdded']}';
-
     return Scaffold(
         appBar: AppBar(
           title: const Text('Review Resource'),
@@ -750,9 +663,9 @@ class _ReviewResourceState extends State<ReviewResource> {
                           SizedBox(height: 10.0),
                           // create rating buttons and assign to correct rating
                           SizedBox(
-                              child: buildPreliminaryRating(avoidCond, (newValue) {
+                              child: buildPreliminaryRating(avoidCondescension, (newValue) {
                                 setState(() {
-                                  avoidCond = newValue;
+                                  avoidCondescension = newValue;
                                 });
                               }, screenSize)),
                           SizedBox(height: 15),
@@ -764,9 +677,9 @@ class _ReviewResourceState extends State<ReviewResource> {
                           SizedBox(height: 10.0),
                           // create rating buttons and assign to correct rating
                           SizedBox(
-                              child: buildPreliminaryRating(avoidLanguage, (newValue) {
+                              child: buildPreliminaryRating(avoidVulgarity, (newValue) {
                                 setState(() {
-                                  avoidLanguage = newValue;
+                                  avoidVulgarity = newValue;
                                 });
                               }, screenSize)),
                           SizedBox(height: 15),
@@ -843,43 +756,19 @@ class _ReviewResourceState extends State<ReviewResource> {
                       ),
                       SizedBox(height: 10.0),
                       // create check boxes to display possible genders
-                            SizedBox(
-                                width: screenSize.width > 850
-                                    ? screenSize.width / 1.5
-                                    : screenSize.width / 1,
-                                child: GridView.count(
-                                  crossAxisCount:
-                                      screenSize.width > 850 ? 2 : 1,
-                                  padding: EdgeInsets.only(right: 30.0),
-                                  childAspectRatio: screenSize.width > 850 ? 8 : 15,
-                                  shrinkWrap: true,
-                                  children: List<CheckboxListTile>.generate(
-                                      genderOptions.length,
-                                      (int index) => CheckboxListTile(
-                                            title: Text(genderOptions[index],
-                                                style: TextStyle(fontSize: 14)),
-                                            value: selectedGenders[index],
-                                            onChanged: (value) {
-                                              setState(() {
-                                                selectedGenders[index] = value!;
-                                                if (value) {
-                                                  selectedGenderOptions.add(
-                                                      genderOptions[index]);
-                                                } else {
-                                                  selectedGenderOptions.remove(
-                                                      genderOptions[index]);
-                                                }
-                                              });
-                                            },
-                                            controlAffinity:
-                                                ListTileControlAffinity.leading,
-                                            contentPadding: EdgeInsets.zero,
-                                            dense: true,
-                                        focusNode: FocusNode(skipTraversal: true),
-                                          )),
-                                ),
-                              ),
-                              SizedBox(height: 15),
+                      CustomCheckboxList(
+                        options: Rubric.genderLabels,
+                        selectedOptions: _selectedGender,
+                        onChanged: (value) {
+                          setState(() {
+                            if (_selectedGender.contains(value)) {
+                              _selectedGender.remove(value);
+                            } else {
+                              _selectedGender.add(value);
+                            }
+                          });
+                      }),
+                      SizedBox(height: 15),
                       // sexuality and gender
                       buildStandardTitle(
                           "Is this content specific to LGBTQIA+/Two Spirit identities?",
@@ -887,9 +776,9 @@ class _ReviewResourceState extends State<ReviewResource> {
                       SizedBox(height: 10.0),
                       // create rating buttons and assign to correct rating
                       SizedBox(
-                          child: buildYesNoRating(sexuality, (newValue) {
+                          child: buildYesNoRating(queerSexualitySpecific, (newValue) {
                             setState(() {
-                              sexuality = newValue;
+                              queerSexualitySpecific = newValue;
                             });
                           }, screenSize)),
 
@@ -908,49 +797,24 @@ class _ReviewResourceState extends State<ReviewResource> {
                       ),
                       SizedBox(height: 10.0),
                       // create check boxes for ages
-                            SizedBox(
-                                  width: screenSize.width > 850
-                                      ? screenSize.width / 1.1
-                                      : screenSize.width / 1,
-                                  child: GridView.count(
-                                      crossAxisCount:
-                                          screenSize.width > 850 ? 3 : 1,
-                                      padding: EdgeInsets.only(right: 30.0),
-                                      childAspectRatio:
-                                          screenSize.width > 850 ? 8 : 15,
-                                      shrinkWrap: true,
-                                      children: List<CheckboxListTile>.generate(
-                                          ageRanges.length,
-                                          (index) => CheckboxListTile(
-                                                title: Text(ageRanges[index],
-                                                    style: TextStyle(
-                                                        fontSize: 14.0)),
-                                                value: selectedAges[index],
-                                                onChanged: (value) {
-                                                  setState(() {
-                                                    selectedAges[index] =
-                                                        value!;
-                                                    if (value) {
-                                                      selectedAgeRanges.add(
-                                                          ageRanges[index]);
-                                                    } else {
-                                                      selectedAgeRanges.remove(
-                                                          ageRanges[index]);
-                                                    }
-                                                  });
-                                                },
-                                                controlAffinity:
-                                                    ListTileControlAffinity
-                                                        .leading,
-                                                contentPadding: EdgeInsets.zero,
-                                                dense: true,
-                                            focusNode: FocusNode(skipTraversal: true),
-                                              )))),
-                              SizedBox(height: 15),
-                    // life experience standard
-                    buildStandardTitle(
-                        "Life Experiences",
-                        "Please select which life experiences this content is relavent for. "),
+                      CustomCheckboxList(
+                        options: Resource.ageLabels,
+                        selectedOptions: _selectedAge,
+                        onChanged: (value) {
+                          setState(() {
+                            if (_selectedAge.contains(value)) {
+                              _selectedAge.remove(value);
+                            } else {
+                              _selectedAge.add(value);
+                            }
+                          });
+                        },
+                      ),
+                      SizedBox(height: 15),
+                      // life experience standard
+                      buildStandardTitle(
+                          "Life Experiences",
+                          "Please select which life experiences this content is relavent for. "),
                     SizedBox(height: 10.0),
                     Text(
                       "Experiences:",
@@ -960,46 +824,21 @@ class _ReviewResourceState extends State<ReviewResource> {
                       ),
                     ),
                     SizedBox(height: 10.0),
-                    // create check boxes for experiences
-                          SizedBox(
-                                width: screenSize.width > 850
-                                    ? screenSize.width / 1.1
-                                    : screenSize.width / 1,
-                                child: GridView.count(
-                                    crossAxisCount:
-                                        screenSize.width > 850 ? 3 : 1,
-                                    padding: EdgeInsets.only(right: 30.0),
-                                    childAspectRatio:
-                                        screenSize.width > 850 ? 8 : 15,
-                                    shrinkWrap: true,
-                                    children: List<CheckboxListTile>.generate(
-                                        lifeExperiences.length,
-                                        (index) => CheckboxListTile(
-                                              title: Text(lifeExperiences[index],
-                                                  style: TextStyle(
-                                                      fontSize: 14.0)),
-                                              value: selectedExperiences[index],
-                                              onChanged: (value) {
-                                                setState(() {
-                                                  selectedExperiences[index] =
-                                                      value!;
-                                                  if (value) {
-                                                    selectedLifeExperiences.add(
-                                                        lifeExperiences[index]);
-                                                  } else {
-                                                    selectedLifeExperiences.remove(
-                                                        lifeExperiences[index]);
-                                                  }
-                                                });
-                                              },
-                                              controlAffinity:
-                                                  ListTileControlAffinity
-                                                      .leading,
-                                              contentPadding: EdgeInsets.zero,
-                                              dense: true,
-                                          focusNode: FocusNode(skipTraversal: true),
-                                            )))),
-                            SizedBox(height: 15),
+                    // create check boxes for life experiences
+                    CustomCheckboxList(
+                      options: Rubric.lifeExperienceLabels,
+                      selectedOptions: _selectedLifeExperiences,
+                      onChanged: (value) {
+                        setState(() {
+                          if (_selectedLifeExperiences.contains(value)) {
+                            _selectedLifeExperiences.remove(value);
+                          } else {
+                            _selectedLifeExperiences.add(value);
+                          }
+                        });
+                      },
+                    ),
+                    SizedBox(height: 15),
                     // accessibility standard
                     buildStandardTitle(
                         "Accessibility",
@@ -1014,45 +853,20 @@ class _ReviewResourceState extends State<ReviewResource> {
                     ),
                     SizedBox(height: 10.0),
                     // create check boxes for accessibility
-                    SizedBox(
-                          width: screenSize.width > 850
-                              ? screenSize.width / 1.1
-                              : screenSize.width / 1,
-                          child: GridView.count(
-                              crossAxisCount:
-                                  screenSize.width > 850 ? 3 : 1,
-                              padding: EdgeInsets.only(right: 30.0),
-                              childAspectRatio:
-                                  screenSize.width > 850 ? 8 : 15,
-                              shrinkWrap: true,
-                              children: List<CheckboxListTile>.generate(
-                                  accessibilityFeatures.length,
-                                  (index) => CheckboxListTile(
-                                        title: Text(accessibilityFeatures[index],
-                                            style: TextStyle(
-                                                fontSize: 14.0)),
-                                        value: selectedAccessibility[index],
-                                        onChanged: (value) {
-                                          setState(() {
-                                            selectedAccessibility[index] =
-                                                value!;
-                                            if (value) {
-                                              selectedAccessibilityFeatures.add(
-                                                  accessibilityFeatures[index]);
-                                            } else {
-                                              selectedAccessibilityFeatures.remove(
-                                                  accessibilityFeatures[index]);
-                                            }
-                                          });
-                                        },
-                                        controlAffinity:
-                                            ListTileControlAffinity
-                                                .leading,
-                                        contentPadding: EdgeInsets.zero,
-                                        dense: true,
-                                    focusNode: FocusNode(skipTraversal: true),
-                                      )))),
-                      SizedBox(height: 15),
+                    CustomCheckboxList(
+                      options: Rubric.accessibilityLabels,
+                      selectedOptions: _selectedAccessibilityFeatures,
+                      onChanged: (value) {
+                        setState(() {
+                          if (_selectedAccessibilityFeatures.contains(value)) {
+                            _selectedAccessibilityFeatures.remove(value);
+                          } else {
+                            _selectedAccessibilityFeatures.add(value);
+                          }
+                        });
+                      },
+                    ),
+                    SizedBox(height: 15),
                   ],
                 ),
               ),
@@ -1121,7 +935,11 @@ class _ReviewResourceState extends State<ReviewResource> {
             SizedBox(height: 10),
             // display the total score of ratings
             Text(
-                "Total Score: ${totalScore} / 25"),
+                "Total Score: ${contentAccurate! 
+                                + contentTrustworthy!
+                                + contentCurrent!
+                                + culturalRatingHopi!
+                                + culturalRatingIndigenous!} / 25"),
             SizedBox(height: 20),
             // display box for user comments
             Text('Additional Comments',
@@ -1167,8 +985,7 @@ class _ReviewResourceState extends State<ReviewResource> {
                   ),
                   onPressed: () async {
                     await verifyResource(widget.resourceData);
-                    await updateResourceRubric(widget.resourceData, userComments,
-                                                                    totalScore);
+                    await updateResourceRubric(widget.resourceData, userComments);
                     await submitToInbox( widget.resourceData, "Approved",
                                                                  userComments );
                     if (mounted) {
