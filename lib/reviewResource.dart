@@ -240,44 +240,6 @@ class _ReviewResourceState extends State<ReviewResource> {
     );
   }
 
-  // displays the score key
-  Widget buildScoringKey() {
-    return Text(
-      "Please answer the following questions on the content of the resource.",
-      style: TextStyle(
-        decoration: TextDecoration.underline,
-        color: Colors.black,
-        fontSize: 20.0,
-        fontWeight: FontWeight.bold,
-      ),
-    );
-  }
-
-    // displays the score key
-  Widget buildPreliminaryScoringKey() {
-    return Text(
-      "Please select 'Yes' or 'No' for the following questions. If you answer 'No' to any of the following questions, the resource will be automatically denied.",
-      style: TextStyle(
-        decoration: TextDecoration.underline,
-        color: Colors.black,
-        fontSize: 20.0,
-        fontWeight: FontWeight.bold,
-      ),
-    );
-  }
-
-  //class to represent yes and no radio buttons
- /* class YesNoButtons extends StatefulWidget {
-    const YesNoButtons({super.key});
-
-    @override
-    State<YesNoButtons> createState() => _YesNoButtons();
-  }
-
-  class _YesNoButtons extends State<YesNoButtons> {
-    PrelimAnswer? _answer = PrelimAnswer.yes;
-  }*/
-
   // builds the radio button ratings for the preliminary questions
   Widget buildYesNoRating(rating, Function(String) updateRating, screenSize) {
 
