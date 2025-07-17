@@ -598,7 +598,17 @@ class _ReviewResourceState extends State<ReviewResource> {
                 ),
               ),
               SizedBox(height: 10),
-              buildPreliminaryScoringKey(),
+              Divider(
+                color: Colors.grey,
+                thickness: 1.0,
+              ),
+              Text("Please select Yes or No for the following questions. If you answer No to any of the following questions, the resource will be automatically denied.",
+                style: TextStyle(
+                  color: Colors.black,
+                  fontSize: 20.0,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               SizedBox(height: 15.0),
               // first standard: culturally grounded
               buildStandardTitle(
@@ -706,7 +716,17 @@ class _ReviewResourceState extends State<ReviewResource> {
                 }, screenSize),
               ),
               SizedBox(height: 15),
-              buildScoringKey(),
+              Divider(
+                color: Colors.grey,
+                thickness: 1.0,
+              ),
+              Text("Please answer the following questions on the content of the resource.",
+                style: TextStyle(
+                  color: Colors.black,
+                  fontSize: 20.0,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               SizedBox(height: 15.0),
               buildStandardTitle(
                 "Culturally grounded",
@@ -920,7 +940,17 @@ class _ReviewResourceState extends State<ReviewResource> {
                 ),
               ),
               SizedBox(height: 15),
-              buildScoringKey(),
+              Divider(
+                color: Colors.grey,
+                thickness: 1.0,
+              ),
+              Text("Please answer the following questions on the content of the resource.",
+                style: TextStyle(
+                  color: Colors.black,
+                  fontSize: 20.0,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               SizedBox(height: 15.0),
               buildStandardTitle(
                 "Content presents accurate, up-to-date infromation",
