@@ -47,7 +47,7 @@ class Verify extends StatelessWidget {
         );
   }
 
-  void reviewResource( Resource resource, BuildContext context )
+  void reviewResource( BuildContext context, Resource resource )
   {
     User? user = FirebaseAuth.instance.currentUser;
     if( user != null )
@@ -128,6 +128,7 @@ class Verify extends StatelessWidget {
                       //Get the snapshot data
                       final data = snapshot.requireData;
                       final docs = data.docs.toList();
+                      final resourceList = docs.map((doc) => Resource.fromJson(doc.data() as Map<String, dynamic>, doc.id)).toList();
 
                       //Return a list of the data, no data if size is 0
                       if( data.size != 0 )
@@ -157,14 +158,14 @@ class Verify extends StatelessWidget {
                                                 horizontal: 30.0),
                                             dense: false,
                                             title: SizedBox(width: index == 0? 95:80,
-                                                child: Text('${data.docs[index]['name']}',
+                                                child: Text('${resourceList[index].name}',
                                                 overflow: TextOverflow.clip,
                                                 softWrap: true,
                                                 maxLines: isSmallScreen ? 2 : null,
                                                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: isSmallScreen ? 18 : 25))
                                             ),
                                             subtitle: SizedBox( width: 80,
-                                                child: Text('Description: ${data.docs[ index ][ 'description' ]}',
+                                                child: Text('Description: ${resourceList[index].description}',
                                                     overflow: TextOverflow.ellipsis,
                                                     maxLines: 2,
                                                     softWrap: true,
@@ -174,7 +175,7 @@ class Verify extends StatelessWidget {
                                               mainAxisSize: MainAxisSize.min,
                                               children: [
                                                 // if a resource was created by the current user, show created by you
-                                                currentUser != null && currentUser.email == data.docs[index]['createdBy']
+                                                currentUser != null && currentUser.email == resourceList[index].createdBy
                                                     ? Text(
                                                   'Created by you',
                                                   style: TextStyle(
@@ -185,7 +186,7 @@ class Verify extends StatelessWidget {
                                                     : SizedBox(),
                                                 SizedBox(width: 10),
                                                 // if the resource was created by the current user, disable the review button
-                                                currentUser != null && currentUser.email == data.docs[index]['createdBy']
+                                                currentUser != null && currentUser.email == resourceList[index].createdBy
                                                     ? TextButton(
                                                   style: ButtonStyle(
                                                     shape: MaterialStateProperty.all<RoundedRectangleBorder>(
@@ -218,8 +219,8 @@ class Verify extends StatelessWidget {
                                                   ),
                                                   onPressed: () {
                                                     reviewResource(
-                                                      Resource.fromJson(docs[index].data() as Map<String, dynamic>, data.docs[index].id),
                                                       context,
+                                                      resourceList[index],
                                                     );
                                                   },
                                                   child: Text(
@@ -247,7 +248,10 @@ class Verify extends StatelessWidget {
                                                             Color>(Colors.black),
                                                   ),
                                                   onPressed: () {
-                                                    deleteResource(parentContext, docs[index]);
+                                                    deleteResource(
+                                                      parentContext,
+                                                      resourceList[index],
+                                                    );
                                                   },
                                                   child: Icon(
                                                     Icons.delete_outlined,
