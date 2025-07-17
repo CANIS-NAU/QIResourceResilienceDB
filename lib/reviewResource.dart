@@ -376,7 +376,8 @@ class _ReviewResourceState extends State<ReviewResource> {
                         TextButton(
                           child: Text("No, go back"),
                           style: TextButton.styleFrom(
-                            foregroundColor: Colors.grey,
+                            foregroundColor: Color.fromARGB(255, 72, 72, 72),
+
                           ),
                           onPressed: () => Navigator.pop(context, false),
                         ),
