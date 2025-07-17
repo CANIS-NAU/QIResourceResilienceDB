@@ -2,7 +2,7 @@ import 'package:web_app/file_attachments.dart';
 import 'package:web_app/events/schedule.dart';
 
 class Rubric {
-  // Preliminary questionnaire fields
+  // Preliminary rating fields
   final bool? appropriate;
   final bool? avoidAgeism;
   final bool? avoidAppropriation;
