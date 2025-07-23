@@ -62,32 +62,57 @@ class MyApp extends StatelessWidget {
         '/top10resources' : (context) => Top10Resources(),
       },
       theme: ThemeData(
-        primaryColor: Color(0xFF0060BE),
-        primaryColorDark: Color(0xFF0052a2),
-        primaryColorLight: Color(0xFF006edb),
-        focusColor: Color(0xFF0CCCCCC),
-        hoverColor: Color(0xFF0CCCCCC),
+        primaryColor: Color.fromARGB(255, 0, 96, 190),
+        primaryColorDark: Color.fromARGB(255, 0, 82, 162),
+        primaryColorLight: Color.fromARGB(255, 0, 110, 219),
+        focusColor: Color.fromARGB(255, 204, 204, 204),
+        hoverColor: Color.fromARGB(255, 204, 204, 204),
         appBarTheme: AppBarTheme(
-          color: Color(0xFF0060BE),
+          color: Color.fromARGB(255, 0, 96, 190),
           iconTheme: IconThemeData(color: Colors.white),
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ButtonStyle(
             backgroundColor: MaterialStateProperty.resolveWith<Color>((Set<MaterialState> states) {
               if (states.contains(MaterialState.pressed)) {
-                return Color(0xFF0052a2);
+                return Color.fromARGB(255, 0, 82, 162);
               } else if (states.contains(MaterialState.hovered)) {
-                return Color(0xFF0052a2);
+                return Color.fromARGB(255, 0, 82, 162);
               } else if (states.contains(MaterialState.focused)) {
-                return Color(0xFF0052a2);
+                return Color.fromARGB(255, 0, 82, 162);
               }
-              return Color(0xFF0060BE);
+              return Color.fromARGB(255, 0, 96, 190);
             }),
           ),
         ),
         textButtonTheme: TextButtonThemeData(
           style: ButtonStyle(
           foregroundColor: MaterialStateProperty.all<Color>(Color(0xFF0060BE)),
+          backgroundColor: MaterialStateProperty.resolveWith<Color>((states) {
+            if (states.contains(MaterialState.pressed)) {
+              return Color.fromARGB(255, 204, 204, 204);
+            } else if (states.contains(MaterialState.hovered)) {
+              return Color.fromARGB(255, 204, 204, 204);
+            } else if (states.contains(MaterialState.focused)) {
+              return Color.fromARGB(255, 204, 204, 204);
+            }
+            return Colors.transparent;
+          }),
+          ),
+        ),
+        outlinedButtonTheme: OutlinedButtonThemeData(
+          style: ButtonStyle(
+            foregroundColor: MaterialStateProperty.all<Color>(Color(0xFF0060BE)),
+            backgroundColor: MaterialStateProperty.resolveWith<Color>((Set<MaterialState> states) {
+              if (states.contains(MaterialState.pressed)) {
+                return Color.fromARGB(255, 204, 204, 204);
+              } else if (states.contains(MaterialState.hovered)) {
+                return Color.fromARGB(255, 204, 204, 204);
+              } else if (states.contains(MaterialState.focused)) {
+                return Color.fromARGB(255, 204, 204, 204);
+              }
+              return Colors.transparent;
+            }),
           ),
         ),
         chipTheme: ChipThemeData(
