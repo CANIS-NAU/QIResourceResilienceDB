@@ -5,6 +5,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
+import 'package:web_app/model.dart';
+import 'package:web_app/util.dart';
 
 //Shows unverified resources for opportunity to be verified
 class Verify extends StatelessWidget {
@@ -45,16 +47,15 @@ class Verify extends StatelessWidget {
         );
   }
 
-  void reviewResource( dynamic name, String createdBy,
-                                      BuildContext context )
+  void reviewResource( BuildContext context, Resource resource )
   {
     User? user = FirebaseAuth.instance.currentUser;
     if( user != null )
     {
-        if( user.email != createdBy )
+        if( user.email !=  resource.createdBy)
         {  
           Navigator.pushNamed(context, '/reviewresource',
-            arguments: name );
+            arguments: resource );
         }
         else
         {
@@ -63,11 +64,30 @@ class Verify extends StatelessWidget {
     }
   }
 
+  // function to deny/delete a resource
+  Future<void> deleteResource(BuildContext context, resource) async {
+    try {
+      await resourceCollection.doc(resource.id).delete();
+      await showMessageDialog(
+        context,
+        title:'Success',
+        message: "Resource has been denied."
+      );
+    } catch (e) {
+      await showMessageDialog(
+        context,
+        title: 'Error',
+        message: "Failed to delete resource: $e",
+      );
+    }
+  }
+
   //Verification UI  
   @override
   Widget build(BuildContext context) {
     final bool isSmallScreen = MediaQuery.of(context).size.width < 800;
     final User? currentUser = FirebaseAuth.instance.currentUser;
+    final parentContext = context;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Verify Resource'),
@@ -107,6 +127,8 @@ class Verify extends StatelessWidget {
 
                       //Get the snapshot data
                       final data = snapshot.requireData;
+                      final docs = data.docs.toList();
+                      final resourceList = docs.map((doc) => Resource.fromJson(doc.data() as Map<String, dynamic>, doc.id)).toList();
 
                       //Return a list of the data, no data if size is 0
                       if( data.size != 0 )
@@ -136,14 +158,14 @@ class Verify extends StatelessWidget {
                                                 horizontal: 30.0),
                                             dense: false,
                                             title: SizedBox(width: index == 0? 95:80,
-                                                child: Text('${data.docs[index]['name']}',
+                                                child: Text('${resourceList[index].name}',
                                                 overflow: TextOverflow.clip,
                                                 softWrap: true,
                                                 maxLines: isSmallScreen ? 2 : null,
                                                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: isSmallScreen ? 18 : 25))
                                             ),
                                             subtitle: SizedBox( width: 80,
-                                                child: Text('Description: ${data.docs[ index ][ 'description' ]}',
+                                                child: Text('Description: ${resourceList[index].description}',
                                                     overflow: TextOverflow.ellipsis,
                                                     maxLines: 2,
                                                     softWrap: true,
@@ -153,7 +175,7 @@ class Verify extends StatelessWidget {
                                               mainAxisSize: MainAxisSize.min,
                                               children: [
                                                 // if a resource was created by the current user, show created by you
-                                                currentUser != null && currentUser.email == data.docs[index]['createdBy']
+                                                currentUser != null && currentUser.email == resourceList[index].createdBy
                                                     ? Text(
                                                   'Created by you',
                                                   style: TextStyle(
@@ -164,7 +186,7 @@ class Verify extends StatelessWidget {
                                                     : SizedBox(),
                                                 SizedBox(width: 10),
                                                 // if the resource was created by the current user, disable the review button
-                                                currentUser != null && currentUser.email == data.docs[index]['createdBy']
+                                                currentUser != null && currentUser.email == resourceList[index].createdBy
                                                     ? TextButton(
                                                   style: ButtonStyle(
                                                     shape: MaterialStateProperty.all<RoundedRectangleBorder>(
@@ -197,9 +219,8 @@ class Verify extends StatelessWidget {
                                                   ),
                                                   onPressed: () {
                                                     reviewResource(
-                                                      data.docs[index],
-                                                      data.docs[index]['createdBy'],
                                                       context,
+                                                      resourceList[index],
                                                     );
                                                   },
                                                   child: Text(
@@ -227,10 +248,10 @@ class Verify extends StatelessWidget {
                                                             Color>(Colors.black),
                                                   ),
                                                   onPressed: () {
-                                                    reviewResource( 
-                                                      data.docs[ index ],
-                                                      data.docs[ index ]['createdBy'],
-                                                      context );
+                                                    deleteResource(
+                                                      parentContext,
+                                                      resourceList[index],
+                                                    );
                                                   },
                                                   child: Icon(
                                                     Icons.delete_outlined,

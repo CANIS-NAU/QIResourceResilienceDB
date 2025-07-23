@@ -13,11 +13,71 @@ import 'package:url_launcher/url_launcher_string.dart';
 import 'package:web_app/events/schedule.dart';
 import 'package:web_app/model.dart';
 import 'package:web_app/time.dart';
+import 'package:web_app/top10resources.dart';
 import 'package:web_app/util.dart';
 import 'package:web_app/Analytics.dart';
+import 'package:web_app/model.dart';
+import 'package:web_app/view_resource/resource_detail.dart';
+
+// Widget that displays a row of radio buttons that are responsive to screen size
+// If the screen is narrower than 600px, it displays the radio buttons in a column instead of a row
+class ResponsiveRadioRow<T> extends StatelessWidget {
+  final Map<T, String> options;
+  final T? selectedValue;
+  final ValueChanged<T?> onChanged;
+  final TextStyle? labelStyle;
+  final FocusNode? focusNode;
+
+  const ResponsiveRadioRow({
+    super.key,
+    required this.options,
+    required this.selectedValue,
+    required this.onChanged,
+    this.labelStyle,
+    this.focusNode,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final screenSize = MediaQuery.of(context).size;
+    return screenSize.width > 600
+          ? Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: options.entries.map((entry) {
+                final value = entry.key;
+                final label = entry.value;
+                return Expanded(
+                  child: RadioListTile<T>(
+                    title: Text(label, style: labelStyle),
+                    value: value,
+                    groupValue: selectedValue,
+                    onChanged: onChanged,
+                    focusNode: focusNode ?? FocusNode(skipTraversal: true),
+                    controlAffinity: ListTileControlAffinity.leading,
+                  ),
+                );
+              }).toList(),
+            )
+            
+          : Column(
+              children: options.entries.map((entry) {
+                final value = entry.key;
+                final label = entry.value;
+                return RadioListTile(
+                  title: Text(label),
+                  value: value,
+                  groupValue: selectedValue,
+                  onChanged: onChanged,
+                  focusNode: focusNode ?? FocusNode(skipTraversal: true),
+                  controlAffinity: ListTileControlAffinity.leading,
+                );
+              }).toList(),
+            );
+    }
+  }
 
 class ReviewResource extends StatefulWidget {
-  final QueryDocumentSnapshot resourceData;
+  final Resource resourceData;
 
   ReviewResource({Key? key, required this.resourceData})
       : super(key: key);
@@ -41,9 +101,9 @@ class _ReviewResourceState extends State<ReviewResource> {
                                                 UserReview(currentUser) : null;
 
   // function to verify a resource
-  Future<void> verifyResource(name) async {
+  Future<void> verifyResource(resource) async {
     try {
-      await resourceCollection.doc(name.id).update({"verified": true});
+      await resourceCollection.doc(resource.id).update({"verified": true});
       await showMessageDialog(
         context,
         title:'Success',
@@ -59,9 +119,9 @@ class _ReviewResourceState extends State<ReviewResource> {
   }
 
   // function to deny/delete a resourcecontext
-  Future<void> deleteResource(name) async {
+  Future<void> deleteResource(resource) async {
     try {
-      await resourceCollection.doc(name.id).delete();
+      await resourceCollection.doc(resource.id).delete();
       await showMessageDialog(
         context,
         title:'Success',
@@ -110,24 +170,16 @@ class _ReviewResourceState extends State<ReviewResource> {
         .catchError( (error) => print("Error updating document $error"));
   }
 
-  Future<void> submitToInbox( QueryDocumentSnapshot currentResource, 
+  Future<void> submitToInbox( Resource resource, 
                                                 String status, String comments )
   {
-    String email = "${currentResource['createdBy']}";
-    String resourceName = "${currentResource['name']}";
-
-    DateTime currentTime = DateTime.now();
-
-    String timestamp = "${currentTime}";
     
     String description = "" +
-      "Cultural Rating part 1: ${ culturalRatingHopi } / 5, " +
-      "Cultural Rating part 2: ${ culturalRatingIndigenous } / 5, "
-      "Experience Rating: ${ experienceRating } / 5, " +
-      "Current Rating: ${ currentRating } / 5, " +
+      "Indigenous Cultural Rating: ${ culturalRatingIndigenous } / 5, "
+      "Hopi Cultural Rating: ${ culturalRatingHopi } / 5, " +
       "Behavioral Health Accuracy Rating: ${ contentAccurate } / 5, " +
       "Behavioral Health Trustworthy Rating: ${ contentTrustworthy } / 5, " +
-      "Current Rating: ${ currentRating } / 5, ";
+      "Behavioral Health Current Rating: ${ contentCurrent } / 5, ";
 
 
     User? currentUser = FirebaseAuth.instance.currentUser;
@@ -135,12 +187,12 @@ class _ReviewResourceState extends State<ReviewResource> {
 
     final inboxInstance = {
       'reviewedby': reviewer,
-      'email': email,
+      'email': resource.createdBy,
       'status': status,
       'description': description,
-      'submittedName': resourceName,
+      'submittedName': resource.name,
       'comments': comments,
-      'timestamp': timestamp
+      'timestamp': DateTime.now()
     };
 
     return inboxRef.add( inboxInstance ).then( ( value ) => 
@@ -244,44 +296,6 @@ class _ReviewResourceState extends State<ReviewResource> {
       ],
     );
   }
-
-  // displays the score key
-  Widget buildScoringKey() {
-    return Text(
-      "Please answer the following questions on the content of the resource.",
-      style: TextStyle(
-        decoration: TextDecoration.underline,
-        color: Colors.black,
-        fontSize: 15.0,
-        fontWeight: FontWeight.bold,
-      ),
-    );
-  }
-
-    // displays the score key
-  Widget buildPreliminaryScoringKey() {
-    return Text(
-      "Please select 'Yes' or 'No' for the following questions. If you answer 'No' to any of the following questions, the resource will be automatically denied.",
-      style: TextStyle(
-        decoration: TextDecoration.underline,
-        color: Colors.black,
-        fontSize: 15.0,
-        fontWeight: FontWeight.bold,
-      ),
-    );
-  }
-
-  //class to represent yes and no radio buttons
- /* class YesNoButtons extends StatefulWidget {
-    const YesNoButtons({super.key});
-
-    @override
-    State<YesNoButtons> createState() => _YesNoButtons();
-  }
-
-  class _YesNoButtons extends State<YesNoButtons> {
-    PrelimAnswer? _answer = PrelimAnswer.yes;
-  }*/
 
   // builds the radio button ratings for the preliminary questions
   Widget buildYesNoRating(rating, Function(String) updateRating, screenSize) {
@@ -415,44 +429,6 @@ class _ReviewResourceState extends State<ReviewResource> {
     );
   }
 
-  // builds the radio button ratings
-  Widget buildRating(rating, Function(int) updateRating, screenSize) {
-
-    double ratingItemWidth;
-
-    if (screenSize.width > 850) {
-      ratingItemWidth = screenSize.width / 10;
-    } else if (screenSize.width > 600) {
-      ratingItemWidth = screenSize.width / 8;
-    } else {
-      ratingItemWidth = screenSize.width / 6;
-    }
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: List.generate(5, (index) {
-        final value = index + 1;
-        return SizedBox(
-          width: ratingItemWidth,
-          child: Container(
-            child: RadioListTile(
-              dense: true,
-              title: Row(
-                  children: [
-                    Expanded(
-                      child: Text("$value"))]),
-              value: value,
-              groupValue: rating,
-              onChanged: (newValue) {
-                updateRating(newValue as int);
-              },
-              focusNode: FocusNode(skipTraversal: true),
-            ),
-          ),
-        );
-      }),
-    );
-  }
 
   // creates an active phone number link
   Widget buildPhoneLink(phoneUrl, phoneNumStr, resourceType) {
@@ -602,651 +578,559 @@ class _ReviewResourceState extends State<ReviewResource> {
     String userComments = "";
 
     int totalScore = culturalRatingHopi! + culturalRatingIndigenous!
-                      + currentRating! + contentAccurate! + contentTrustworthy! + currentRating! + contentCurrent!;
-
-    String resourceInfo = 'Name: ${widget.resourceData['name']}\n\n'
-        'Description: ${widget.resourceData['description']}\n\n'
-        'Type: ${widget.resourceData['resourceType']}\n\n';
-
-    resourceInfo += 'Privacy: ${widget.resourceData['privacy'].join(', ')}\n\n'
-        'Cultural Responsiveness: ${Resource.culturalResponsivenessLabels[widget
-        .resourceData['culturalResponsiveness']]}\n';
-
-    if (widget.resourceData['resourceType'] == 'Event') {
-      final schedule = Schedule.fromJson(widget.resourceData['schedule']);
-      if (schedule is ScheduleOnce) {
-        // One-time events info...
-        resourceInfo += "\nOne time event:\n\n";
-        resourceInfo += "Date: ${longDateFormat.format(schedule.date)}";
-        if (schedule.time != null) {
-          resourceInfo += " ${schedule.time!.format(context)} (${schedule.timeZone})";
-        }
-        resourceInfo += "\n";
-      } else if (schedule is ScheduleRecurring) {
-        // Recurring events info...
-        resourceInfo += "\nRecurring event:\n\n";
-        resourceInfo += "Starts: ${longDateFormat.format(schedule.date)}";
-        if (schedule.time != null) {
-          resourceInfo += " ${schedule.time!.format(context)} (${schedule.timeZone})";
-        }
-        resourceInfo += "\n\nFrequency: ${schedule.frequency.name}\n";
-        if (schedule.until != null) {
-          resourceInfo += "\nUntil: ${longDateFormat.format(schedule.until!)}\n";
-        }
-      } else {
-        resourceInfo += "\n(UNHANDLED EVENT SCHEDULE)\n";
-      }
-    }
-
-    // create a full address if it is an in person resource
-    String fullAddress = "";
-    String addressUrl = "";
-    if (widget.resourceData['resourceType'] == 'In Person') {
-      fullAddress = widget.resourceData['address'] + ' ' +
-          widget.resourceData['building']! + ' ' + widget.resourceData['city'] +
-          ' ' + widget.resourceData['state'] +  ' ' + widget.resourceData['zipcode'];
-    }
-
-    // create a phone url if it is a hotline or in person resource
-    String phoneNumStr="";
-    String phoneUrl = "";
-    if (widget.resourceData['resourceType'] == 'Hotline' ||
-        widget.resourceData['resourceType'] == 'In Person') {
-      phoneNumStr = widget.resourceData['phoneNumber'];
-      phoneUrl = "tel:$phoneNumStr";
-    }
-
-    // create a url link
-    String urlStr = widget.resourceData['location'];
-    final Uri url = Uri.parse(urlStr);
-
-    // initialize the data a resource was created
-    String date = '\nDate Added: ${widget.resourceData['dateAdded']}';
+                      + contentAccurate! + contentTrustworthy! + contentCurrent!;
 
     return Scaffold(
-        appBar: AppBar(
-          title: const Text('Review Resource'),
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            splashRadius: 20.0,
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-          ),
+      appBar: AppBar(
+        title: const Text('Review Resource'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          splashRadius: 20.0,
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
         ),
-        body: SafeArea(
-            child: SingleChildScrollView(
-              child: Container(
-                padding: const EdgeInsets.all(10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+      ),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: 800),
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: ListView(
+                  padding: EdgeInsets.all(16.0),
                   children: [
-                  // display information about the resource
-                  Text(
-                  'Resource Information',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: screenSize.width > 600 ? 22.0 : 18.0,
-                  ),
-                ),
-                SizedBox(height: 10),
-                    Container(
-                      padding: EdgeInsets.all(10.0),
-                      height: 500,
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey.withOpacity(0.5)),
-                        borderRadius: BorderRadius.circular(10.0),
+                          //ResourceDetail(resourceModel: widget.resourceData,),
+                    //SizedBox(height: 20.0),
+                    Text(
+                      'Resource Information',
+                      style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: screenSize.width > 600 ? 22.0 : 18.0,
                       ),
-                      child: SingleChildScrollView(
-                          child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                              buildPreliminaryScoringKey(),
-                          SizedBox(height: 15.0),
-                          // first standard: culturally grounded
-                          buildStandardTitle(
-                              "Avoids Racism",
-                              "Content does not exhibit racist verbiage or values."),
-                          SizedBox(height: 10.0),
-                          // create rating buttons and assign to correct rating
-                          SizedBox(
-                              child: buildPreliminaryRating(avoidRacism, (newValue) {
-                                setState(() {
-                                  avoidRacism = newValue;
-                                });
-                              }, screenSize)),
-                          SizedBox(height: 15),
-                          
-                          // first standard: culturally grounded
-                          buildStandardTitle(
-                              "Avoids Sexism and Gender Stereotyping",
-                              "Content does not exhibit sexist verbiage or values."),
-                          SizedBox(height: 10.0),
-                          // create rating buttons and assign to correct rating
-                          SizedBox(
-                              child: buildPreliminaryRating(avoidSexism, (newValue) {
-                                setState(() {
-                                  avoidSexism = newValue;
-                                });
-                              }, screenSize)),
-                          SizedBox(height: 15),
-
-                          // first standard: culturally grounded
-                          buildStandardTitle(
-                              "Avoids Pan-Indian Stereotypes",
-                              "Content does not exhibit sexist verbiage or values."),
-                          SizedBox(height: 10.0),
-                          // create rating buttons and assign to correct rating
-                          SizedBox(
-                              child: buildPreliminaryRating(avoidStereotyping, (newValue) {
-                                setState(() {
-                                  avoidStereotyping = newValue;
-                                });
-                              }, screenSize)),
-                          SizedBox(height: 15),
-                          
-                          // first standard: culturally grounded
-                          buildStandardTitle(
-                              "Avoids Cultural Appropriation",
-                              "Content does not appropriate or misuse any aspect of any culture."),
-                          SizedBox(height: 10.0),
-                          // create rating buttons and assign to correct rating
-                          SizedBox(
-                              child: buildPreliminaryRating(avoidAppropriation, (newValue) {
-                                setState(() {
-                                  avoidAppropriation = newValue;
-                                });
-                              }, screenSize)),
-                          SizedBox(height: 15),
-                          
-                          // first standard: culturally grounded
-                          buildStandardTitle(
-                              "Avoids Ageism",
-                              "Content does not exhibit stereotypes based on age."),
-                          SizedBox(height: 10.0),
-                          // create rating buttons and assign to correct rating
-                          SizedBox(
-                              child: buildPreliminaryRating(avoidAgeism, (newValue) {
-                                setState(() {
-                                  avoidAgeism = newValue;
-                                });
-                              }, screenSize)),
-                          SizedBox(height: 15),
-                          
-                          // first standard: culturally grounded
-                          buildStandardTitle(
-                              "Avoids Being Condescending",
-                              "Content does not 'talk down.'"),
-                          SizedBox(height: 10.0),
-                          // create rating buttons and assign to correct rating
-                          SizedBox(
-                              child: buildPreliminaryRating(avoidCond, (newValue) {
-                                setState(() {
-                                  avoidCond = newValue;
-                                });
-                              }, screenSize)),
-                          SizedBox(height: 15),
-                          
-                          // first standard: culturally grounded
-                          buildStandardTitle(
-                              "Avoids Innapropriate Language and Content",
-                              "Content avoids profanity, vulgar language, inappropriate references to sexuality or violence, or substance abuse."),
-                          SizedBox(height: 10.0),
-                          // create rating buttons and assign to correct rating
-                          SizedBox(
-                              child: buildPreliminaryRating(avoidLanguage, (newValue) {
-                                setState(() {
-                                  avoidLanguage = newValue;
-                                });
-                              }, screenSize)),
-                          SizedBox(height: 15),
-                          
-                          // first standard: culturally grounded
-                          buildStandardTitle(
-                              "Content Suggests Available and Appropriate Services",
-                              "Content does not recommend services that are unavailable or that are inconsistent with HBHSs approach to alcoholism treatment and/or behavioral healthcare."),
-                          SizedBox(height: 10.0),
-                          // create rating buttons and assign to correct rating
-                          SizedBox(
-                              child: buildPreliminaryRating(appropriate, (newValue) {
-                                setState(() {
-                                  appropriate = newValue;
-                                });
-                              }, screenSize)),
-                          SizedBox(height: 15),
-                      ],
                     ),
-                  ),
-                ),
-                Container(
-                  padding: EdgeInsets.all(10.0),
-                  height: 500,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey.withOpacity(0.5)),
-                    borderRadius: BorderRadius.circular(10.0),
-                  ),
-                  child: SingleChildScrollView(
-                      child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                          buildScoringKey(),
-                      SizedBox(height: 15.0),
-                      // first standard: culturally grounded, part 1
-                      buildStandardTitle(
-                          "Culturally grounded",
-                          "Content is specific to Indigenous individuals."),
-                      SizedBox(height: 10.0),
-                      // create rating buttons and assign to correct rating
-                      SizedBox(
-                          child: buildRating(culturalRatingIndigenous, (newValue) {
-                            setState(() {
-                              culturalRatingIndigenous = newValue;
-                            });
-                          }, screenSize)),
-                      SizedBox(height: 15),
-                      // first standard: culturally grounded, part 2
-                      buildStandardTitle(
-                          "Culturally grounded",
-                          "Content is specific to Hopi."),
-                      SizedBox(height: 10.0),
-                      // create rating buttons and assign to correct rating
-                      SizedBox(
-                          child: buildRating(culturalRatingHopi, (newValue) {
-                            setState(() {
-                              culturalRatingHopi = newValue;
-                            });
-                          }, screenSize)),
-
-                      // gender balance standard
-                      buildStandardTitle(
-                          "Gender and Sexual Orientation",
-                          "Is the content specific to any particular gender(s)? "
-                              "If so, please specify below. "),
-                      SizedBox(height: 10.0),
-                      Text(
-                        "Which gender(s)?",
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 14.0,
-                        ),
+                    SizedBox(height: 10),
+                    Divider(
+                      color: Colors.grey,
+                      thickness: 1.0,
+                    ),
+                    Text("Please select Yes or No for the following questions. If you answer No to any of the following questions, the resource will be automatically denied.",
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 20.0,
+                        fontWeight: FontWeight.bold,
                       ),
-                      SizedBox(height: 10.0),
-                      // create check boxes to display possible genders
-                            SizedBox(
-                                width: screenSize.width > 850
-                                    ? screenSize.width / 1.5
-                                    : screenSize.width / 1,
-                                child: GridView.count(
-                                  crossAxisCount:
-                                      screenSize.width > 850 ? 2 : 1,
-                                  padding: EdgeInsets.only(right: 30.0),
-                                  childAspectRatio: screenSize.width > 850 ? 8 : 15,
-                                  shrinkWrap: true,
-                                  children: List<CheckboxListTile>.generate(
-                                      genderOptions.length,
-                                      (int index) => CheckboxListTile(
-                                            title: Text(genderOptions[index],
-                                                style: TextStyle(fontSize: 14)),
-                                            value: selectedGenders[index],
-                                            onChanged: (value) {
-                                              setState(() {
-                                                selectedGenders[index] = value!;
-                                                if (value) {
-                                                  selectedGenderOptions.add(
-                                                      genderOptions[index]);
-                                                } else {
-                                                  selectedGenderOptions.remove(
-                                                      genderOptions[index]);
-                                                }
-                                              });
-                                            },
-                                            controlAffinity:
-                                                ListTileControlAffinity.leading,
-                                            contentPadding: EdgeInsets.zero,
-                                            dense: true,
-                                        focusNode: FocusNode(skipTraversal: true),
-                                          )),
-                                ),
-                              ),
-                              SizedBox(height: 15),
-                      // sexuality and gender
-                      buildStandardTitle(
-                          "Is this content specific to LGBTQIA+/Two Spirit identities?",
-                          "Please check yes or no."),
-                      SizedBox(height: 10.0),
-                      // create rating buttons and assign to correct rating
-                      SizedBox(
-                          child: buildYesNoRating(sexuality, (newValue) {
-                            setState(() {
-                              sexuality = newValue;
-                            });
-                          }, screenSize)),
-
-
-                      // age balance standard
-                      buildStandardTitle(
-                          "Age balance",
-                          "Please select which age group(s) the content is targeted towards. "),
-                      SizedBox(height: 10.0),
-                      Text(
-                        "Ages:",
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 14.0,
-                        ),
-                      ),
-                      SizedBox(height: 10.0),
-                      // create check boxes for ages
-                            SizedBox(
-                                  width: screenSize.width > 850
-                                      ? screenSize.width / 1.1
-                                      : screenSize.width / 1,
-                                  child: GridView.count(
-                                      crossAxisCount:
-                                          screenSize.width > 850 ? 3 : 1,
-                                      padding: EdgeInsets.only(right: 30.0),
-                                      childAspectRatio:
-                                          screenSize.width > 850 ? 8 : 15,
-                                      shrinkWrap: true,
-                                      children: List<CheckboxListTile>.generate(
-                                          ageRanges.length,
-                                          (index) => CheckboxListTile(
-                                                title: Text(ageRanges[index],
-                                                    style: TextStyle(
-                                                        fontSize: 14.0)),
-                                                value: selectedAges[index],
-                                                onChanged: (value) {
-                                                  setState(() {
-                                                    selectedAges[index] =
-                                                        value!;
-                                                    if (value) {
-                                                      selectedAgeRanges.add(
-                                                          ageRanges[index]);
-                                                    } else {
-                                                      selectedAgeRanges.remove(
-                                                          ageRanges[index]);
-                                                    }
-                                                  });
-                                                },
-                                                controlAffinity:
-                                                    ListTileControlAffinity
-                                                        .leading,
-                                                contentPadding: EdgeInsets.zero,
-                                                dense: true,
-                                            focusNode: FocusNode(skipTraversal: true),
-                                              )))),
-                              SizedBox(height: 15),
-                    // life experience standard
+                    ),
+                    SizedBox(height: 15.0),
+                    // first standard: culturally grounded
                     buildStandardTitle(
-                        "Life Experiences",
-                        "Please select which life experiences this content is relavent for. "),
+                      "Avoids Racism",
+                      "Content does not exhibit racist verbiage or values.",
+                    ),
+                    SizedBox(height: 10.0),
+                    // create rating buttons and assign to correct rating
+                    SizedBox(
+                      child: buildPreliminaryRating(avoidRacism, (newValue) {
+                      setState(() {
+                        avoidRacism = newValue;
+                      });
+                      }, screenSize),
+                    ),
+                    SizedBox(height: 15),
+                    buildStandardTitle(
+                      "Avoids Sexism and Gender Stereotyping",
+                      "Content does not exhibit sexist verbiage or values.",
+                    ),
+                    SizedBox(height: 10.0),
+                    SizedBox(
+                      child: buildPreliminaryRating(avoidSexism, (newValue) {
+                      setState(() {
+                        avoidSexism = newValue;
+                      });
+                      }, screenSize),
+                    ),
+                    SizedBox(height: 15),
+                    buildStandardTitle(
+                      "Avoids Pan-Indian Stereotypes",
+                      "Content does not exhibit sexist verbiage or values.",
+                    ),
+                    SizedBox(height: 10.0),
+                    SizedBox(
+                      child: buildPreliminaryRating(avoidStereotyping, (newValue) {
+                      setState(() {
+                        avoidStereotyping = newValue;
+                      });
+                      }, screenSize),
+                    ),
+                    SizedBox(height: 15),
+                    buildStandardTitle(
+                      "Avoids Cultural Appropriation",
+                      "Content does not appropriate or misuse any aspect of any culture.",
+                    ),
+                    SizedBox(height: 10.0),
+                    SizedBox(
+                      child: buildPreliminaryRating(avoidAppropriation, (newValue) {
+                      setState(() {
+                        avoidAppropriation = newValue;
+                      });
+                      }, screenSize),
+                    ),
+                    SizedBox(height: 15),
+                    buildStandardTitle(
+                      "Avoids Ageism",
+                      "Content does not exhibit stereotypes based on age.",
+                    ),
+                    SizedBox(height: 10.0),
+                    SizedBox(
+                      child: buildPreliminaryRating(avoidAgeism, (newValue) {
+                      setState(() {
+                        avoidAgeism = newValue;
+                      });
+                      }, screenSize),
+                    ),
+                    SizedBox(height: 15),
+                    buildStandardTitle(
+                      "Avoids Being Condescending",
+                      "Content does not 'talk down.'",
+                    ),
+                    SizedBox(height: 10.0),
+                    SizedBox(
+                      child: buildPreliminaryRating(avoidCond, (newValue) {
+                      setState(() {
+                        avoidCond = newValue;
+                      });
+                      }, screenSize),
+                    ),
+                    SizedBox(height: 15),
+                    buildStandardTitle(
+                      "Avoids Innapropriate Language and Content",
+                      "Content avoids profanity, vulgar language, inappropriate references to sexuality or violence, or substance abuse.",
+                    ),
+                    SizedBox(height: 10.0),
+                    SizedBox(
+                      child: buildPreliminaryRating(avoidLanguage, (newValue) {
+                      setState(() {
+                        avoidLanguage = newValue;
+                      });
+                      }, screenSize),
+                    ),
+                    SizedBox(height: 15),
+                    buildStandardTitle(
+                      "Content Suggests Available and Appropriate Services",
+                      "Content does not recommend services that are unavailable or that are inconsistent with HBHSs approach to alcoholism treatment and/or behavioral healthcare.",
+                    ),
+                    SizedBox(height: 10.0),
+                    SizedBox(
+                      child: buildPreliminaryRating(appropriate, (newValue) {
+                      setState(() {
+                        appropriate = newValue;
+                      });
+                      }, screenSize),
+                    ),
+                    SizedBox(height: 15),
+                    Divider(
+                      color: Colors.grey,
+                      thickness: 1.0,
+                    ),
+                    Text("Please answer the following questions on the content of the resource.",
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 20.0,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: 15.0),
+                    buildStandardTitle(
+                      "Culturally grounded",
+                      "Content is specific to Indigenous individuals.",
+                    ),
+                    SizedBox(height: 10.0),
+                    ResponsiveRadioRow(options: {
+                      1: "1",
+                      2: "2",
+                      3: "3",
+                      4: "4",
+                      5: "5",
+                    }, selectedValue: culturalRatingIndigenous, onChanged: (value) {
+                      setState(() {
+                        culturalRatingIndigenous = value!;
+                      });
+                    }),
+                    SizedBox(height: 15),
+                    buildStandardTitle(
+                      "Culturally grounded",
+                      "Content is specific to Hopi.",
+                    ),
+                    SizedBox(height: 10.0),
+                    ResponsiveRadioRow(options: {
+                      1: "1",
+                      2: "2",
+                      3: "3",
+                      4: "4",
+                      5: "5",
+                    }, selectedValue: culturalRatingHopi, onChanged: (value) {
+                      setState(() {
+                        culturalRatingHopi = value!;
+                      });
+                    }),
+                    SizedBox(height: 15),
+                    buildStandardTitle(
+                      "Gender and Sexual Orientation",
+                      "Is the content specific to any particular gender(s)? If so, please specify below.",
+                    ),
+                    SizedBox(height: 10.0),
+                    Text(
+                      "Which gender(s)?",
+                      style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 14.0,
+                      ),
+                    ),
+                    SizedBox(height: 10.0),
+                    SizedBox(
+                      width: screenSize.width > 850
+                        ? screenSize.width / 1.5
+                        : screenSize.width / 1,
+                      child: Column(
+                      children: List<CheckboxListTile>.generate(
+                        genderOptions.length,
+                        (int index) => CheckboxListTile(
+                        title: Text(genderOptions[index], style: TextStyle(fontSize: 14)),
+                        value: selectedGenders[index],
+                        onChanged: (value) {
+                          setState(() {
+                          selectedGenders[index] = value!;
+                          if (value) {
+                            selectedGenderOptions.add(genderOptions[index]);
+                          } else {
+                            selectedGenderOptions.remove(genderOptions[index]);
+                          }
+                          });
+                        },
+                        controlAffinity: ListTileControlAffinity.leading,
+                        contentPadding: EdgeInsets.only(left:8.0),
+                        dense: true,
+                        focusNode: FocusNode(skipTraversal: true),
+                        ),
+                      ),
+                      ),
+                    ),
+                    SizedBox(height: 15),
+                    buildStandardTitle(
+                      "Is this content specific to LGBTQIA+/Two Spirit identities?",
+                      "Please check yes or no.",
+                    ),
+                    SizedBox(height: 10.0),
+                    ResponsiveRadioRow(options: {
+                      "Yes": "Yes",
+                      "No": "No",
+                    }, selectedValue: sexuality, onChanged: (value) {
+                      setState(() {
+                        sexuality = value!;
+                      });
+                    }),
+                    SizedBox(height: 15),
+                    buildStandardTitle(
+                      "Age balance",
+                      "Please select which age group(s) the content is targeted towards.",
+                    ),
+                    SizedBox(height: 10.0),
+                    Text(
+                      "Ages:",
+                      style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 14.0,
+                      ),
+                    ),
+                    SizedBox(height: 10.0),
+                    SizedBox(
+                      width: screenSize.width > 850
+                        ? screenSize.width / 1.1
+                        : screenSize.width / 1,
+                      child:Column(
+                      children: List<CheckboxListTile>.generate(
+                        ageRanges.length,
+                        (index) => CheckboxListTile(
+                        title: Text(ageRanges[index], style: TextStyle(fontSize: 14.0)),
+                        value: selectedAges[index],
+                        onChanged: (value) {
+                          setState(() {
+                          selectedAges[index] = value!;
+                          if (value) {
+                            selectedAgeRanges.add(ageRanges[index]);
+                          } else {
+                            selectedAgeRanges.remove(ageRanges[index]);
+                          }
+                          });
+                        },
+                        controlAffinity: ListTileControlAffinity.leading,
+                        contentPadding: EdgeInsets.only(left:8.0),
+                        dense: true,
+                        focusNode: FocusNode(skipTraversal: true),
+                        ),
+                      ),
+                      ),
+                    ),
+                    SizedBox(height: 15),
+                    buildStandardTitle(
+                      "Life Experiences",
+                      "Please select which life experiences this content is relavent for.",
+                    ),
                     SizedBox(height: 10.0),
                     Text(
                       "Experiences:",
                       style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 14.0,
+                      color: Colors.black,
+                      fontSize: 14.0,
                       ),
                     ),
                     SizedBox(height: 10.0),
-                    // create check boxes for experiences
-                          SizedBox(
-                                width: screenSize.width > 850
-                                    ? screenSize.width / 1.1
-                                    : screenSize.width / 1,
-                                child: GridView.count(
-                                    crossAxisCount:
-                                        screenSize.width > 850 ? 3 : 1,
-                                    padding: EdgeInsets.only(right: 30.0),
-                                    childAspectRatio:
-                                        screenSize.width > 850 ? 8 : 15,
-                                    shrinkWrap: true,
-                                    children: List<CheckboxListTile>.generate(
-                                        lifeExperiences.length,
-                                        (index) => CheckboxListTile(
-                                              title: Text(lifeExperiences[index],
-                                                  style: TextStyle(
-                                                      fontSize: 14.0)),
-                                              value: selectedExperiences[index],
-                                              onChanged: (value) {
-                                                setState(() {
-                                                  selectedExperiences[index] =
-                                                      value!;
-                                                  if (value) {
-                                                    selectedLifeExperiences.add(
-                                                        lifeExperiences[index]);
-                                                  } else {
-                                                    selectedLifeExperiences.remove(
-                                                        lifeExperiences[index]);
-                                                  }
-                                                });
-                                              },
-                                              controlAffinity:
-                                                  ListTileControlAffinity
-                                                      .leading,
-                                              contentPadding: EdgeInsets.zero,
-                                              dense: true,
-                                          focusNode: FocusNode(skipTraversal: true),
-                                            )))),
-                            SizedBox(height: 15),
-                    // accessibility standard
+                    SizedBox(
+                      width: screenSize.width > 850
+                        ? screenSize.width / 1.1
+                        : screenSize.width / 1,
+                      /*child: GridView.count(
+                      crossAxisCount: screenSize.width > 850 ? 3 : 1,
+                      padding: EdgeInsets.only(right: 30.0),
+                      childAspectRatio: screenSize.width > 850 ? 8 : 15,
+                      shrinkWrap: true,*/
+                      child: Column(
+                      children: List<CheckboxListTile>.generate(
+                        lifeExperiences.length,
+                        (index) => CheckboxListTile(
+                        title: Text(lifeExperiences[index], style: TextStyle(fontSize: 14.0)),
+                        value: selectedExperiences[index],
+                        onChanged: (value) {
+                          setState(() {
+                          selectedExperiences[index] = value!;
+                          if (value) {
+                            selectedLifeExperiences.add(lifeExperiences[index]);
+                          } else {
+                            selectedLifeExperiences.remove(lifeExperiences[index]);
+                          }
+                          });
+                        },
+                        controlAffinity: ListTileControlAffinity.leading,
+                        contentPadding: EdgeInsets.only(left:8.0),
+                        dense: true,
+                        focusNode: FocusNode(skipTraversal: true),
+                        ),
+                      ),
+                      ),
+                    ),
+                    SizedBox(height: 15),
                     buildStandardTitle(
-                        "Accessibility",
-                        "Please select any accessibility features available for the resource. "),
+                      "Accessibility",
+                      "Please select any accessibility features available for the resource.",
+                    ),
                     SizedBox(height: 10.0),
                     Text(
                       "Features:",
                       style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 14.0,
+                      color: Colors.black,
+                      fontSize: 14.0,
                       ),
                     ),
                     SizedBox(height: 10.0),
-                    // create check boxes for accessibility
                     SizedBox(
-                          width: screenSize.width > 850
-                              ? screenSize.width / 1.1
-                              : screenSize.width / 1,
-                          child: GridView.count(
-                              crossAxisCount:
-                                  screenSize.width > 850 ? 3 : 1,
-                              padding: EdgeInsets.only(right: 30.0),
-                              childAspectRatio:
-                                  screenSize.width > 850 ? 8 : 15,
-                              shrinkWrap: true,
-                              children: List<CheckboxListTile>.generate(
-                                  accessibilityFeatures.length,
-                                  (index) => CheckboxListTile(
-                                        title: Text(accessibilityFeatures[index],
-                                            style: TextStyle(
-                                                fontSize: 14.0)),
-                                        value: selectedAccessibility[index],
-                                        onChanged: (value) {
-                                          setState(() {
-                                            selectedAccessibility[index] =
-                                                value!;
-                                            if (value) {
-                                              selectedAccessibilityFeatures.add(
-                                                  accessibilityFeatures[index]);
-                                            } else {
-                                              selectedAccessibilityFeatures.remove(
-                                                  accessibilityFeatures[index]);
-                                            }
-                                          });
-                                        },
-                                        controlAffinity:
-                                            ListTileControlAffinity
-                                                .leading,
-                                        contentPadding: EdgeInsets.zero,
-                                        dense: true,
-                                    focusNode: FocusNode(skipTraversal: true),
-                                      )))),
-                      SizedBox(height: 15),
+                      width: screenSize.width > 850
+                        ? screenSize.width / 1.1
+                        : screenSize.width / 1,
+                      child: Column(
+                      children: List<CheckboxListTile>.generate(
+                        accessibilityFeatures.length,
+                        (index) => CheckboxListTile(
+                        title: Text(accessibilityFeatures[index], style: TextStyle(fontSize: 14.0)),
+                        value: selectedAccessibility[index],
+                        onChanged: (value) {
+                          setState(() {
+                          selectedAccessibility[index] = value!;
+                          if (value) {
+                            selectedAccessibilityFeatures.add(accessibilityFeatures[index]);
+                          } else {
+                            selectedAccessibilityFeatures.remove(accessibilityFeatures[index]);
+                          }
+                          });
+                        },
+                        controlAffinity: ListTileControlAffinity.leading,
+                        contentPadding: EdgeInsets.only(left:8.0),
+                        dense: true,
+                        focusNode: FocusNode(skipTraversal: true),
+                        ),
+                      ),
+                      ),
+                    ),
+                    SizedBox(height: 15),
+                    Divider(
+                      color: Colors.grey,
+                      thickness: 1.0,
+                    ),
+                    Text("Please answer the following questions on the content of the resource.",
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 20.0,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: 15.0),
+                    buildStandardTitle(
+                      "Content presents accurate, up-to-date infromation",
+                      "1 means 'strongly disagree' and 5 means 'strongly agree.",
+                    ),
+                    SizedBox(height: 10.0),
+                    ResponsiveRadioRow(options: {
+                      1: "1",
+                      2: "2",
+                      3: "3",
+                      4: "4",
+                      5: "5",
+                    }, selectedValue: contentAccurate, onChanged: (value) {
+                      setState(() {
+                        contentAccurate = value!;
+                      });
+                    }),
+                    SizedBox(height: 15),
+                    buildStandardTitle(
+                      "Content is from a reliable and trustworthy source, has credentials if applicable",
+                      "1 means 'strongly disagree' and 5 means 'strongly agree.",
+                    ),
+                    SizedBox(height: 10.0),
+                    ResponsiveRadioRow(options: {
+                      1: "1",
+                      2: "2",
+                      3: "3",
+                      4: "4",
+                      5: "5",
+                    }, selectedValue: contentTrustworthy, onChanged: (value) {
+                      setState(() {
+                        contentTrustworthy = value!;
+                      });
+                    }),
+                    SizedBox(height: 15),
+                    buildStandardTitle(
+                      "Content is consistent with the current state of knowledge and practice and is not outdated",
+                      "1 means 'strongly disagree' and 5 means 'strongly agree.",
+                    ),
+                    SizedBox(height: 10.0),
+                    ResponsiveRadioRow(options: {
+                      1: "1",
+                      2: "2",
+                      3: "3",
+                      4: "4",
+                      5: "5",
+                    }, selectedValue: contentCurrent, onChanged: (value) {
+                      setState(() {
+                        contentCurrent = value!;
+                      });
+                    }),
+                    SizedBox(height: 15),
+                    SizedBox(height: 10),
+                    Text("Total Score: ${totalScore} / 25"),
+                    SizedBox(height: 20),
+                    Text(
+                      'Additional Comments',
+                      style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: screenSize.width > 600 ? 22.0 : 18.0,
+                      ),
+                    ),
+                    SizedBox(height: 10),
+                    TextField(
+                      maxLines: 3,
+                      decoration: InputDecoration(
+                      hintText: 'Type your additional comments here',
+                      border: InputBorder.none,
+                      ),
+                      onChanged: (value) {
+                      userComments = value;
+                      },
+                    ),
+                    SizedBox(height: 20),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                      TextButton(
+                        style: ButtonStyle(
+                        shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                          RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18.0),
+                          side: BorderSide(color: Theme.of(context).primaryColor),
+                          ),
+                        ),
+                        foregroundColor: MaterialStateProperty.all<Color>(Colors.black),
+                        ),
+                        onPressed: () async {
+                        await verifyResource(widget.resourceData);
+                        await updateResourceRubric(widget.resourceData, userComments, totalScore);
+                        await submitToInbox(widget.resourceData, "Approved", userComments);
+                        if (mounted) {
+                          Navigator.pop(context);
+                        }
+                        },
+                        child: Text(
+                        'Verify',
+                        style: TextStyle(
+                          color: Theme.of(context).primaryColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        ),
+                      ),
+                      SizedBox(width: 10),
+                      TextButton(
+                        style: ButtonStyle(
+                        shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                          RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18.0),
+                          side: BorderSide(color: Colors.grey.shade700),
+                          ),
+                        ),
+                        foregroundColor: MaterialStateProperty.all<Color>(Colors.black),
+                        ),
+                        onPressed: () async {
+                        await deleteResource(widget.resourceData);
+                        await submitToInbox(widget.resourceData, "Denied", userComments);
+                        if (mounted) {
+                          Navigator.pop(context);
+                        }
+                        },
+                        child: Text(
+                        'Deny',
+                        style: TextStyle(
+                          color: Colors.grey.shade700,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        ),
+                      ),
+                      ],
+                    ),
                   ],
                 ),
               ),
-            ),
-            Container(
-            padding: EdgeInsets.all(10.0),
-            height: 250,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.withOpacity(0.5)),
-              borderRadius: BorderRadius.circular(10.0),
-            ),
-            child: SingleChildScrollView(
-                child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                    buildScoringKey(),
-                SizedBox(height: 15.0),
-                //Accuracy standard
-                buildStandardTitle(
-                    "Content presents accurate, up-to-date infromation",
-                    "1 means 'strongly disagree' and 5 means 'strongly agree."),
-                SizedBox(height: 10.0),
-                // create rating buttons and assign to correct rating
-                SizedBox(
-                    child: buildRating(contentAccurate, (newValue) {
-                      setState(() {
-                        contentAccurate = newValue;
-                      });
-                    }, screenSize)),
-                SizedBox(height: 15),
-                
-                //Trustworthy standard
-                buildStandardTitle(
-                    "Content is from a reliable and trustworthy source, has credentials if applicable",
-                    "1 means 'strongly disagree' and 5 means 'strongly agree."),
-                SizedBox(height: 10.0),
-                // create rating buttons and assign to correct rating
-                SizedBox(
-                    child: buildRating(contentTrustworthy, (newValue) {
-                      setState(() {
-                        contentTrustworthy = newValue;
-                      });
-                    }, screenSize)),
-                SizedBox(height: 15),
-
-                //Current Standard
-                buildStandardTitle(
-                    "Content is consistent with the current state of knowledge and practice and is not outdated",
-                    "1 means 'strongly disagree' and 5 means 'strongly agree."),
-                SizedBox(height: 10.0),
-                // create rating buttons and assign to correct rating
-                SizedBox(
-                    child: buildRating(contentCurrent, (newValue) {
-                      setState(() {
-                        contentCurrent = newValue;
-                      });
-                    }, screenSize)),
-                SizedBox(height: 15),
+              Positioned(
+                top: 16.0,
+                right: 16.0,
+                child: ElevatedButton (
+                  style: ElevatedButton.styleFrom(
+                    padding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+                  ),
+                  onPressed: () async {
+                    showDialog(
+                      context: context,
+                      builder: (dialogContext) {
+                        return ResourceDetail(resourceModel: widget.resourceData);
+                      },
+                    );
+                  },
+                  child: Text(
+                    'View Resource Details',
+                    style: TextStyle(fontSize: 14.0, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
             ],
           ),
-        ),
-      ),
-
-
-            SizedBox(height: 10),
-            // display the total score of ratings
-            Text(
-                "Total Score: ${totalScore} / 25"),
-            SizedBox(height: 20),
-            // display box for user comments
-            Text('Additional Comments',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: screenSize.width > 600 ? 22.0 : 18.0,
-                )),
-            SizedBox(height: 10),
-            Container(
-              padding: EdgeInsets.all(10.0),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.withOpacity(0.5)),
-                borderRadius: BorderRadius.circular(10.0),
-              ),
-              child: SingleChildScrollView(
-                physics: ScrollPhysics(),
-                child: TextField(
-                    maxLines: 3,
-                    decoration: InputDecoration(
-                      hintText: 'Type your additional comments here',
-                      border: InputBorder.none,
-                    ),
-                    onChanged: (value) {
-                        userComments = value;
-                    }
-                ),
-              ),
-            ),
-            SizedBox(height: 20),
-            // display verify or deny buttons
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextButton(
-                  style: ButtonStyle(
-                    shape: MaterialStateProperty.all<
-                        RoundedRectangleBorder>(
-                        RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(18.0),
-                            side: BorderSide(color: Theme.of(context).primaryColor))),
-                    foregroundColor:
-                    MaterialStateProperty.all<Color>(Colors.black),
-                  ),
-                  onPressed: () async {
-                    await verifyResource(widget.resourceData);
-                    await updateResourceRubric(widget.resourceData, userComments,
-                                                                    totalScore);
-                    await submitToInbox( widget.resourceData, "Approved",
-                                                                 userComments );
-                    if (mounted) {
-                      Navigator.pop(context);
-                    }
-                    
-                  },
-                  child: Text(
-                    'Verify',
-                    style: TextStyle(
-                      color: Theme.of(context).primaryColor,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                SizedBox(width: 10),
-                TextButton(
-                  style: ButtonStyle(
-                    shape: MaterialStateProperty.all<
-                        RoundedRectangleBorder>(
-                        RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(18.0),
-                            side: BorderSide(
-                                color: Colors.grey.shade700))),
-                    foregroundColor:
-                    MaterialStateProperty.all<Color>(Colors.black),
-                  ),
-                  onPressed: () async {
-                    await deleteResource(widget.resourceData);
-                    await submitToInbox(widget.resourceData, "Denied", userComments);
-                    if (mounted) {
-                      Navigator.pop(context);
-                    }
-                  },
-                  child: Text(
-                    'Deny',
-                    style: TextStyle(
-                      color: Colors.grey.shade700,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
-            )
-            ])),
-    ),
-    )
+        )
+      )
     );
   }
 }
