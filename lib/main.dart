@@ -7,6 +7,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:timezone/browser.dart' as tz;
+import 'package:web_app/model.dart';
 
 //Screen or class imports
 import 'package:web_app/home.dart';
@@ -57,7 +58,7 @@ class MyApp extends StatelessWidget {
         '/account': ( context ) => Account(),
         '/inbox': ( context ) => Inbox(),
         '/usermanagement': ( context ) => Manage(),
-        '/reviewresource' :  ( context ) => ReviewResource(resourceData: ModalRoute.of(context)!.settings.arguments as QueryDocumentSnapshot),
+        '/reviewresource' :  ( context ) => ReviewResource(resourceData: ModalRoute.of(context)!.settings.arguments as Resource),
         '/top10resources' : (context) => Top10Resources(),
       },
       theme: ThemeData(
