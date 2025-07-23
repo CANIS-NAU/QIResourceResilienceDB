@@ -376,18 +376,49 @@ class _ReviewResourceState extends State<ReviewResource> {
                       child: Text("$value"))]),
               value: value,
               groupValue: rating,
-              onChanged: (newValue) {
+              onChanged: (newValue) async {
+                final previousValue = rating;
                 updateRating(newValue as String);
                 if(newValue == 'No')
                 {
-                  Future(() async {
-                    await deleteResource(widget.resourceData);
-                    await submitToInbox(widget.resourceData, "Denied", "Resource denied by reviewer.");
-                    if (mounted) {
-                      Navigator.pop(context);
-                    }
-                  });
-                    //submitToInbox( widget.resourceData, "Denied", userComments);
+                  final confirm = await showDialog<bool>(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: Text("Confirm Resource Rejection"),
+                      content: Text("Answering 'No' to any preliminary questions will result in the automatic rejection of this resource. Are you sure?"),
+                      actions: [
+                        TextButton(
+                          child: Text("No, go back"),
+                          style: TextButton.styleFrom(
+                            foregroundColor: Color.fromARGB(255, 72, 72, 72),
+                          ),
+                          onPressed: () => Navigator.pop(context, false),
+                        ),
+                        OutlinedButton(
+                          child: Text("Yes, reject"),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Theme.of(context).primaryColorDark,
+                          ),
+                          onPressed: () => Navigator.pop(context, true),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (confirm == true) {
+                    // If the user confirms, deny the resource
+                    Future(() async {
+                      await deleteResource(widget.resourceData);
+                      await submitToInbox(widget.resourceData, "Denied", "Resource denied by reviewer.");
+                      if (mounted) {
+                        Navigator.pop(context);
+                      }
+                    });
+                  } else {
+                    // If the user cancels, revert the rating
+                    setState(() {
+                      updateRating(previousValue);
+                    });
+                  }
                 }
               },
               focusNode: FocusNode(skipTraversal: true),
