@@ -85,7 +85,7 @@ class ResourceSummary extends StatelessWidget {
       );
     }
 
-    final visable = (resourceModel.isVisable ?? true) || user != null;
+    final visable = (resourceModel.isVisable) || user != null;
     if (!visable) {
       return SizedBox.shrink();
     } else {
