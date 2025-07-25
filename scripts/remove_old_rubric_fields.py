@@ -13,6 +13,13 @@ parser.add_argument(
 args = parser.parse_args()
 dry_run = args.dry_run
 
+def map_string_to_boolean(entry):
+    if entry in [True, False]:
+        return entry
+    elif entry in ["Yes", "No"]:
+        return entry == "Yes"
+    return None
+
 # Set credentials
 cred = credentials.Certificate("./.secret/sunrise-dev.json")
 # Initialize Firebase
@@ -60,6 +67,8 @@ def remove_fields_from_resource():
 
         if "rubric" in data and data["rubric"]: # Check if 'rubric' field exists and is not empty
             rubric = data["rubric"]
+            if "appropriate" in rubric:
+                updates["rubric.appropriate"] = map_string_to_boolean(rubric["appropriate"])
             for field in fields_to_remove:
                 if field in rubric:
                     updates[f"rubric.{field}"] = firestore.DELETE_FIELD
