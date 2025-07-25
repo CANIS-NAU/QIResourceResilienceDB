@@ -1,16 +1,18 @@
+import 'dart:ui';
+
 import 'package:web_app/file_attachments.dart';
 import 'package:web_app/events/schedule.dart';
 
 class Rubric {
   // Preliminary rating fields
   final bool? appropriate;
-  final bool? avoidAgeism;
-  final bool? avoidAppropriation;
-  final bool? avoidCondescension;
-  final bool? avoidRacism;
-  final bool? avoidSexism;
-  final bool? avoidStereotyping;
-  final bool? avoidVulgarity;
+  final bool? avoidsAgeism;
+  final bool? avoidsAppropriation;
+  final bool? avoidsCondescension;
+  final bool? avoidsRacism;
+  final bool? avoidsSexism;
+  final bool? avoidsStereotyping;
+  final bool? avoidsVulgarity;
 
   // Description fields
   final List<String>? accessibilityFeatures;
@@ -21,61 +23,102 @@ class Rubric {
   final bool? queerSexualitySpecific;
 
   // Scoring fields
-  final int? contentAccurate;
-  final int? contentCurrent;
-  final int? contentTrustworthy;
-  final int? culturallyGroundedHopi;
-  final int? culturallyGroundedIndigenous;
+  final int? contentAccuracy;
+  final int? contentCurrentness;
+  final int? contentTrustworthiness;
+  final int? culturalGroundednessHopi;
+  final int? culturalGroundednessIndigenous;
+
+  // Metadata
+  final String? reviewedBy;
+  final DateTime? reviewTime;
+
   // Computed fields
   int get totalScore {
-    return (culturallyGroundedHopi ?? 0) + (culturallyGroundedIndigenous ?? 0)
-        + (contentAccurate ?? 0) + (contentCurrent ?? 0) + (contentTrustworthy ?? 0);
+    return (culturalGroundednessHopi ?? 0) + (culturalGroundednessIndigenous ?? 0)
+        + (contentAccuracy ?? 0) + (contentCurrentness ?? 0) + (contentTrustworthiness ?? 0);
+  }
+
+  List<String> get accessibilityFeaturesLabel {
+    if (accessibilityFeatures == null || accessibilityFeatures!.isEmpty) {
+      return ["No accessibility features specified"];
+    }
+    return accessibilityFeatures!.map((e) => 
+        Rubric.accessibilityLabels[e] ?? "Unrecognized feature: $e").toList();
+  }
+
+  List<String> get ageBalanceLabel {
+    if (ageBalance == null || ageBalance!.isEmpty) {
+      return ["No age balance specified"];
+    }
+    return ageBalance!.map((e) => Resource.ageLabels[e] ?? "Unrecognized age: $e").toList();
+  }
+
+  List<String> get genderBalanceLabel {
+    if (genderBalance == null || genderBalance!.isEmpty) {
+      return ["No gender balance specified"];
+    }
+    return genderBalance!.map((e) => Rubric.genderLabels[e] ?? "Unrecognized gender: $e").toList();
+  }
+
+  List<String> get lifeExperiencesLabel {
+    if (lifeExperiences == null || lifeExperiences!.isEmpty) {
+      return ["No life experiences specified"];
+    }
+    return lifeExperiences!.map((e) => Rubric.lifeExperienceLabels[e] ?? "Unrecognized experience: $e").toList();
   }
 
   // default constructor
   Rubric({
-    this.avoidRacism,
-    this.avoidStereotyping,
-    this.avoidAppropriation,
-    this.avoidSexism,
-    this.avoidAgeism,
-    this.avoidCondescension,
-    this.avoidVulgarity,
     this.appropriate,
+    this.avoidsAgeism,
+    this.avoidsAppropriation,
+    this.avoidsCondescension,
+    this.avoidsRacism,
+    this.avoidsSexism,
+    this.avoidsStereotyping,
+    this.avoidsVulgarity,
+
     this.accessibilityFeatures,
-    this.genderBalance,
+    this.additionalComments,
     this.ageBalance,
+    this.genderBalance,
     this.lifeExperiences,
     this.queerSexualitySpecific,
-    this.additionalComments,
-    this.contentAccurate,
-    this.contentCurrent,
-    this.contentTrustworthy,
-    this.culturallyGroundedHopi,
-    this.culturallyGroundedIndigenous,
+
+    this.contentAccuracy,
+    this.contentCurrentness,
+    this.contentTrustworthiness,
+    this.culturalGroundednessHopi,
+    this.culturalGroundednessIndigenous,
+
+    this.reviewedBy,
+    this.reviewTime,
   });
   // firestore => dart
   factory Rubric.fromJson(Map<String, dynamic> json) {
     return Rubric(
-      avoidRacism: json["avoidRacism"],
-      avoidStereotyping: json["avoidStereotyping"],
-      avoidAppropriation: json["avoidAppropriation"],
-      avoidSexism: json["avoidSexism"],
-      avoidAgeism: json["avoidAgeism"],
-      avoidCondescension: json["avoidCondescension"],
-      avoidVulgarity: json["avoidVulgarity"],
-      appropriate: json["appropriate"],
       accessibilityFeatures: json["accessibilityFeatures"] != null ? List<String>.from(json["accessibilityFeatures"]) : null,
-      genderBalance: json["genderBalance"] != null ? List<String>.from(json["genderBalance"]) : null,
+      additionalComments: json["additionalComments"],
       ageBalance: json["ageBalance"] != null ? List<String>.from(json["ageBalance"]) : null,
+      appropriate: json["appropriate"] is bool ? json["appropriate"] : null,
+      avoidsAgeism: json["avoidsAgeism"] is bool ? json["avoidsAgeism"] : null,
+      avoidsAppropriation: json["avoidsAppropriation"] is bool ? json["avoidsAppropriation"] : null,
+      avoidsCondescension: json["avoidsCondescension"] is bool ? json["avoidsCondescension"] : null,
+      avoidsRacism: json["avoidsRacism"] is bool ? json["avoidsRacism"] : null,
+      avoidsSexism: json["avoidsSexism"] is bool ? json["avoidsSexism"] : null,
+      avoidsStereotyping: json["avoidsStereotyping"] is bool ? json["avoidsStereotyping"] : null,
+      avoidsVulgarity: json["avoidsVulgarity"] is bool ? json["avoidsVulgarity"] : null,
+      contentAccuracy: json["contentAccurate"],
+      contentCurrentness: json["contentCurrentness"],
+      contentTrustworthiness: json["contentTrustworthiness"],
+      culturalGroundednessHopi: json["culturalGroundednessHopi"],
+      culturalGroundednessIndigenous: json["culturalGroundednessIndigenous"],
+      genderBalance: json["genderBalance"] != null ? List<String>.from(json["genderBalance"]) : null,
       lifeExperiences: json["lifeExperiences"] != null ? List<String>.from(json["lifeExperiences"]) : null,
       queerSexualitySpecific: json["queerSexualitySpecific"],
-      additionalComments: json["additionalComments"],
-      contentAccurate: json["contentAccurate"],
-      contentCurrent: json["contentCurrent"],
-      contentTrustworthy: json["contentTrustworthy"],
-      culturallyGroundedHopi: json["culturallyGroundedHopi"],
-      culturallyGroundedIndigenous: json["culturallyGroundedIndigenous"],
+      reviewedBy: json["reviewedBy"],
+      reviewTime: json["reviewTime"] != null ? json["reviewTime"].toDate() : null,
     );
   }
   
@@ -83,26 +126,27 @@ class Rubric {
   // dart => firestore
   Map<String, dynamic> toJson() {
     return {
-      "avoidRacism": avoidRacism,
-      "avoidStereotyping": avoidStereotyping,
-      "avoidAppropriation": avoidAppropriation,
-      "avoidSexism": avoidSexism,
-      "avoidAgeism": avoidAgeism,
-      "avoidCondescension": avoidCondescension,
-      "avoidVulgarity": avoidVulgarity,
-      "appropriate": appropriate,
       "accessibilityFeatures": accessibilityFeatures,
-      "genderBalance": genderBalance,
+      "additionalComments": additionalComments,
       "ageBalance": ageBalance,
+      "appropriate": appropriate,
+      "avoidsAgeism": avoidsAgeism,
+      "avoidsAppropriation": avoidsAppropriation,
+      "avoidsCondescension": avoidsCondescension,
+      "avoidsRacism": avoidsRacism,
+      "avoidsSexism": avoidsSexism,
+      "avoidsStereotyping": avoidsStereotyping,
+      "avoidsVulgarity": avoidsVulgarity,
+      "contentAccuracy": contentAccuracy,
+      "contentCurrentness": contentCurrentness,
+      "contentTrustworthiness": contentTrustworthiness,
+      "culturalGroundednessHopi": culturalGroundednessHopi,
+      "culturalGroundednessIndigenous": culturalGroundednessIndigenous,
+      "genderBalance": genderBalance,
       "lifeExperiences": lifeExperiences,
       "queerSexualitySpecific": queerSexualitySpecific,
-      "additionalComments": additionalComments,
-      "contentAccurate": contentAccurate,
-      "contentCurrent": contentCurrent,
-      "contentTrustworthy": contentTrustworthy,
-      "culturallyGroundedHopi": culturallyGroundedHopi,
-      "culturallyGroundedIndigenous": culturallyGroundedIndigenous,
-      "totalScore": totalScore,
+      "reviewedBy": reviewedBy,
+      "reviewTime": reviewTime,
     };
   }
   static Map<String, String> genderLabels = Map.unmodifiable({
@@ -144,12 +188,13 @@ class Resource {
   final List<String>? healthFocus;
   final String id;
   final bool isVisable;
+  bool isDeleted;
   final String? location;
   final String? name;
   final String? phoneNumber;
   final List<String>? privacy;
   final String? resourceType;
-  final Rubric? rubric;
+  Rubric? rubric;
   final Schedule? schedule;
   final String? state;
   final List<String>? tagline;
@@ -172,6 +217,7 @@ class Resource {
     this.healthFocus = const [],
     this.id = "",
     this.isVisable = true,
+    this.isDeleted = false,
     this.location,
     this.name,
     this.phoneNumber,
@@ -203,7 +249,8 @@ class Resource {
       description: json["description"],
       healthFocus: List<String>.from(json["healthFocus"] ?? []),
       id: id,
-      isVisable: json["isVisable"],
+      isVisable: json["isVisable"] is bool ? json["isVisable"] : false,
+      //isDeleted: json["isDeleted"],
       location: json["location"],
       name: json["name"],
       phoneNumber: json["phoneNumber"],
@@ -240,6 +287,7 @@ class Resource {
       "description": description,
       "healthFocus": healthFocus,
       "isVisable": isVisable,
+      "isDeleted": isDeleted,
       "location": location,
       "name": name,
       "phoneNumber": phoneNumber,

@@ -8,6 +8,7 @@ import 'package:web_app/file_attachments.dart';
 import 'package:web_app/pdfDownload.dart';
 import 'package:web_app/util.dart';
 import 'package:web_app/model.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class DetailLink extends StatelessWidget {
   DetailLink(
@@ -47,8 +48,181 @@ class DetailLink extends StatelessWidget {
     );
   }
 }
+// Widget to build section titles
+Widget sectionTitle({required String title}) {
+  return Padding(
+    padding: fieldPadding,
+    child: Text(
+      title,
+      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+    ),
+  );
+}
+
+// Widget to assist in building list view for fields that are lists
+Widget buildFieldList(List<String>? values) {
+  if (values == null || values.isEmpty) {
+    return SizedBox.shrink(); // Return empty widget if no values
+  }
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: values.map((value) {
+      return Padding(
+        padding: EdgeInsets.fromLTRB(16.0, 8.0, 8.0, 8.0),
+        child: Text('- $value'),
+      );
+    }).toList(),
+  );
+}
+
+Widget field(String label, dynamic value, {Widget Function(dynamic value)? builder, bool padding = true}) {
+  // if value is blank or null, dont render the field
+  if (value == null || (value is String && value.isEmpty)
+      || (value is List && value.isEmpty)) {
+    return SizedBox.shrink();
+  }
+  final valueWidget = builder != null // Check if a builder is provided, else use Text widget
+      ? builder(value)
+      : Text(value.toString());
+
+   return Padding(
+    padding: padding ? fieldPadding : EdgeInsets.zero,
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '$label: ',
+          softWrap: true,
+          overflow: TextOverflow.visible,
+        ),
+        Expanded(
+          child: valueWidget,
+        ),
+      ],
+    ),
+  );
+}
+
+// Converts a boolean value to "Yes" or "No" string
+String boolToYesNo(bool? value) {
+  if (value == null) return "Unknown";
+  return value ? "Yes" : "No";
+}
 
 const fieldPadding = EdgeInsets.symmetric(vertical: 8.0);
+
+class RubricDetail extends StatelessWidget {
+  const RubricDetail({required this.rubric, super.key});
+
+  final Rubric rubric;
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      insetPadding: const EdgeInsets.all(16),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.7, // Limit height to 70% of screen height
+          maxWidth: 600, // Limit width to 600px
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Title
+              Center(
+                child: Text(
+                  'Rubric Information',
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                ),
+              ),
+              Divider(),
+              // Rubric Details Section
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Creation info
+                        sectionTitle(title: 'General Info'),
+                        field('Reviewed By', rubric.reviewedBy),
+                        field('Review Time', rubric.reviewTime),
+
+                        const Divider(),
+
+                        // Preliminary Rating Section
+                        sectionTitle(title: 'Preliminary Rating'),
+                        field('Appropriate', boolToYesNo(rubric.appropriate)),
+                        field('Avoids Ageism', boolToYesNo(rubric.avoidsAgeism)),
+                        field('Avoids Appropriation', boolToYesNo(rubric.avoidsAppropriation)),
+                        field('Avoids Condescension', boolToYesNo(rubric.avoidsCondescension)),
+                        field('Avoids Racism', boolToYesNo(rubric.avoidsRacism)),
+                        field('Avoids Sexism', boolToYesNo(rubric.avoidsSexism)),
+                        field('Avoids Stereotypes', boolToYesNo(rubric.avoidsStereotyping)),
+                        field('Avoids Vulgarity', boolToYesNo(rubric.avoidsVulgarity)),
+
+                        const Divider(),
+
+                        // Descriptive Attributes Section
+                        sectionTitle(title: 'Descriptive Attributes'),
+                        Padding(
+                          padding: fieldPadding,
+                          child: Text('Accessibility Features: '),
+                        ),
+                        buildFieldList(rubric.accessibilityFeaturesLabel),
+                        Padding(
+                          padding: fieldPadding,
+                          child: Text('Ages Served: '),
+                        ),
+                        buildFieldList(rubric.ageBalanceLabel),
+                        Padding(
+                          padding: fieldPadding,
+                          child: Text('Genders Represented: '),
+                        ),
+                        buildFieldList(rubric.genderBalanceLabel),
+                        Padding(
+                          padding: fieldPadding,
+                          child: Text('Life Experiences Represented: '),
+                        ),
+                        buildFieldList(rubric.lifeExperiencesLabel),
+                        field('Additional Comments', rubric.additionalComments),
+                        field('Queer Sexuality Specific', boolToYesNo(rubric.queerSexualitySpecific)),
+
+                        const Divider(),
+
+                        // Numerical Ratings Section
+                        sectionTitle(title: 'Numerical Ratings'),
+                        field('Content Accuracy', rubric.contentAccuracy),
+                        field('Content Currentness', rubric.contentCurrentness),
+                        field('Content Trustworthiness', rubric.contentTrustworthiness),
+                        field('Cultural Groundedness (Hopi)', rubric.culturalGroundednessHopi),
+                        field('Cultural Groundedness (Indigenous)', rubric.culturalGroundednessIndigenous),
+                        field('Total Score', rubric.totalScore),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              // Close Button
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('Close'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 
 class ResourceDetail extends StatelessWidget {
@@ -56,38 +230,15 @@ class ResourceDetail extends StatelessWidget {
 
   final Resource resourceModel;
 
-// This widget displays the details of a resource in a dialog.
-  Widget field(String label, dynamic value, {Widget Function(dynamic value)? builder}) {
-    // if value is blank or null, dont render the field 
-    if (value == null || (value is String && value.isEmpty)
-        || (value is List && value.isEmpty)) {
-      return SizedBox.shrink();
-    }
-    final valueWidget = builder != null // Check if a builder is provided, else use Text widget
-        ? builder(value)
-        : Text(value);
 
-    return Padding(
-      padding: fieldPadding,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '$label: ',
-            softWrap: true,
-            overflow: TextOverflow.visible,
-          ),
-          Expanded(
-            child: valueWidget,
-          ),
-        ],
-      ),
-    );
-  }
+// This widget displays the details of a resource in a dialog.
+  
 
   @override
   Widget build(BuildContext context) {
-    
+
+    User? currentUser = FirebaseAuth.instance.currentUser;
+
     List<Attachment> attachments = resourceModel.attachments ?? [];
     Uri? url =
         resourceModel.location != null ? Uri.parse(resourceModel.location!) : null;
@@ -149,9 +300,15 @@ class ResourceDetail extends StatelessWidget {
     // Create a list of text widgets to show based what fields are visible
     final visible = resourceModel.visibleFields();
 
+    final rubric = resourceModel.rubric;
+
     final fieldsToShow = [
       for (final fieldName in visible)
         if (fieldBuilders.containsKey(fieldName)) fieldBuilders[fieldName]!(),
+      if (currentUser != null) ...[
+        field('Reviewed By', rubric != null ? rubric.reviewedBy : null),
+        field('Review Time', rubric != null ? rubric.reviewTime : null),
+      ]
     ];
     return SimpleDialog(
       key: ObjectKey(resourceModel.id),
@@ -182,6 +339,19 @@ class ResourceDetail extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 ...fieldsToShow,
+                if (resourceModel.rubric != null && currentUser != null)
+                  Padding(
+                    padding: fieldPadding,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (context) => RubricDetail(rubric: resourceModel.rubric!),
+                        );
+                      },
+                      child: Text('View Rubric'),
+                    ),
+                  ),
                 Padding(
                   padding: fieldPadding,
                   child: ElevatedButton(
@@ -218,7 +388,8 @@ class ResourceDetail extends StatelessWidget {
                       },
                       child: Text('Share'),
                     ),
-                  )
+                  ),
+                
               ],
             ),
           ),

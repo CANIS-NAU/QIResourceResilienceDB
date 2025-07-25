@@ -41,20 +41,25 @@ class ResponsiveRadioRow<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     final screenSize = MediaQuery.of(context).size;
     return screenSize.width > 600
-          ? Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          ? Wrap(
+              spacing: 12.0,
+              runSpacing: 8.0,
+              alignment: WrapAlignment.start,
               children: options.entries.map((entry) {
                 final value = entry.key;
                 final label = entry.value;
-                return Expanded(
-                  child: RadioListTile<T>(
+                return ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: 100.0),
+                  child: RadioListTile(
                     title: Text(label, style: labelStyle),
                     value: value,
                     groupValue: selectedValue,
                     onChanged: onChanged,
                     focusNode: focusNode ?? FocusNode(skipTraversal: true),
                     controlAffinity: ListTileControlAffinity.leading,
-                  ),
+                    contentPadding: EdgeInsets.zero,
+                    visualDensity: VisualDensity.compact,
+                  )
                 );
               }).toList(),
             )
@@ -86,6 +91,7 @@ class ReviewResource extends StatefulWidget {
   State<ReviewResource> createState() => _ReviewResourceState();
 }
 
+
 class _ReviewResourceState extends State<ReviewResource> {
   final CollectionReference resourceCollection = FirebaseFirestore.instance
       .collection('resources');
@@ -101,21 +107,52 @@ class _ReviewResourceState extends State<ReviewResource> {
                                                 UserReview(currentUser) : null;
 
   // function to verify a resource
-  Future<void> verifyResource(resource) async {
-    try {
-      await resourceCollection.doc(resource.id).update({"verified": true});
-      await showMessageDialog(
-        context,
-        title:'Success',
-        message: "Resource has been verified."
-      );
-    } catch (e) {
-      await showMessageDialog(
-        context,
-        title: 'Error',
-        message: "Failed to verify resource: $e",
-      );
-    }
+  Future<void> verifyResource(Resource resource) async {
+  try {
+    await resourceCollection.doc(resource.id).update({"verified": true});
+
+    if (!mounted) return;
+    await showMessageDialog(
+      context,
+      title: 'Success',
+      message: "Resource has been verified.",
+    );
+  } catch (e) {
+    if (!mounted) return;
+    await showMessageDialog(
+      context,
+      title: 'Error',
+      message: "Failed to verify resource: $e",
+    );
+  }
+}
+
+
+  Rubric buildRubricFromForm(){
+    return Rubric(
+      // default preliminary ratings to false if not filled out
+      appropriate: appropriate ?? false,
+      avoidsAgeism: avoidsAgeism ?? false,
+      avoidsAppropriation: avoidsAppropriation ?? false,
+      avoidsCondescension: avoidsCondescension ?? false,
+      avoidsRacism: avoidsRacism ?? false,
+      avoidsSexism: avoidsSexism ?? false,
+      avoidsStereotyping: avoidsStereotyping ?? false,
+      avoidsVulgarity: avoidsVulgarity ?? false,
+      accessibilityFeatures: _selectedAccessibilityFeatures.toList(),
+      additionalComments: _userCommentController.text,
+      ageBalance: _selectedAge.toList(),
+      genderBalance: _selectedGender.toList(),
+      lifeExperiences: _selectedLifeExperiences.toList(),
+      queerSexualitySpecific: queerSexualitySpecific,
+      contentAccuracy: contentAccuracy,
+      contentCurrentness: contentCurrentness,
+      contentTrustworthiness: contentTrustworthiness,
+      culturalGroundednessHopi: culturalGroundednessHopi,
+      culturalGroundednessIndigenous: culturalGroundednessIndigenous,
+      reviewTime: DateTime.now(),
+      reviewedBy: currentUser!.email,
+    );
   }
 
   // function to deny/delete a resourcecontext
@@ -136,88 +173,133 @@ class _ReviewResourceState extends State<ReviewResource> {
     }
   }
 
+  Future<void> handleRubricSubmission( Resource resource, bool isApproved ) async {
+
+    resource.rubric = buildRubricFromForm();
+
+    if (isApproved) {
+      // set resource as verified
+      await verifyResource(resource);
+      // Update DB
+      await updateResourceRubric(resource, isApproved);
+      // Send to inbox
+      await submitToInbox(resource, isApproved);
+    }
+    else {
+      await submitToInbox(resource, isApproved);
+      await deleteResource(resource);
+    }
+  }
+
+  ValueChanged<bool?> preliminaryRatingHandler({
+      required BuildContext context,
+      required void Function(bool?) updateRating,
+      required Future<void> Function() rejectAndSubmit,
+      }) {
+        return (newValue) async {
+          updateRating(newValue);
+
+          if (newValue == false) {
+            final confirm = await showDialog<bool>(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: const Text("Confirm Resource Rejection"),
+                content: const Text(
+                  "Answering 'No' to any preliminary questions will result in the automatic rejection of this resource. Are you sure?"
+                ),
+                actions: [
+                  TextButton(
+                    child: const Text("No, go back"),
+                    style: TextButton.styleFrom(
+                            foregroundColor: Color.fromARGB(255, 72, 72, 72),
+                          ),
+                    onPressed: () => Navigator.pop(context, false),
+                  ),
+                  OutlinedButton(
+                    child: const Text("Yes, reject"),
+                    style: OutlinedButton.styleFrom(
+                            foregroundColor: Theme.of(context).primaryColorDark,
+                          ),
+                    onPressed: () => Navigator.pop(context, true),
+                  ),
+                ],
+              ),
+            );
+
+            if (confirm == true) {
+              await rejectAndSubmit();
+              if (context.mounted) Navigator.pop(context);
+            } else {
+              updateRating(null);
+            }
+          }
+  };
+}
+
+
   // function to add rubric info to a resource
-  Future<void> updateResourceRubric(resource, userComments) {
-    // define rubric and all sub-fields (score, ratings, comments)
-    final Rubric rubric = 
-      Rubric(
-        appropriate: appropriate,
-        avoidAgeism: avoidAgeism,
-        avoidAppropriation: avoidAppropriation,
-        avoidCondescension: avoidCondescension,
-        avoidRacism: avoidRacism,
-        avoidSexism: avoidSexism,
-        avoidStereotyping: avoidStereotyping,
-        avoidVulgarity: avoidVulgarity,
-
-        accessibilityFeatures: _selectedAccessibilityFeatures.toList(),
-        additionalComments: userComments,
-        ageBalance: _selectedAge.toList(),
-        genderBalance: _selectedGender.toList(),
-        lifeExperiences: _selectedLifeExperiences.toList(),
-        queerSexualitySpecific: queerSexualitySpecific,
-
-        contentAccurate: contentAccurate,
-        contentCurrent: contentCurrent,
-        contentTrustworthy: contentTrustworthy,
-        culturallyGroundedHopi: culturalRatingHopi,
-        culturallyGroundedIndigenous: culturalRatingIndigenous,
-      ); 
+  Future<void> updateResourceRubric(resource, isApproved) {
     
+    final rubric = resource.rubric!;
+    final reviewedBy = rubric.reviewedBy;
+    final reviewTime = rubric.reviewTime;
+
     // Add admin review of a resource
     if(userReview != null) {
       userReview?.submittedResource(rubric.toJson());
     }
 
+
+
   //update the resource with rubric information
-    return resourceCollection.doc(resource.id).update({'rubric': rubric}).then(
-            (value) => print("Resource successfully updated"))
-        .catchError( (error) => print("Error updating document $error"));
+    return resourceCollection.doc(resource.id).update({
+      'rubric': rubric.toJson(),
+      'reviewedBy': reviewedBy,
+      'reviewTime': reviewTime,
+      'isDeleted': !isApproved // if is approved don't delete (isApproved=true, isDeleted=false)
+      }).then((value) {
+        print("Resource successfully updated")  ;
+        // clear text controller
+        _userCommentController.clear();
+      }).catchError( (error) {
+        print("Error updating document $error");
+      });
   }
 
   Future<void> submitToInbox( Resource resource, 
-                                                String status, String comments )
+                                                bool isApproved )
   {
-    
-    String description = "" +
-      "Indigenous Cultural Rating: ${ culturalRatingIndigenous } / 5, "
-      "Hopi Cultural Rating: ${ culturalRatingHopi } / 5, " +
-      "Indigenous Cultural Rating: ${ culturalRatingIndigenous } / 5, "
-      "Hopi Cultural Rating: ${ culturalRatingHopi } / 5, " +
-      "Behavioral Health Accuracy Rating: ${ contentAccurate } / 5, " +
-      "Behavioral Health Trustworthy Rating: ${ contentTrustworthy } / 5, " +
-      "Behavioral Health Current Rating: ${ contentCurrent } / 5, ";
-      "Behavioral Health Current Rating: ${ contentCurrent } / 5, ";
 
-
-    User? currentUser = FirebaseAuth.instance.currentUser;
-    String? reviewer = (currentUser != null) ? currentUser.email : "";
+    final rubric = resource.rubric!;
 
     final inboxInstance = {
-      'reviewedby': reviewer,
+      'resourceID': resource.id, 
+      'reviewedby': rubric.reviewedBy,
       'email': resource.createdBy,
-      'status': status,
-      'description': description,
+      'status': isApproved ? "Verified" : "Denied",
+      'rubric': rubric.toJson(),
       'submittedName': resource.name,
-      'comments': comments,
-      'timestamp': DateTime.now()
+      'comments': rubric.additionalComments,
+      'timestamp': rubric.reviewTime,
     };
 
-    return inboxRef.add( inboxInstance ).then( ( value ) => 
-      print("Inbox instance added.") ).catchError( ( error ) => 
-      print("Error creating document $error")
-    );
+    return inboxRef.add( inboxInstance )
+      .then( (value) { 
+        print("Inbox instance added.");
+      }).catchError( (error) { 
+        print("Error creating document $error");
+      });
   }
 
   // initialize all ratings to default values
   bool? appropriate = null;
-  bool? avoidAgeism = null;
-  bool? avoidAppropriation = null;
-  bool? avoidCondescension = null;
-  bool? avoidRacism = null;
-  bool? avoidSexism = null;
-  bool? avoidStereotyping = null;
-  bool? avoidVulgarity = null;
+  bool? avoidsAgeism = null;
+  bool? avoidsAppropriation = null;
+  bool? avoidsCondescension = null;
+  bool? avoidsRacism = null;
+  bool? avoidsSexism = null;
+  bool? avoidsStereotyping = null;
+  bool? avoidsVulgarity = null;
 
   List<String>? selectedAccessibilityFeatures = [];
   String? userComments = null;
@@ -226,12 +308,14 @@ class _ReviewResourceState extends State<ReviewResource> {
   List<String>? selectedLifeExperiences = [];
   bool? queerSexualitySpecific = null;
 
-  int? contentAccurate = 0;
-  int? contentCurrent = 0;
-  int? contentTrustworthy = 0;
-  int? culturalRatingHopi = 0;
-  int? culturalRatingIndigenous = 0;
+  int? contentAccuracy = 0;
+  int? contentCurrentness = 0;
+  int? contentTrustworthiness = 0;
+  int? culturalGroundednessHopi = 0;
+  int? culturalGroundednessIndigenous = 0;
 
+  final String? reviewedBy = currentUser?.email;
+  final DateTime? reviewTime = DateTime.now();
 
   Set<String> _selectedGender = {};
 
@@ -240,6 +324,8 @@ class _ReviewResourceState extends State<ReviewResource> {
   Set<String> _selectedLifeExperiences = {};
 
   Set<String> _selectedAccessibilityFeatures = {};
+
+  final _userCommentController = TextEditingController();
 
   // take in the name of the standard and description and displays it
   Widget buildStandardTitle(title, description) {
@@ -321,7 +407,7 @@ class _ReviewResourceState extends State<ReviewResource> {
   }
 
     // builds the radio button ratings for the preliminary questions
-  Widget buildPreliminaryRating(rating, Function(bool) updateRating, screenSize) {
+  Widget buildPreliminaryRating(rating, Function(bool?) updateRating, screenSize) {
 
     double ratingItemWidth;
 
@@ -357,7 +443,7 @@ class _ReviewResourceState extends State<ReviewResource> {
               groupValue: rating,
               onChanged: (newValue) async {
                 final previousValue = rating;
-                updateRating(newValue as bool);
+                updateRating(newValue as bool?);
                 if(newValue == false)
                 {
                   final confirm = await showDialog<bool>(
@@ -387,7 +473,7 @@ class _ReviewResourceState extends State<ReviewResource> {
                     // If the user confirms, deny the resource
                     Future(() async {
                       await deleteResource(widget.resourceData);
-                      await submitToInbox(widget.resourceData, "Denied", "Resource denied by reviewer.");
+                      await submitToInbox(widget.resourceData, false,);
                       if (mounted) {
                         Navigator.pop(context);
                       }
@@ -408,156 +494,14 @@ class _ReviewResourceState extends State<ReviewResource> {
     );
   }
 
-
-  // creates an active phone number link
-  Widget buildPhoneLink(phoneUrl, phoneNumStr, resourceType) {
-    // check if resource has a phone number
-    if(resourceType == "Hotline" || resourceType == "In Person") {
-      return Column(children: [
-        GestureDetector(
-            onTap: () async {
-              if (await canLaunchUrlString(phoneUrl)) {
-                await launchUrlString(phoneUrl);
-              } else {
-                showDialog(
-                    context: context,
-                    builder: (context) =>
-                        AlertDialog(
-                            title: Text("Error"),
-                            content: Text("Failed to call phone number"),
-                            actions: [
-                              TextButton(
-                                child: Text("OK"),
-                                onPressed: () => Navigator.pop(context),
-                              )
-                            ]));
-              }
-            },
-            // display phone number link
-            child: RichText(
-                text: TextSpan(
-                    text: 'Phone Number: ',
-                    style: TextStyle(color: Colors.black, fontSize: 14),
-                    children: [
-                      TextSpan(
-                          text: '$phoneNumStr\n',
-                          style: TextStyle(
-                            color: Theme.of(context).primaryColor,
-                            fontSize: 14,
-                            decoration: TextDecoration.underline,
-                          ))
-                    ]))),
-      ]);
-    }
-    else{
-      // returns an empty widget if resource is not in person or hotline
-      // (doesn't have a phone number)
-      return SizedBox.shrink();
-    }
-    }
-
-    // creates an active address link
-    Widget buildAddressLink(addressUrl, fullAddress, resourceType) {
-    if(resourceType == "In Person") {
-      return Column(children: [
-        GestureDetector(
-            onTap: () async {
-              String formattedAddress = fullAddress.replaceAll(" ", "+");
-              String mapUrl = 'https://maps.google.com/?q=$formattedAddress';
-              if (await canLaunchUrlString(mapUrl)) {
-                await launchUrlString(mapUrl);
-              } else {
-                showDialog(
-                    context: context,
-                    builder: (context) =>
-                        AlertDialog(
-                            title: Text("Error"),
-                            content: Text("Failed to launch address"),
-                            actions: [
-                              TextButton(
-                                child: Text("OK"),
-                                onPressed: () => Navigator.pop(context),
-                              )
-                            ]));
-              }
-            },
-            // display address link
-            child: RichText(
-                text: TextSpan(
-                    text: 'Address: ',
-                    style: TextStyle(color: Colors.black, fontSize: 14),
-                    children: [
-                      TextSpan(
-                          text: '$fullAddress\n',
-                          style: TextStyle(
-                            color: Theme.of(context).primaryColor,
-                            fontSize: 14,
-                            decoration: TextDecoration.underline,
-                          ))
-                    ]))),
-      ]);
-    }
-    else{
-      // returns an empty widget if resource is not in person
-      // (doesn't have an address)
-      return SizedBox.shrink();
-    }
-    }
-
-    // creates an active url link
-    Widget buildUrlLink(url, urlStr){
-    return Column(
-      children: [
-        GestureDetector(
-            onTap: () async {
-              if (await canLaunchUrl(url)) {
-                await launchUrl(url);
-              } else {
-                showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                        title: Text("Error"),
-                        content: Text(
-                            "Failed to launch URL"),
-                        actions: [
-                          TextButton(
-                            child: Text("OK"),
-                            onPressed: () =>
-                                Navigator.pop(context),
-                          )
-                        ]));
-              }
-            },
-            child: RichText(
-                text: TextSpan(
-                    text: "URL: Link to website ",
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 14,
-                    ),
-                    children: [
-                      TextSpan(
-                          text: 'here',
-                          style: TextStyle(
-                            color: Theme.of(context).primaryColor,
-                            fontSize: 14,
-                            decoration:
-                            TextDecoration.underline,
-                          ))
-                    ])))
-      ]
-    );
-    }
-
   @override
   Widget build(BuildContext context) {
     // get the screen size
     final Size screenSize = MediaQuery.of(context).size;
 
-    String userComments = "";
 
-    int totalScore = culturalRatingHopi! + culturalRatingIndigenous!
-                      + contentAccurate! + contentTrustworthy! + contentCurrent!;
+    int totalScore = culturalGroundednessHopi! + culturalGroundednessIndigenous!
+                      + contentAccuracy! + contentTrustworthiness! + contentCurrentness!;
 
     return Scaffold(
       appBar: AppBar(
@@ -608,25 +552,33 @@ class _ReviewResourceState extends State<ReviewResource> {
                     ),
                     SizedBox(height: 10.0),
                     // create rating buttons and assign to correct rating
-                    SizedBox(
-                      child: buildPreliminaryRating(avoidRacism, (newValue) {
-                      setState(() {
-                        avoidRacism = newValue;
-                      });
-                      }, screenSize),
-                    ),
+                    ResponsiveRadioRow(
+                      options: { true: "Yes", false: "No" },
+                      selectedValue: avoidsRacism, 
+                      onChanged: preliminaryRatingHandler(
+                        context: context,
+                        updateRating: (val) => setState(() => avoidsRacism = val),
+                        rejectAndSubmit: () async {
+                          await handleRubricSubmission(widget.resourceData, false);
+                        },
+                      )
+                    ),       
                     SizedBox(height: 15),
                     buildStandardTitle(
                       "Avoids Sexism and Gender Stereotyping",
                       "Content does not exhibit sexist verbiage or values.",
                     ),
                     SizedBox(height: 10.0),
-                    SizedBox(
-                      child: buildPreliminaryRating(avoidSexism, (newValue) {
-                      setState(() {
-                        avoidSexism = newValue;
-                      });
-                      }, screenSize),
+                    ResponsiveRadioRow(
+                      options: { true: "Yes", false: "No" },
+                      selectedValue: avoidsSexism, 
+                      onChanged: preliminaryRatingHandler(
+                        context: context,
+                        updateRating: (val) => setState(() => avoidsSexism = val),
+                        rejectAndSubmit: () async {
+                          await handleRubricSubmission(widget.resourceData, false);
+                        },
+                      )
                     ),
                     SizedBox(height: 15),
                     buildStandardTitle(
@@ -634,12 +586,16 @@ class _ReviewResourceState extends State<ReviewResource> {
                       "Content does not exhibit sexist verbiage or values.",
                     ),
                     SizedBox(height: 10.0),
-                    SizedBox(
-                      child: buildPreliminaryRating(avoidStereotyping, (newValue) {
-                      setState(() {
-                        avoidStereotyping = newValue;
-                      });
-                      }, screenSize),
+                    ResponsiveRadioRow(
+                      options: { true: "Yes", false: "No" },
+                      selectedValue: avoidsStereotyping, 
+                      onChanged: preliminaryRatingHandler(
+                        context: context,
+                        updateRating: (val) => setState(() => avoidsStereotyping = val),
+                        rejectAndSubmit: () async {
+                          await handleRubricSubmission(widget.resourceData, false);
+                        },
+                      )
                     ),
                     SizedBox(height: 15),
                     buildStandardTitle(
@@ -647,12 +603,16 @@ class _ReviewResourceState extends State<ReviewResource> {
                       "Content does not appropriate or misuse any aspect of any culture.",
                     ),
                     SizedBox(height: 10.0),
-                    SizedBox(
-                      child: buildPreliminaryRating(avoidAppropriation, (newValue) {
-                      setState(() {
-                        avoidAppropriation = newValue;
-                      });
-                      }, screenSize),
+                    ResponsiveRadioRow(
+                      options: { true: "Yes", false: "No" },
+                      selectedValue: avoidsAppropriation, 
+                      onChanged: preliminaryRatingHandler(
+                        context: context,
+                        updateRating: (val) => setState(() => avoidsAppropriation = val),
+                        rejectAndSubmit: () async {
+                          await handleRubricSubmission(widget.resourceData, false);
+                        },
+                      )
                     ),
                     SizedBox(height: 15),
                     buildStandardTitle(
@@ -660,12 +620,16 @@ class _ReviewResourceState extends State<ReviewResource> {
                       "Content does not exhibit stereotypes based on age.",
                     ),
                     SizedBox(height: 10.0),
-                    SizedBox(
-                      child: buildPreliminaryRating(avoidAgeism, (newValue) {
-                      setState(() {
-                        avoidAgeism = newValue;
-                      });
-                      }, screenSize),
+                    ResponsiveRadioRow(
+                      options: { true: "Yes", false: "No" },
+                      selectedValue: avoidsAgeism, 
+                      onChanged: preliminaryRatingHandler(
+                        context: context,
+                        updateRating: (val) => setState(() => avoidsAgeism = val),
+                        rejectAndSubmit: () async {
+                          await handleRubricSubmission(widget.resourceData, false);
+                        },
+                      )
                     ),
                     SizedBox(height: 15),
                     buildStandardTitle(
@@ -673,40 +637,49 @@ class _ReviewResourceState extends State<ReviewResource> {
                       "Content does not 'talk down.'",
                     ),
                     SizedBox(height: 10.0),
-                    SizedBox(
-                      child: buildPreliminaryRating(avoidCondescension, (newValue) {
-                      setState(() {
-                        avoidCondescension = newValue;
-                      });
-                      }, screenSize),
-                    ),
-                    SizedBox(height: 15),
+                    ResponsiveRadioRow(
+                      options: { true: "Yes", false: "No" },
+                      selectedValue: avoidsCondescension, 
+                      onChanged: preliminaryRatingHandler(
+                        context: context,
+                        updateRating: (val) => setState(() => avoidsCondescension = val),
+                        rejectAndSubmit: () async {
+                          await handleRubricSubmission(widget.resourceData, false);
+                        },
+                      )
+                    ),SizedBox(height: 15),
                     buildStandardTitle(
                       "Avoids Innapropriate Language and Content",
                       "Content avoids profanity, vulgar language, inappropriate references to sexuality or violence, or substance abuse.",
                     ),
                     SizedBox(height: 10.0),
-                    SizedBox(
-                      child: buildPreliminaryRating(avoidVulgarity, (newValue) {
-                      setState(() {
-                        avoidVulgarity = newValue;
-                      });
-                      }, screenSize),
-                    ),
-                    SizedBox(height: 15),
+                    ResponsiveRadioRow(
+                      options: { true: "Yes", false: "No" },
+                      selectedValue: avoidsVulgarity, 
+                      onChanged: preliminaryRatingHandler(
+                        context: context,
+                        updateRating: (val) => setState(() => avoidsVulgarity = val),
+                        rejectAndSubmit: () async {
+                          await handleRubricSubmission(widget.resourceData, false);
+                        },
+                      )
+                    ),SizedBox(height: 15),
                     buildStandardTitle(
                       "Content Suggests Available and Appropriate Services",
                       "Content does not recommend services that are unavailable or that are inconsistent with HBHSs approach to alcoholism treatment and/or behavioral healthcare.",
                     ),
                     SizedBox(height: 10.0),
-                    SizedBox(
-                      child: buildPreliminaryRating(appropriate, (newValue) {
-                      setState(() {
-                        appropriate = newValue;
-                      });
-                      }, screenSize),
-                    ),
-                    SizedBox(height: 15),
+                    ResponsiveRadioRow(
+                      options: { true: "Yes", false: "No" },
+                      selectedValue: appropriate, 
+                      onChanged: preliminaryRatingHandler(
+                        context: context,
+                        updateRating: (val) => setState(() => appropriate = val),
+                        rejectAndSubmit: () async {
+                          await handleRubricSubmission(widget.resourceData, false);
+                        },
+                      )
+                    ),SizedBox(height: 15),
                     Divider(
                       color: Colors.grey,
                       thickness: 1.0,
@@ -730,9 +703,9 @@ class _ReviewResourceState extends State<ReviewResource> {
                       3: "3",
                       4: "4",
                       5: "5",
-                    }, selectedValue: culturalRatingIndigenous, onChanged: (value) {
+                    }, selectedValue: culturalGroundednessIndigenous, onChanged: (value) {
                       setState(() {
-                        culturalRatingIndigenous = value!;
+                        culturalGroundednessIndigenous = value!;
                       });
                     }),
                     SizedBox(height: 15),
@@ -747,9 +720,9 @@ class _ReviewResourceState extends State<ReviewResource> {
                       3: "3",
                       4: "4",
                       5: "5",
-                    }, selectedValue: culturalRatingHopi, onChanged: (value) {
+                    }, selectedValue: culturalGroundednessHopi, onChanged: (value) {
                       setState(() {
-                        culturalRatingHopi = value!;
+                        culturalGroundednessHopi = value!;
                       });
                     }),
                     SizedBox(height: 15),
@@ -898,9 +871,9 @@ class _ReviewResourceState extends State<ReviewResource> {
                       3: "3",
                       4: "4",
                       5: "5",
-                    }, selectedValue: contentAccurate, onChanged: (value) {
+                    }, selectedValue: contentAccuracy, onChanged: (value) {
                       setState(() {
-                        contentAccurate = value!;
+                        contentAccuracy = value!;
                       });
                     }),
                     SizedBox(height: 15),
@@ -915,9 +888,9 @@ class _ReviewResourceState extends State<ReviewResource> {
                       3: "3",
                       4: "4",
                       5: "5",
-                    }, selectedValue: contentTrustworthy, onChanged: (value) {
+                    }, selectedValue: contentTrustworthiness, onChanged: (value) {
                       setState(() {
-                        contentTrustworthy = value!;
+                        contentTrustworthiness = value!;
                       });
                     }),
                     SizedBox(height: 15),
@@ -932,9 +905,9 @@ class _ReviewResourceState extends State<ReviewResource> {
                       3: "3",
                       4: "4",
                       5: "5",
-                    }, selectedValue: contentCurrent, onChanged: (value) {
+                    }, selectedValue: contentCurrentness, onChanged: (value) {
                       setState(() {
-                        contentCurrent = value!;
+                        contentCurrentness = value!;
                       });
                     }),
                     SizedBox(height: 15),
@@ -955,9 +928,7 @@ class _ReviewResourceState extends State<ReviewResource> {
                       hintText: 'Type your additional comments here',
                       border: InputBorder.none,
                       ),
-                      onChanged: (value) {
-                      userComments = value;
-                      },
+                      controller: _userCommentController,
                     ),
                     SizedBox(height: 20),
                     Row(
@@ -974,12 +945,10 @@ class _ReviewResourceState extends State<ReviewResource> {
                         foregroundColor: MaterialStateProperty.all<Color>(Colors.black),
                         ),
                         onPressed: () async {
-                        await verifyResource(widget.resourceData);
-                        await updateResourceRubric(widget.resourceData, userComments);
-                        await submitToInbox(widget.resourceData, "Approved", userComments);
-                        if (mounted) {
-                          Navigator.pop(context);
-                        }
+                          await handleRubricSubmission(widget.resourceData, true);
+                          if (mounted) {
+                            Navigator.pop(context);
+                          }
                         },
                         child: Text(
                         'Verify',
@@ -1002,7 +971,7 @@ class _ReviewResourceState extends State<ReviewResource> {
                         ),
                         onPressed: () async {
                         await deleteResource(widget.resourceData);
-                        await submitToInbox(widget.resourceData, "Denied", userComments);
+                        await submitToInbox(widget.resourceData, false);
                         if (mounted) {
                           Navigator.pop(context);
                         }
