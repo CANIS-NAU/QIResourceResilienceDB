@@ -970,8 +970,7 @@ class _ReviewResourceState extends State<ReviewResource> {
                         foregroundColor: MaterialStateProperty.all<Color>(Colors.black),
                         ),
                         onPressed: () async {
-                        await deleteResource(widget.resourceData);
-                        await submitToInbox(widget.resourceData, false);
+                          await handleRubricSubmission(widget.resourceData, false);
                         if (mounted) {
                           Navigator.pop(context);
                         }
