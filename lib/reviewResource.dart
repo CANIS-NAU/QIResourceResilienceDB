@@ -4,6 +4,8 @@ The rubric ratings, total score, and additional comments are saved and the revie
 choose to verify or deny a resource.
  */
 
+// TODO: implement a "toast" manager to facilitate widget tree management in the context of popup dialogues
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 //Package imports
