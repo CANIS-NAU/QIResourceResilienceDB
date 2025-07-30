@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:web_app/view_resource/resource_detail.dart';
-import 'firebase_options.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:multi_select_flutter/multi_select_flutter.dart';
 import 'package:web_app/model.dart';
 
 enum VerificationStatus {
@@ -20,7 +16,7 @@ class Inbox extends StatelessWidget
 
     final CollectionReference inboxRef = FirebaseFirestore.instance
                                                        .collection('rrdbInbox');
-    User? currUser = FirebaseAuth.instance.currentUser;
+    final User? currUser = FirebaseAuth.instance.currentUser;
 
 
 
@@ -35,16 +31,14 @@ class Inbox extends StatelessWidget
     Widget cardDisplay(BuildContext context, int docIndex,
                                       List<QueryDocumentSnapshot<Object?>> data)
     {
-        bool resourceApproved = data[docIndex]['status'] == VerificationStatus.Approved.name;
-        bool hasRubric = false;
-        Rubric? rubric = null;
-
         Map<String, dynamic> doc = data[docIndex].data() as Map<String, dynamic>;
 
-        if (doc.containsKey('rubric')){
-            hasRubric = true;
-            rubric = Rubric.fromJson(data[docIndex]['rubric']);
-        }
+        Rubric? rubric = doc.containsKey('rubric')
+          ? Rubric.fromJson(doc['rubric'] as Map<String, dynamic>)
+          : null;
+
+        bool resourceApproved = doc['status'] == VerificationStatus.Approved.name;
+
         return Card(
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
@@ -90,7 +84,7 @@ class Inbox extends StatelessWidget
                         children: <Widget>[
                             const Spacer(),
                             Visibility(
-                                visible: hasRubric,
+                                visible: rubric != null,
                                 child: TextButton(
                                     style: TextButton.styleFrom(
                                         foregroundColor: Colors.transparent,

@@ -8,13 +8,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 //Package imports
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:url_launcher/url_launcher_string.dart';
 import 'package:web_app/createResource.dart';
-import 'package:web_app/events/schedule.dart';
 import 'package:web_app/model.dart';
-import 'package:web_app/time.dart';
-import 'package:web_app/top10resources.dart';
 import 'package:web_app/util.dart';
 import 'package:web_app/Analytics.dart';
 import 'package:web_app/view_resource/resource_detail.dart';
