@@ -226,7 +226,6 @@ class _ReviewResourceState extends State<ReviewResource> {
   ValueChanged<bool?> preliminaryRatingHandler({
       required BuildContext context,
       required void Function(bool?) updateRating,
-      required Future<void> Function() rejectAndSubmit,
       }) {
         return (newValue) async {
           updateRating(newValue);
@@ -259,7 +258,7 @@ class _ReviewResourceState extends State<ReviewResource> {
             );
 
             if (confirm == true) {
-              await rejectAndSubmit();
+              await handleRubricSubmission(widget.resourceData, VerificationStatus.Denied);
               if (context.mounted) Navigator.pop(context);
             } else {
               updateRating(null);
@@ -426,9 +425,6 @@ class _ReviewResourceState extends State<ReviewResource> {
                       onChanged: preliminaryRatingHandler(
                         context: context,
                         updateRating: (val) => setState(() => avoidsRacism = val),
-                        rejectAndSubmit: () async {
-                          await handleRubricSubmission(widget.resourceData, VerificationStatus.Denied);
-                        },
                       )
                     ),       
                     SizedBox(height: 15),
@@ -443,9 +439,6 @@ class _ReviewResourceState extends State<ReviewResource> {
                       onChanged: preliminaryRatingHandler(
                         context: context,
                         updateRating: (val) => setState(() => avoidsSexism = val),
-                        rejectAndSubmit: () async {
-                          await handleRubricSubmission(widget.resourceData, VerificationStatus.Denied);
-                        },
                       )
                     ),
                     SizedBox(height: 15),
@@ -460,9 +453,6 @@ class _ReviewResourceState extends State<ReviewResource> {
                       onChanged: preliminaryRatingHandler(
                         context: context,
                         updateRating: (val) => setState(() => avoidsStereotyping = val),
-                        rejectAndSubmit: () async {
-                          await handleRubricSubmission(widget.resourceData, VerificationStatus.Denied);
-                        },
                       )
                     ),
                     SizedBox(height: 15),
@@ -477,9 +467,6 @@ class _ReviewResourceState extends State<ReviewResource> {
                       onChanged: preliminaryRatingHandler(
                         context: context,
                         updateRating: (val) => setState(() => avoidsAppropriation = val),
-                        rejectAndSubmit: () async {
-                          await handleRubricSubmission(widget.resourceData, VerificationStatus.Denied);
-                        },
                       )
                     ),
                     SizedBox(height: 15),
@@ -494,9 +481,6 @@ class _ReviewResourceState extends State<ReviewResource> {
                       onChanged: preliminaryRatingHandler(
                         context: context,
                         updateRating: (val) => setState(() => avoidsAgeism = val),
-                        rejectAndSubmit: () async {
-                          await handleRubricSubmission(widget.resourceData, VerificationStatus.Denied);
-                        },
                       )
                     ),
                     SizedBox(height: 15),
@@ -511,9 +495,6 @@ class _ReviewResourceState extends State<ReviewResource> {
                       onChanged: preliminaryRatingHandler(
                         context: context,
                         updateRating: (val) => setState(() => avoidsCondescension = val),
-                        rejectAndSubmit: () async {
-                          await handleRubricSubmission(widget.resourceData, VerificationStatus.Denied);
-                        },
                       )
                     ),SizedBox(height: 15),
                     buildStandardTitle(
@@ -527,9 +508,6 @@ class _ReviewResourceState extends State<ReviewResource> {
                       onChanged: preliminaryRatingHandler(
                         context: context,
                         updateRating: (val) => setState(() => avoidsVulgarity = val),
-                        rejectAndSubmit: () async {
-                          await handleRubricSubmission(widget.resourceData, VerificationStatus.Denied);
-                        },
                       )
                     ),SizedBox(height: 15),
                     buildStandardTitle(
@@ -543,9 +521,6 @@ class _ReviewResourceState extends State<ReviewResource> {
                       onChanged: preliminaryRatingHandler(
                         context: context,
                         updateRating: (val) => setState(() => appropriate = val),
-                        rejectAndSubmit: () async {
-                          await handleRubricSubmission(widget.resourceData, VerificationStatus.Denied);
-                        },
                       )
                     ),SizedBox(height: 15),
                     Divider(
