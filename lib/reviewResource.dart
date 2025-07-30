@@ -45,14 +45,13 @@ class ResponsiveRadioRow<T> extends StatelessWidget {
       return _buildTile(entry.key, entry.value);
     }).toList();
 
-    return isWide
-        ? Wrap(
+    return Wrap(
+            direction: isWide ? Axis.horizontal : Axis.vertical,
             spacing: 12.0,
             runSpacing: 8.0,
             alignment: WrapAlignment.start,
             children: tiles,
-          )
-        : Column(children: tiles);
+          );
   }
   // builds tiles of radio row/column
   Widget _buildTile(T value, String label) {
@@ -70,7 +69,7 @@ class ResponsiveRadioRow<T> extends StatelessWidget {
       ),
     );
   }
-  }
+}
 
 class ReviewResource extends StatefulWidget {
   final Resource resourceData;

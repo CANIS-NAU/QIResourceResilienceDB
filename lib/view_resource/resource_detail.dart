@@ -109,21 +109,20 @@ String boolToYesNo(bool? value) {
   return value ? "Yes" : "No";
 }
 
-const fieldPadding = EdgeInsets.symmetric(vertical: 8.0);
+class DetailDialog extends StatelessWidget {
+  const DetailDialog({required this.detailView, required this.title, super.key});
 
-class RubricDetail extends StatelessWidget {
-  const RubricDetail({required this.rubric, super.key});
-
-  final Rubric rubric;
+  final detailView;
+  final String title;
 
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      insetPadding: const EdgeInsets.all(16),
+      insetPadding: const EdgeInsets.all(16.0),
       child: ConstrainedBox(
         constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.7, // Limit height to 70% of screen height
-          maxWidth: 600, // Limit width to 600px
+          maxHeight: MediaQuery.of(context).size.height * 0.7, // Limit height to 70% of screen
+          maxWidth: 600,
         ),
         child: Padding(
           padding: const EdgeInsets.all(8.0),
@@ -133,80 +132,21 @@ class RubricDetail extends StatelessWidget {
               // Title
               Center(
                 child: Text(
-                  'Rubric Information',
+                  title,
                   style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                 ),
               ),
               Divider(),
-              // Rubric Details Section
+              // Body
               Expanded(
                 child: SingleChildScrollView(
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Creation info
-                        sectionTitle(title: 'General Info'),
-                        field('Reviewed By', rubric.reviewedBy),
-                        field('Review Time', rubric.reviewTime),
-
-                        const Divider(),
-
-                        // Preliminary Rating Section
-                        sectionTitle(title: 'Preliminary Rating'),
-                        field('Appropriate', boolToYesNo(rubric.appropriate)),
-                        field('Avoids Ageism', boolToYesNo(rubric.avoidsAgeism)),
-                        field('Avoids Appropriation', boolToYesNo(rubric.avoidsAppropriation)),
-                        field('Avoids Condescension', boolToYesNo(rubric.avoidsCondescension)),
-                        field('Avoids Racism', boolToYesNo(rubric.avoidsRacism)),
-                        field('Avoids Sexism', boolToYesNo(rubric.avoidsSexism)),
-                        field('Avoids Stereotypes', boolToYesNo(rubric.avoidsStereotyping)),
-                        field('Avoids Vulgarity', boolToYesNo(rubric.avoidsVulgarity)),
-
-                        const Divider(),
-
-                        // Descriptive Attributes Section
-                        sectionTitle(title: 'Descriptive Attributes'),
-                        Padding(
-                          padding: fieldPadding,
-                          child: Text('Accessibility Features: '),
-                        ),
-                        buildFieldList(rubric.accessibilityFeaturesLabel),
-                        Padding(
-                          padding: fieldPadding,
-                          child: Text('Ages Served: '),
-                        ),
-                        buildFieldList(rubric.ageBalanceLabel),
-                        Padding(
-                          padding: fieldPadding,
-                          child: Text('Genders Represented: '),
-                        ),
-                        buildFieldList(rubric.genderBalanceLabel),
-                        Padding(
-                          padding: fieldPadding,
-                          child: Text('Life Experiences Represented: '),
-                        ),
-                        buildFieldList(rubric.lifeExperiencesLabel),
-                        field('Additional Comments', rubric.additionalComments),
-                        field('Queer Sexuality Specific', boolToYesNo(rubric.queerSexualitySpecific)),
-
-                        const Divider(),
-
-                        // Numerical Ratings Section
-                        sectionTitle(title: 'Numerical Ratings'),
-                        field('Content Accuracy', rubric.contentAccuracy),
-                        field('Content Currentness', rubric.contentCurrentness),
-                        field('Content Trustworthiness', rubric.contentTrustworthiness),
-                        field('Cultural Groundedness (Hopi)', rubric.culturalGroundednessHopi),
-                        field('Cultural Groundedness (Indigenous)', rubric.culturalGroundednessIndigenous),
-                        field('Total Score', rubric.totalScore),
-                      ],
-                    ),
+                    child: detailView,
                   ),
                 ),
               ),
-              // Close Button
+              // Close button
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: ElevatedButton(
@@ -223,6 +163,72 @@ class RubricDetail extends StatelessWidget {
     );
   }
 }
+
+class RubricDetailView extends StatelessWidget {
+  const RubricDetailView({required this.rubric});
+
+  final Rubric rubric;
+  static const fieldPadding = EdgeInsets.symmetric(vertical: 8.0);
+
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Creation info
+        sectionTitle(title: 'General Info'),
+        field('Reviewed By', rubric.reviewedBy),
+        field('Review Time', rubric.reviewTime),
+        const Divider(),
+        // Preliminary Rating Section
+        sectionTitle(title: 'Preliminary Rating'),
+        field('Appropriate', boolToYesNo(rubric.appropriate)),
+        field('Avoids Ageism', boolToYesNo(rubric.avoidsAgeism)),
+        field('Avoids Appropriation', boolToYesNo(rubric.avoidsAppropriation)),
+        field('Avoids Condescension', boolToYesNo(rubric.avoidsCondescension)),
+        field('Avoids Racism', boolToYesNo(rubric.avoidsRacism)),
+        field('Avoids Sexism', boolToYesNo(rubric.avoidsSexism)),
+        field('Avoids Stereotypes', boolToYesNo(rubric.avoidsStereotyping)),
+        field('Avoids Vulgarity', boolToYesNo(rubric.avoidsVulgarity)),
+        const Divider(),
+        // Descriptive Attributes Section
+        sectionTitle(title: 'Descriptive Attributes'),
+        Padding(
+          padding: fieldPadding,
+          child: Text('Accessibility Features: '),
+        ),
+        buildFieldList(rubric.accessibilityFeaturesLabel),
+        Padding(
+          padding: fieldPadding,
+          child: Text('Ages Served: '),
+        ),
+        buildFieldList(rubric.ageBalanceLabel),
+        Padding(
+          padding: fieldPadding,
+          child: Text('Genders Represented: '),
+        ),
+        buildFieldList(rubric.genderBalanceLabel),
+        Padding(
+          padding: fieldPadding,
+          child: Text('Life Experiences Represented: '),
+        ),
+        buildFieldList(rubric.lifeExperiencesLabel),
+        field('Additional Comments', rubric.additionalComments),
+        field('Queer Sexuality Specific', boolToYesNo(rubric.queerSexualitySpecific)),
+        const Divider(),
+        // Numerical Ratings Section
+        sectionTitle(title: 'Numerical Ratings'),
+        field('Content Accuracy', rubric.contentAccuracy),
+        field('Content Currentness', rubric.contentCurrentness),
+        field('Content Trustworthiness', rubric.contentTrustworthiness),
+        field('Cultural Groundedness (Hopi)', rubric.culturalGroundednessHopi),
+        field('Cultural Groundedness (Indigenous)', rubric.culturalGroundednessIndigenous),
+        field('Total Score', rubric.totalScore),
+      ],
+    );
+  }
+}
+
+const fieldPadding = EdgeInsets.symmetric(vertical: 8.0);
 
 
 class ResourceDetail extends StatelessWidget {
@@ -346,7 +352,10 @@ class ResourceDetail extends StatelessWidget {
                       onPressed: () {
                         showDialog(
                           context: context,
-                          builder: (context) => RubricDetail(rubric: resourceModel.rubric!),
+                          builder: (context) => DetailDialog(
+                            detailView: RubricDetailView(
+                              rubric: resourceModel.rubric!), 
+                            title: "Rubric Information"),
                         );
                       },
                       child: Text('View Rubric'),

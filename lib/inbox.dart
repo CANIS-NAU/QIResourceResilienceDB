@@ -98,7 +98,9 @@ class Inbox extends StatelessWidget
                                     onPressed: () {
                                         showDialog(
                                             context: context,
-                                           builder: (context) => RubricDetail(rubric: rubric!)
+                                           builder: (context) => DetailDialog(
+                                            detailView: RubricDetailView(rubric: rubric!),
+                                            title: "Rubric Information")
                                         );
                                     },
                                 )
