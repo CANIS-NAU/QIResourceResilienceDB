@@ -127,7 +127,7 @@ class _ReviewResourceState extends State<ReviewResource> {
   }
 }
 
-
+  // builds a rubric from info given in form
   Rubric buildRubricFromForm(){
     return Rubric(
       // default preliminary ratings to false if not filled out
@@ -152,6 +152,38 @@ class _ReviewResourceState extends State<ReviewResource> {
       culturalGroundednessIndigenous: culturalGroundednessIndigenous,
       reviewTime: DateTime.now(),
       reviewedBy: currentUser!.email,
+    );
+  }
+  // take in the name of the standard and description and displays it
+  Widget buildStandardTitle(title, description) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Flexible(
+          child: Text(
+            "$title: ",
+            style: TextStyle(
+              color: Colors.black,
+              fontSize: 16.0,
+              fontWeight: FontWeight.bold,
+            ),
+            softWrap: true,
+            overflow: TextOverflow.clip,
+          ),
+        ),
+        Flexible(
+          fit: FlexFit.loose,
+          child: Text(
+            "$description",
+            style: TextStyle(
+              color: Colors.black,
+              fontSize: 15.0,
+            ),
+            softWrap: true,
+            overflow: TextOverflow.clip,
+          ),
+        )
+      ],
     );
   }
 
@@ -327,172 +359,7 @@ class _ReviewResourceState extends State<ReviewResource> {
 
   final _userCommentController = TextEditingController();
 
-  // take in the name of the standard and description and displays it
-  Widget buildStandardTitle(title, description) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Flexible(
-          child: Text(
-            "$title: ",
-            style: TextStyle(
-              color: Colors.black,
-              fontSize: 16.0,
-              fontWeight: FontWeight.bold,
-            ),
-            softWrap: true,
-            overflow: TextOverflow.clip,
-          ),
-        ),
-        Flexible(
-          fit: FlexFit.loose,
-          child: Text(
-            "$description",
-            style: TextStyle(
-              color: Colors.black,
-              fontSize: 15.0,
-            ),
-            softWrap: true,
-            overflow: TextOverflow.clip,
-          ),
-        )
-      ],
-    );
-  }
-
-  // builds the radio button ratings for the preliminary questions
-  Widget buildYesNoRating(rating, Function(bool) updateRating, screenSize) {
-
-    double ratingItemWidth;
-
-    if (screenSize.width > 850) {
-      ratingItemWidth = screenSize.width / 10;
-    } else if (screenSize.width > 600) {
-      ratingItemWidth = screenSize.width / 8;
-    } else {
-      ratingItemWidth = screenSize.width / 6;
-    }
-
-    // list of option strings
-    const List<String> ButtonOptions = [
-      'Yes',
-      'No',
-    ];
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: List.generate(2, (index) {
-        final label = ButtonOptions[index];
-        final value = (label == 'Yes');
-        return SizedBox(
-          width: ratingItemWidth,
-          child: Container(
-            child: RadioListTile(
-              dense: true,
-              title: Row(
-                  children: [
-                    Expanded(
-                      child: Text("$label"))]),
-              value: value,
-              groupValue: rating,
-              onChanged: (newValue) {
-                updateRating(newValue as bool);
-              },
-              focusNode: FocusNode(skipTraversal: true),
-            ),
-          ),
-        );
-      }),
-    );
-  }
-
-    // builds the radio button ratings for the preliminary questions
-  Widget buildPreliminaryRating(rating, Function(bool?) updateRating, screenSize) {
-
-    double ratingItemWidth;
-
-    if (screenSize.width > 850) {
-      ratingItemWidth = screenSize.width / 10;
-    } else if (screenSize.width > 600) {
-      ratingItemWidth = screenSize.width / 8;
-    } else {
-      ratingItemWidth = screenSize.width / 6;
-    }
-
-    // list of option strings
-    const List<String> ButtonOptions = [
-      'Yes',
-      'No',
-    ];
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: List.generate(2, (index) {
-        final label = ButtonOptions[index];
-        final value = (label == 'Yes');
-        return SizedBox(
-          width: ratingItemWidth,
-          child: Container(
-            child: RadioListTile(
-              dense: true,
-              title: Row(
-                  children: [
-                    Expanded(
-                      child: Text("$label"))]),
-              value: value,
-              groupValue: rating,
-              onChanged: (newValue) async {
-                final previousValue = rating;
-                updateRating(newValue as bool?);
-                if(newValue == false)
-                {
-                  final confirm = await showDialog<bool>(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: Text("Confirm Resource Rejection"),
-                      content: Text("Answering 'No' to any preliminary questions will result in the automatic rejection of this resource. Are you sure?"),
-                      actions: [
-                        TextButton(
-                          child: Text("No, go back"),
-                          style: TextButton.styleFrom(
-                            foregroundColor: Color.fromARGB(255, 72, 72, 72),
-                          ),
-                          onPressed: () => Navigator.pop(context, false),
-                        ),
-                        OutlinedButton(
-                          child: Text("Yes, reject"),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Theme.of(context).primaryColorDark,
-                          ),
-                          onPressed: () => Navigator.pop(context, true),
-                        ),
-                      ],
-                    ),
-                  );
-                  if (confirm == true) {
-                    // If the user confirms, deny the resource
-                    Future(() async {
-                      await deleteResource(widget.resourceData);
-                      await submitToInbox(widget.resourceData, false,);
-                      if (mounted) {
-                        Navigator.pop(context);
-                      }
-                    });
-                  } else {
-                    // If the user cancels, revert the rating
-                    setState(() {
-                      updateRating(previousValue);
-                    });
-                  }
-                }
-              },
-              focusNode: FocusNode(skipTraversal: true),
-            ),
-          ),
-        );
-      }),
-    );
-  }
+  
 
   @override
   Widget build(BuildContext context) {
