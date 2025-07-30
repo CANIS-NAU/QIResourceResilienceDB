@@ -19,6 +19,11 @@ import 'package:web_app/util.dart';
 import 'package:web_app/Analytics.dart';
 import 'package:web_app/view_resource/resource_detail.dart';
 
+enum VerificationStatus {
+  Approved,
+  Denied,
+}
+
 // Widget that displays a row of radio buttons that are responsive to screen size
 // If the screen is narrower than 600px, it displays the radio buttons in a column instead of a row
 class ResponsiveRadioRow<T> extends StatelessWidget {
@@ -205,20 +210,20 @@ class _ReviewResourceState extends State<ReviewResource> {
     }
   }
 
-  Future<void> handleRubricSubmission( Resource resource, bool isApproved ) async {
+  Future<void> handleRubricSubmission( Resource resource, VerificationStatus status ) async {
 
     resource.rubric = buildRubricFromForm();
 
-    if (isApproved) {
+    if (status == VerificationStatus.Approved) {
       // set resource as verified
       await verifyResource(resource);
       // Update DB
-      await updateResourceRubric(resource, isApproved);
+      await updateResourceRubric(resource, status);
       // Send to inbox
-      await submitToInbox(resource, isApproved);
+      await submitToInbox(resource, status);
     }
     else {
-      await submitToInbox(resource, isApproved);
+      await submitToInbox(resource, status);
       await deleteResource(resource);
     }
   }
@@ -270,7 +275,7 @@ class _ReviewResourceState extends State<ReviewResource> {
 
 
   // function to add rubric info to a resource
-  Future<void> updateResourceRubric(resource, isApproved) {
+  Future<void> updateResourceRubric(resource, status) {
     
     final rubric = resource.rubric!;
     final reviewedBy = rubric.reviewedBy;
@@ -288,7 +293,7 @@ class _ReviewResourceState extends State<ReviewResource> {
       'rubric': rubric.toJson(),
       'reviewedBy': reviewedBy,
       'reviewTime': reviewTime,
-      'isDeleted': !isApproved // if is approved don't delete (isApproved=true, isDeleted=false)
+      'isDeleted': status == VerificationStatus.Denied, // if is approved don't delete (isApproved=true, isDeleted=false)
       }).then((value) {
         print("Resource successfully updated")  ;
         // clear text controller
@@ -299,7 +304,7 @@ class _ReviewResourceState extends State<ReviewResource> {
   }
 
   Future<void> submitToInbox( Resource resource, 
-                                                bool isApproved )
+                                                VerificationStatus status )
   {
 
     final rubric = resource.rubric!;
@@ -308,7 +313,7 @@ class _ReviewResourceState extends State<ReviewResource> {
       'resourceID': resource.id, 
       'reviewedby': rubric.reviewedBy,
       'email': resource.createdBy,
-      'status': isApproved ? "Verified" : "Denied",
+      'status': status.name,
       'rubric': rubric.toJson(),
       'submittedName': resource.name,
       'comments': rubric.additionalComments,
@@ -426,7 +431,7 @@ class _ReviewResourceState extends State<ReviewResource> {
                         context: context,
                         updateRating: (val) => setState(() => avoidsRacism = val),
                         rejectAndSubmit: () async {
-                          await handleRubricSubmission(widget.resourceData, false);
+                          await handleRubricSubmission(widget.resourceData, VerificationStatus.Denied);
                         },
                       )
                     ),       
@@ -443,7 +448,7 @@ class _ReviewResourceState extends State<ReviewResource> {
                         context: context,
                         updateRating: (val) => setState(() => avoidsSexism = val),
                         rejectAndSubmit: () async {
-                          await handleRubricSubmission(widget.resourceData, false);
+                          await handleRubricSubmission(widget.resourceData, VerificationStatus.Denied);
                         },
                       )
                     ),
@@ -460,7 +465,7 @@ class _ReviewResourceState extends State<ReviewResource> {
                         context: context,
                         updateRating: (val) => setState(() => avoidsStereotyping = val),
                         rejectAndSubmit: () async {
-                          await handleRubricSubmission(widget.resourceData, false);
+                          await handleRubricSubmission(widget.resourceData, VerificationStatus.Denied);
                         },
                       )
                     ),
@@ -477,7 +482,7 @@ class _ReviewResourceState extends State<ReviewResource> {
                         context: context,
                         updateRating: (val) => setState(() => avoidsAppropriation = val),
                         rejectAndSubmit: () async {
-                          await handleRubricSubmission(widget.resourceData, false);
+                          await handleRubricSubmission(widget.resourceData, VerificationStatus.Denied);
                         },
                       )
                     ),
@@ -494,7 +499,7 @@ class _ReviewResourceState extends State<ReviewResource> {
                         context: context,
                         updateRating: (val) => setState(() => avoidsAgeism = val),
                         rejectAndSubmit: () async {
-                          await handleRubricSubmission(widget.resourceData, false);
+                          await handleRubricSubmission(widget.resourceData, VerificationStatus.Denied);
                         },
                       )
                     ),
@@ -511,7 +516,7 @@ class _ReviewResourceState extends State<ReviewResource> {
                         context: context,
                         updateRating: (val) => setState(() => avoidsCondescension = val),
                         rejectAndSubmit: () async {
-                          await handleRubricSubmission(widget.resourceData, false);
+                          await handleRubricSubmission(widget.resourceData, VerificationStatus.Denied);
                         },
                       )
                     ),SizedBox(height: 15),
@@ -527,7 +532,7 @@ class _ReviewResourceState extends State<ReviewResource> {
                         context: context,
                         updateRating: (val) => setState(() => avoidsVulgarity = val),
                         rejectAndSubmit: () async {
-                          await handleRubricSubmission(widget.resourceData, false);
+                          await handleRubricSubmission(widget.resourceData, VerificationStatus.Denied);
                         },
                       )
                     ),SizedBox(height: 15),
@@ -543,7 +548,7 @@ class _ReviewResourceState extends State<ReviewResource> {
                         context: context,
                         updateRating: (val) => setState(() => appropriate = val),
                         rejectAndSubmit: () async {
-                          await handleRubricSubmission(widget.resourceData, false);
+                          await handleRubricSubmission(widget.resourceData, VerificationStatus.Denied);
                         },
                       )
                     ),SizedBox(height: 15),
@@ -812,7 +817,7 @@ class _ReviewResourceState extends State<ReviewResource> {
                         foregroundColor: MaterialStateProperty.all<Color>(Colors.black),
                         ),
                         onPressed: () async {
-                          await handleRubricSubmission(widget.resourceData, true);
+                          await handleRubricSubmission(widget.resourceData, VerificationStatus.Approved);
                           if (mounted) {
                             Navigator.pop(context);
                           }
@@ -837,7 +842,7 @@ class _ReviewResourceState extends State<ReviewResource> {
                         foregroundColor: MaterialStateProperty.all<Color>(Colors.black),
                         ),
                         onPressed: () async {
-                          await handleRubricSubmission(widget.resourceData, false);
+                          await handleRubricSubmission(widget.resourceData, VerificationStatus.Denied);
                         if (mounted) {
                           Navigator.pop(context);
                         }
