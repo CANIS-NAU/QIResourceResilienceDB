@@ -20,12 +20,14 @@ class Inbox extends StatelessWidget
 
 
 
-    Future<void> deleteInboxItem(doc) 
-    {
+    Future<void> deleteInboxItem(doc) async {
         // TODO: Show user via pop up operation status
-        return inboxRef.doc(doc.id).delete()
-        .then((value) => print('Successfully deleted message.'))
-        .catchError((error) => print('Error deleting message.'));
+        try {
+          await inboxRef.doc(doc.id).delete();
+          print('Successfully deleted message.');
+        } catch (error) {
+          print('Error deleting message.');
+        }
     }
 
     Widget cardDisplay(BuildContext context, int docIndex,

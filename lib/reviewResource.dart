@@ -270,7 +270,7 @@ class _ReviewResourceState extends State<ReviewResource> {
 
 
   // function to add rubric info to a resource
-  Future<void> updateResourceRubric(resource, status) {
+  Future<void> updateResourceRubric(resource, status) async {
     
     final rubric = resource.rubric!;
     final reviewedBy = rubric.reviewedBy;
@@ -284,18 +284,19 @@ class _ReviewResourceState extends State<ReviewResource> {
 
 
   //update the resource with rubric information
-    return resourceCollection.doc(resource.id).update({
+    try {
+      await resourceCollection.doc(resource.id).update({
       'rubric': rubric.toJson(),
       'reviewedBy': reviewedBy,
       'reviewTime': reviewTime,
-      'isDeleted': status == VerificationStatus.Denied, // if is approved don't delete (isApproved=true, isDeleted=false)
-      }).then((value) {
-        print("Resource successfully updated")  ;
-        // clear text controller
-        _userCommentController.clear();
-      }).catchError( (error) {
-        print("Error updating document $error");
+      'isDeleted': status == VerificationStatus.Denied,
       });
+      print("Resource successfully updated");
+      // clear text controller
+      _userCommentController.clear();
+    } catch (error) {
+      print("Error updating document $error");
+    }
   }
 
   Future<void> submitToInbox( Resource resource, 
