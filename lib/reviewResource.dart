@@ -37,48 +37,39 @@ class ResponsiveRadioRow<T> extends StatelessWidget {
     this.focusNode,
   });
 
-  @override
+    @override
   Widget build(BuildContext context) {
-    final screenSize = MediaQuery.of(context).size;
-    return screenSize.width > 600
-          ? Wrap(
-              spacing: 12.0,
-              runSpacing: 8.0,
-              alignment: WrapAlignment.start,
-              children: options.entries.map((entry) {
-                final value = entry.key;
-                final label = entry.value;
-                return ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: 100.0),
-                  child: RadioListTile(
-                    title: Text(label, style: labelStyle),
-                    value: value,
-                    groupValue: selectedValue,
-                    onChanged: onChanged,
-                    focusNode: focusNode ?? FocusNode(skipTraversal: true),
-                    controlAffinity: ListTileControlAffinity.leading,
-                    contentPadding: EdgeInsets.zero,
-                    visualDensity: VisualDensity.compact,
-                  )
-                );
-              }).toList(),
-            )
-            
-          : Column(
-              children: options.entries.map((entry) {
-                final value = entry.key;
-                final label = entry.value;
-                return RadioListTile(
-                  title: Text(label),
-                  value: value,
-                  groupValue: selectedValue,
-                  onChanged: onChanged,
-                  focusNode: focusNode ?? FocusNode(skipTraversal: true),
-                  controlAffinity: ListTileControlAffinity.leading,
-                );
-              }).toList(),
-            );
-    }
+    final isWide = MediaQuery.of(context).size.width > 600;
+
+    final tiles = options.entries.map((entry) {
+      return _buildTile(entry.key, entry.value);
+    }).toList();
+
+    return isWide
+        ? Wrap(
+            spacing: 12.0,
+            runSpacing: 8.0,
+            alignment: WrapAlignment.start,
+            children: tiles,
+          )
+        : Column(children: tiles);
+  }
+  // builds tiles of radio row/column
+  Widget _buildTile(T value, String label) {
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 100), // Optional
+      child: RadioListTile<T>(
+        title: Text(label, style: labelStyle),
+        value: value,
+        groupValue: selectedValue,
+        onChanged: onChanged,
+        focusNode: focusNode ?? FocusNode(skipTraversal: true),
+        controlAffinity: ListTileControlAffinity.leading,
+        contentPadding: EdgeInsets.zero,
+        visualDensity: VisualDensity.compact,
+      ),
+    );
+  }
   }
 
 class ReviewResource extends StatefulWidget {
