@@ -76,7 +76,7 @@ def remove_fields_from_resource():
             if updates:
                 if not dry_run:
                     resources.document(doc.id).update(updates)
-                print(f"Removed fields from document {doc.id}:")
+                print(f"Removed/Modified fields from document {doc.id}:")
 
                 for key in updates.keys():
                     print(f"  {key}")
