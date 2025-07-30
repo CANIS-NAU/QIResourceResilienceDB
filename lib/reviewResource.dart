@@ -199,19 +199,19 @@ class _ReviewResourceState extends State<ReviewResource> {
 
   Future<void> handleRubricSubmission( Resource resource, VerificationStatus status ) async {
 
-    resource.rubric = buildRubricFromForm();
+    Resource resourceWithRubric = resource.copyWith(rubric: buildRubricFromForm());
 
     if (status == VerificationStatus.Approved) {
       // set resource as verified
-      await verifyResource(resource);
+      await verifyResource(resourceWithRubric);
       // Update DB
-      await updateResourceRubric(resource, status);
+      await updateResourceRubric(resourceWithRubric, status);
       // Send to inbox
-      await submitToInbox(resource, status);
+      await submitToInbox(resourceWithRubric, status);
     }
     else {
-      await submitToInbox(resource, status);
-      await deleteResource(resource);
+      await submitToInbox(resourceWithRubric, status);
+      await deleteResource(resourceWithRubric);
     }
   }
 

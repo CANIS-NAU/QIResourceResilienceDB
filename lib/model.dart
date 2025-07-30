@@ -186,13 +186,13 @@ class Resource {
   final List<String>? healthFocus;
   final String id;
   final bool isVisable;
-  bool isDeleted;
+  final bool isDeleted;
   final String? location;
   final String? name;
   final String? phoneNumber;
   final List<String>? privacy;
   final String? resourceType;
-  Rubric? rubric;
+  final Rubric? rubric;
   final Schedule? schedule;
   final String? state;
   final List<String>? tagline;
@@ -441,6 +441,42 @@ class Resource {
           "attachments",
         };
     }
+  }
+
+  Resource copyWith({ bool? isDeleted,
+                      bool? isVisable,
+                      Rubric? rubric,
+                      bool? verified }){
+    return Resource(
+      // fields copied without change
+      address: address,
+      agerange: agerange,
+      attachments: attachments,
+      building: building,
+      city: city,
+      cost: cost,
+      createdBy: createdBy,
+      createdTime: createdTime,
+      culturalResponsiveness: culturalResponsiveness,
+      dateAdded: dateAdded,
+      description: description,
+      healthFocus: healthFocus,
+      id: id,
+      location: location,
+      name: name,
+      phoneNumber: phoneNumber,
+      privacy: privacy,
+      resourceType: resourceType,
+      schedule: schedule,
+      state: state,
+      tagline: tagline,
+      zipcode: zipcode,
+      // modifiable fields
+      isDeleted: isDeleted ?? this.isDeleted,
+      isVisable: isVisable ?? this.isVisable,
+      rubric: rubric ?? this.rubric,
+      verified: verified ?? this.verified,
+    );
   }
 
   // Maps for associating string values with front-facing labels
