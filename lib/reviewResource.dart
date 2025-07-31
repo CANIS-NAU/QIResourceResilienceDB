@@ -148,34 +148,20 @@ class _ReviewResourceState extends State<ReviewResource> {
   }
   // take in the name of the standard and description and displays it
   Widget buildStandardTitle(title, description) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Flexible(
-          child: Text(
-            "$title: ",
-            style: TextStyle(
-              color: Colors.black,
-              fontSize: 16.0,
-              fontWeight: FontWeight.bold,
-            ),
-            softWrap: true,
-            overflow: TextOverflow.clip,
+    return RichText(
+      textAlign: TextAlign.start,
+      text: TextSpan(
+        children: <TextSpan>[
+          TextSpan(
+            text: "${title}: ",
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
-        ),
-        Flexible(
-          fit: FlexFit.loose,
-          child: Text(
-            "$description",
-            style: TextStyle(
-              color: Colors.black,
-              fontSize: 15.0,
-            ),
-            softWrap: true,
-            overflow: TextOverflow.clip,
+          TextSpan(
+            text: description,
+            style: TextStyle(fontSize: 15),
           ),
-        )
-      ],
+        ]
+      ),
     );
   }
 
@@ -589,7 +575,7 @@ class _ReviewResourceState extends State<ReviewResource> {
                     ),
                     SizedBox(height: 15),
                     buildStandardTitle(
-                      "Is this content specific to LGBTQIA+/Two Spirit identities?",
+                      "Content is specific to LGBTQIA+/Two Spirit identities",
                       "Please check yes or no.",
                     ),
                     SizedBox(height: 10.0),
@@ -631,7 +617,7 @@ class _ReviewResourceState extends State<ReviewResource> {
                     SizedBox(height: 15),
                     buildStandardTitle(
                       "Life Experiences",
-                      "Please select which life experiences this content is relavent for.",
+                      "Please select which life experiences this content is relevant for.",
                     ),
                     SizedBox(height: 10.0),
                     Text(
@@ -769,55 +755,50 @@ class _ReviewResourceState extends State<ReviewResource> {
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                      TextButton(
-                        style: ButtonStyle(
-                        shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                          RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(18.0),
-                          side: BorderSide(color: Theme.of(context).primaryColor),
+                        SizedBox(
+                          width: 108,
+                          height: 34,
+                          child: ElevatedButton(
+                            style: ButtonStyle(
+                            ),
+                            onPressed: () async {
+                              await handleRubricSubmission(widget.resourceData, VerificationStatus.Approved);
+                              if (mounted) {
+                                Navigator.pop(context);
+                              }
+                            },
+                            child: Text(
+                              'Verify',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
                           ),
                         ),
-                        foregroundColor: MaterialStateProperty.all<Color>(Colors.black),
+                        SizedBox(width: 12.0),
+                        SizedBox(
+                          width: 108,
+                          height: 34,
+                          child: TextButton(
+                            style: ButtonStyle(
+                            ),
+                            onPressed: () async {
+                              await handleRubricSubmission(widget.resourceData, VerificationStatus.Denied);
+                              if (mounted) {
+                                Navigator.pop(context);
+                              }
+                            },
+                            child: Text(
+                              'Deny',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey.shade700,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          )
                         ),
-                        onPressed: () async {
-                          await handleRubricSubmission(widget.resourceData, VerificationStatus.Approved);
-                          if (mounted) {
-                            Navigator.pop(context);
-                          }
-                        },
-                        child: Text(
-                        'Verify',
-                        style: TextStyle(
-                          color: Theme.of(context).primaryColor,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        ),
-                      ),
-                      SizedBox(width: 10),
-                      TextButton(
-                        style: ButtonStyle(
-                        shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                          RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(18.0),
-                          side: BorderSide(color: Colors.grey.shade700),
-                          ),
-                        ),
-                        foregroundColor: MaterialStateProperty.all<Color>(Colors.black),
-                        ),
-                        onPressed: () async {
-                          await handleRubricSubmission(widget.resourceData, VerificationStatus.Denied);
-                        if (mounted) {
-                          Navigator.pop(context);
-                        }
-                        },
-                        child: Text(
-                        'Deny',
-                        style: TextStyle(
-                          color: Colors.grey.shade700,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        ),
-                      ),
                       ],
                     ),
                   ],
@@ -826,7 +807,7 @@ class _ReviewResourceState extends State<ReviewResource> {
               Positioned(
                 top: 16.0,
                 right: 16.0,
-                child: ElevatedButton (
+                child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     padding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
                   ),
