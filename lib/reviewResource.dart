@@ -298,7 +298,7 @@ class _ReviewResourceState extends State<ReviewResource> {
 
     final inboxInstance = {
       'resourceID': resource.id, 
-      'reviewedby': rubric.reviewedBy,
+      'reviewedBy': rubric.reviewedBy,
       'email': resource.createdBy,
       'status': status.name,
       'rubric': rubric.toJson(),
