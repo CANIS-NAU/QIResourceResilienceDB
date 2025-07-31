@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
-import 'firebase_options.dart';
-import 'package:firebase_core/firebase_core.dart';
+import 'package:web_app/view_resource/resource_detail.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:multi_select_flutter/multi_select_flutter.dart';
+import 'package:web_app/model.dart';
+
+enum VerificationStatus {
+  Approved,
+  Denied,
+}
 
 class Inbox extends StatelessWidget
 {
@@ -12,64 +16,31 @@ class Inbox extends StatelessWidget
 
     final CollectionReference inboxRef = FirebaseFirestore.instance
                                                        .collection('rrdbInbox');
-    User? currUser = FirebaseAuth.instance.currentUser;
+    final User? currUser = FirebaseAuth.instance.currentUser;
 
-    Widget showRubricDetail(BuildContext context, doc)
-    {
-        String parts = doc['description'].replaceAll(', ', '\n');
 
-        // Avoid bad state if key DNE
-        String reviewer;
-        try
-        {
-            reviewer = doc['reviewedby'];
-        }catch(error)
-        {
-            reviewer = "";
-        }
 
-        return SimpleDialog(
-            title: Center(
-                child: Text(
-                    'Rubric Information',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-            ),
-            contentPadding: EdgeInsets.all(16),
-            children: [
-                Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                        Text('Reviewed By:\n${reviewer}\n'),
-                        Text('All Scores:\n${parts}\n'),
-                        Text(
-                            'Additional Information: ${doc['comments']}\n'),
-                        Text('Time Reviewed: ${doc['timestamp']}'),
-                    ],
-                ),
-                SizedBox(height: 16),
-                ElevatedButton(
-                    onPressed: () {
-                    Navigator.of(context).pop();
-                    },
-                    child: Text('Close'),
-                ),
-            ],
-        );
-    }
-
-    Future<void> deleteInboxItem(doc) 
-    {
+    Future<void> deleteInboxItem(doc) async {
         // TODO: Show user via pop up operation status
-        return inboxRef.doc(doc.id).delete()
-        .then((value) => print('Successfully deleted message.'))
-        .catchError((error) => print('Error deleting message.'));
+        try {
+          await inboxRef.doc(doc.id).delete();
+          print('Successfully deleted message.');
+        } catch (error) {
+          print('Error deleting message.');
+        }
     }
 
     Widget cardDisplay(BuildContext context, int docIndex,
                                       List<QueryDocumentSnapshot<Object?>> data)
     {
-        bool resourceApproved = data[docIndex]['status'] == 'Approved';
+        Map<String, dynamic> doc = data[docIndex].data() as Map<String, dynamic>;
+
+        Rubric? rubric = doc.containsKey('rubric')
+          ? Rubric.fromJson(doc['rubric'] as Map<String, dynamic>)
+          : null;
+
+        bool resourceApproved = doc['status'] == VerificationStatus.Approved.name;
+
         return Card(
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
@@ -97,14 +68,14 @@ class Inbox extends StatelessWidget
                                 style: TextStyle(fontSize: 24),
                             children: <TextSpan>[
                                 TextSpan(
-                                    text: "${data[docIndex]['submittedName']} ",
+                                    text: "${doc['submittedName']} ",
                                     style: TextStyle(
                                         fontWeight: FontWeight.bold,
                                     ),
                                 ),
                                 TextSpan(
                                     text: 
-                                        "has been ${data[docIndex]['status']}.",
+                                        "has been ${doc['status']}.",
                                     style: TextStyle(fontSize: 24),
                                 ),
                             ],
@@ -114,24 +85,25 @@ class Inbox extends StatelessWidget
                         Row(
                         children: <Widget>[
                             const Spacer(),
-                            TextButton(
-                                style: TextButton.styleFrom(
-                                    foregroundColor: Colors.transparent,
-                                ),
-                                child: Text(
-                                    "Rubric Info",
-                                    style: TextStyle(color: Theme.of(context).primaryColor),
-                                ),
-                                onPressed: () {
-                                    showDialog(
-                                        context: context,
-                                        builder: (BuildContext context) 
-                                        {
-                                            return showRubricDetail(context,
-                                                                data[docIndex]);
-                                        },
-                                    );
-                                },
+                            Visibility(
+                                visible: rubric != null,
+                                child: TextButton(
+                                    style: TextButton.styleFrom(
+                                        foregroundColor: Colors.transparent,
+                                    ),
+                                    child: Text(
+                                        "Rubric Info",
+                                        style: TextStyle(color: Theme.of(context).primaryColor),
+                                    ),
+                                    onPressed: () {
+                                        showDialog(
+                                            context: context,
+                                           builder: (context) => DetailDialog(
+                                            detailView: RubricDetailView(rubric: rubric!),
+                                            title: "Rubric Information")
+                                        );
+                                    },
+                                )
                             ),
                             TextButton(
                             style: TextButton.styleFrom(
@@ -213,6 +185,7 @@ class Inbox extends StatelessWidget
                                                 itemCount: data.size,
                                                 itemBuilder:(context,index) 
                                                 {
+                                                
                                                     return cardDisplay(
                                                        context,index,data.docs);
                                                 }

@@ -2,89 +2,172 @@ import 'package:web_app/file_attachments.dart';
 import 'package:web_app/events/schedule.dart';
 
 class Rubric {
-  final int? accurate;
+  // Preliminary rating fields
+  final bool? appropriate;
+  final bool? avoidsAgeism;
+  final bool? avoidsAppropriation;
+  final bool? avoidsCondescension;
+  final bool? avoidsRacism;
+  final bool? avoidsSexism;
+  final bool? avoidsStereotyping;
+  final bool? avoidsVulgarity;
+
+  // Description fields
+  final List<String>? accessibilityFeatures;
   final String? additionalComments;
-  final List<String> ageBalance;
-  final int? authenticity;
-  final int? consistency;
-  final int? culturallyGrounded;
-  final int? current;
-  final int? experienceBalance;
-  final List<String> genderBalance;
-  final int? language;
-  final int? modularizable;
-  final int? notMorallyOffensive;
-  final int? productionValue;
-  final int? relevance;
-  final int? socialSupport;
-  final int? totalScore;
-  final int? trustworthySource;
+  final List<String>? ageBalance;
+  final List<String>? genderBalance;
+  final List<String>? lifeExperiences;
+  final bool? queerSexualitySpecific;
+
+  // Scoring fields
+  final int? contentAccuracy;
+  final int? contentCurrentness;
+  final int? contentTrustworthiness;
+  final int? culturalGroundednessHopi;
+  final int? culturalGroundednessIndigenous;
+
+  // Metadata
+  final String? reviewedBy;
+  final DateTime? reviewTime;
+
+  // Computed fields
+  int get totalScore {
+    return (culturalGroundednessHopi ?? 0) + (culturalGroundednessIndigenous ?? 0)
+        + (contentAccuracy ?? 0) + (contentCurrentness ?? 0) + (contentTrustworthiness ?? 0);
+  }
+
+  List<String> get accessibilityFeaturesLabel {
+    if (accessibilityFeatures == null || accessibilityFeatures!.isEmpty) {
+      return ["No accessibility features specified"];
+    }
+    return accessibilityFeatures!.map((e) => 
+        Rubric.accessibilityLabels[e] ?? "Unrecognized feature: $e").toList();
+  }
+
+  List<String> get ageBalanceLabel {
+    if (ageBalance == null || ageBalance!.isEmpty) {
+      return ["No age balance specified"];
+    }
+    return ageBalance!.map((e) => Resource.ageLabels[e] ?? "Unrecognized age: $e").toList();
+  }
+
+  List<String> get genderBalanceLabel {
+    if (genderBalance == null || genderBalance!.isEmpty) {
+      return ["No gender balance specified"];
+    }
+    return genderBalance!.map((e) => Rubric.genderLabels[e] ?? "Unrecognized gender: $e").toList();
+  }
+
+  List<String> get lifeExperiencesLabel {
+    if (lifeExperiences == null || lifeExperiences!.isEmpty) {
+      return ["No life experiences specified"];
+    }
+    return lifeExperiences!.map((e) => Rubric.lifeExperienceLabels[e] ?? "Unrecognized experience: $e").toList();
+  }
 
   // default constructor
   Rubric({
-    required this.accurate,
-    required this.additionalComments,
-    required this.ageBalance,
-    required this.authenticity,
-    required this.consistency,
-    required this.culturallyGrounded,
-    required this.current,
-    required this.experienceBalance,
-    required this.genderBalance,
-    required this.language,
-    required this.modularizable,
-    required this.notMorallyOffensive,
-    required this.productionValue,
-    required this.relevance,
-    required this.socialSupport,
-    required this.totalScore,
-    required this.trustworthySource,
+    this.appropriate,
+    this.avoidsAgeism,
+    this.avoidsAppropriation,
+    this.avoidsCondescension,
+    this.avoidsRacism,
+    this.avoidsSexism,
+    this.avoidsStereotyping,
+    this.avoidsVulgarity,
+
+    this.accessibilityFeatures,
+    this.additionalComments,
+    this.ageBalance,
+    this.genderBalance,
+    this.lifeExperiences,
+    this.queerSexualitySpecific,
+
+    this.contentAccuracy,
+    this.contentCurrentness,
+    this.contentTrustworthiness,
+    this.culturalGroundednessHopi,
+    this.culturalGroundednessIndigenous,
+
+    this.reviewedBy,
+    this.reviewTime,
   });
   // firestore => dart
-  factory Rubric.fromJson( Map<String, dynamic> json ) {
+  factory Rubric.fromJson(Map<String, dynamic> json) {
     return Rubric(
-      accurate: json["accurate"],
+      accessibilityFeatures: json["accessibilityFeatures"] != null ? List<String>.from(json["accessibilityFeatures"]) : null,
       additionalComments: json["additionalComments"],
-      ageBalance: List<String>.from( json["ageBalance"] ),
-      authenticity: json["authenticity"],
-      consistency: json["consistency"],
-      culturallyGrounded: json["culturallyGrounded"],
-      current: json["current"],
-      experienceBalance: json["experienceBalance"],
-      genderBalance: List<String>.from( json["genderBalance"] ),
-      language: json["language"],
-      modularizable: json["modularizable"],
-      notMorallyOffensive: json["notMorallyOffensive"],
-      productionValue: json["productionValue"],
-      relevance: json["relevance"],
-      socialSupport: json["socialSupport"],
-      totalScore: json["totalScore"],
-      trustworthySource: json["trustworthySource"],
+      ageBalance: json["ageBalance"] != null ? List<String>.from(json["ageBalance"]) : null,
+      appropriate: json["appropriate"] is bool ? json["appropriate"] : null,
+      avoidsAgeism: json["avoidsAgeism"] is bool ? json["avoidsAgeism"] : null,
+      avoidsAppropriation: json["avoidsAppropriation"] is bool ? json["avoidsAppropriation"] : null,
+      avoidsCondescension: json["avoidsCondescension"] is bool ? json["avoidsCondescension"] : null,
+      avoidsRacism: json["avoidsRacism"] is bool ? json["avoidsRacism"] : null,
+      avoidsSexism: json["avoidsSexism"] is bool ? json["avoidsSexism"] : null,
+      avoidsStereotyping: json["avoidsStereotyping"] is bool ? json["avoidsStereotyping"] : null,
+      avoidsVulgarity: json["avoidsVulgarity"] is bool ? json["avoidsVulgarity"] : null,
+      contentAccuracy: json["contentAccurate"],
+      contentCurrentness: json["contentCurrentness"],
+      contentTrustworthiness: json["contentTrustworthiness"],
+      culturalGroundednessHopi: json["culturalGroundednessHopi"],
+      culturalGroundednessIndigenous: json["culturalGroundednessIndigenous"],
+      genderBalance: json["genderBalance"] != null ? List<String>.from(json["genderBalance"]) : null,
+      lifeExperiences: json["lifeExperiences"] != null ? List<String>.from(json["lifeExperiences"]) : null,
+      queerSexualitySpecific: json["queerSexualitySpecific"],
+      reviewedBy: json["reviewedBy"],
+      reviewTime: json["reviewTime"] != null ? json["reviewTime"].toDate() : null,
     );
   }
+  
 
   // dart => firestore
-  Map<String, dynamic> toJson(){
-    return{
-      "accurate": accurate,
+  Map<String, dynamic> toJson() {
+    return {
+      "accessibilityFeatures": accessibilityFeatures,
       "additionalComments": additionalComments,
       "ageBalance": ageBalance,
-      "authenticity": authenticity,
-      "consistency": consistency,
-      "culturallyGrounded": culturallyGrounded,
-      "current": current,
-      "experienceBalance": experienceBalance,
+      "appropriate": appropriate,
+      "avoidsAgeism": avoidsAgeism,
+      "avoidsAppropriation": avoidsAppropriation,
+      "avoidsCondescension": avoidsCondescension,
+      "avoidsRacism": avoidsRacism,
+      "avoidsSexism": avoidsSexism,
+      "avoidsStereotyping": avoidsStereotyping,
+      "avoidsVulgarity": avoidsVulgarity,
+      "contentAccuracy": contentAccuracy,
+      "contentCurrentness": contentCurrentness,
+      "contentTrustworthiness": contentTrustworthiness,
+      "culturalGroundednessHopi": culturalGroundednessHopi,
+      "culturalGroundednessIndigenous": culturalGroundednessIndigenous,
       "genderBalance": genderBalance,
-      "language": language,
-      "modularizable": modularizable,
-      "notMorallyOffensive": notMorallyOffensive,
-      "productionValue": productionValue,
-      "relevance": relevance,
-      "socialSupport": socialSupport,
-      "totalScore": totalScore,
-      "trustworthySource": trustworthySource,
+      "lifeExperiences": lifeExperiences,
+      "queerSexualitySpecific": queerSexualitySpecific,
+      "reviewedBy": reviewedBy,
+      "reviewTime": reviewTime,
     };
   }
+  static Map<String, String> genderLabels = Map.unmodifiable({
+    'Female': 'Female',
+    'Male': 'Male',
+    'Non-binary': 'Non-binary',
+    'Other (please specify in comments)': 'Other (please specify in comments)',
+  });
+
+  static Map<String, String> lifeExperienceLabels = Map.unmodifiable({
+    'Specific to houseless or unsheltered relatives': 'Specific to houseless or unsheltered relatives',
+    'Specific to parents or guardians': 'Specific to parents or guardians',
+    'Specific to grandparents': 'Specific to grandparents',
+    'Specific to college students': 'Specific to college students',
+    'Specific to people living away from home (e.g., college students or people living away from Hopi)': 'Specific to people living away from home (e.g., college students or people living away from Hopi)'
+  });
+  static Map<String, String> accessibilityLabels = Map.unmodifiable({
+    'Visually Impaired': 'Resource is accessible to people who are visually impaired.',
+    'Hearing Impaired': 'Resource is accessible to people who are hearing impaired.',
+    'Mobility Challenges': 'Resource is accessible for people with mobility challenges (only applicable for in-person resources).',
+    'Neurodivergent': 'Resource offers accessibility features for people who are neurodivergent.',
+    'Sober Living Facility': 'Resource is related to a sober living facility, which has been verified by ADHS and AHCCCS.',
+  });
 }
 
 class Resource {
@@ -103,6 +186,7 @@ class Resource {
   final List<String>? healthFocus;
   final String id;
   final bool isVisable;
+  final bool isDeleted;
   final String? location;
   final String? name;
   final String? phoneNumber;
@@ -131,6 +215,7 @@ class Resource {
     this.healthFocus = const [],
     this.id = "",
     this.isVisable = true,
+    this.isDeleted = false,
     this.location,
     this.name,
     this.phoneNumber,
@@ -162,7 +247,8 @@ class Resource {
       description: json["description"],
       healthFocus: List<String>.from(json["healthFocus"] ?? []),
       id: id,
-      isVisable: json["isVisable"],
+      isVisable: json["isVisable"] is bool ? json["isVisable"] : false,
+      //isDeleted: json["isDeleted"],
       location: json["location"],
       name: json["name"],
       phoneNumber: json["phoneNumber"],
@@ -199,6 +285,7 @@ class Resource {
       "description": description,
       "healthFocus": healthFocus,
       "isVisable": isVisable,
+      "isDeleted": isDeleted,
       "location": location,
       "name": name,
       "phoneNumber": phoneNumber,
@@ -354,6 +441,42 @@ class Resource {
           "attachments",
         };
     }
+  }
+
+  Resource copyWith({ bool? isDeleted,
+                      bool? isVisable,
+                      Rubric? rubric,
+                      bool? verified }){
+    return Resource(
+      // fields copied without change
+      address: address,
+      agerange: agerange,
+      attachments: attachments,
+      building: building,
+      city: city,
+      cost: cost,
+      createdBy: createdBy,
+      createdTime: createdTime,
+      culturalResponsiveness: culturalResponsiveness,
+      dateAdded: dateAdded,
+      description: description,
+      healthFocus: healthFocus,
+      id: id,
+      location: location,
+      name: name,
+      phoneNumber: phoneNumber,
+      privacy: privacy,
+      resourceType: resourceType,
+      schedule: schedule,
+      state: state,
+      tagline: tagline,
+      zipcode: zipcode,
+      // modifiable fields
+      isDeleted: isDeleted ?? this.isDeleted,
+      isVisable: isVisable ?? this.isVisable,
+      rubric: rubric ?? this.rubric,
+      verified: verified ?? this.verified,
+    );
   }
 
   // Maps for associating string values with front-facing labels
