@@ -61,7 +61,7 @@ class Inbox extends StatelessWidget
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                         Center( 
-                          child: buildCardText(currUser, doc)
+                          child: buildCardText(currUser!, doc)
                         ),
                         Container(height: 10),
                         Row(
