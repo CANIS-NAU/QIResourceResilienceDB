@@ -61,26 +61,8 @@ class Inbox extends StatelessWidget
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                         Center( 
-                        child: RichText(
-                            text: 
-                                TextSpan(
-                                text: 'Your Resource: ',
-                                style: TextStyle(fontSize: 24),
-                            children: <TextSpan>[
-                                TextSpan(
-                                    text: "${doc['submittedName']} ",
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                    ),
-                                ),
-                                TextSpan(
-                                    text: 
-                                        "has been ${doc['status']}.",
-                                    style: TextStyle(fontSize: 24),
-                                ),
-                            ],
+                          child: buildCardText(currUser, doc)
                         ),
-                        )),
                         Container(height: 10),
                         Row(
                         children: <Widget>[
@@ -127,12 +109,49 @@ class Inbox extends StatelessWidget
             ),
         );
     }
+    Widget buildCardText(currentUser, Map<String, dynamic> doc){
+      final userEmail = currentUser.email;
+
+      String resourceMessage = "";
+      String resourceStatusMessage = "";
+
+      // set message strings depending if user is submitter or reviewer
+      if (userEmail == doc['email']) {
+        resourceMessage = "Your Resource: ";
+        resourceStatusMessage = " has been ${doc['status']}";
+      } else if (userEmail == doc['reviewedBy']) {
+        resourceMessage = "Your Review of: ";
+        resourceStatusMessage = " has been received and the resource has been ${doc['status']}";
+      }
+      
+      return RichText(
+        textAlign: TextAlign.center,
+        text: TextSpan(
+          text: resourceMessage,
+          style: TextStyle(fontSize: 24),
+          children: <TextSpan>[
+            TextSpan(
+              text: "${doc['submittedName']}",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            TextSpan(
+              text: resourceStatusMessage,
+              style: TextStyle(fontSize: 24),
+            ),
+          ],
+        ),
+      );
+    }
 
     Stream<QuerySnapshot> getInboxItems()
     {
         String email = currUser?.email ?? "";
-        return FirebaseFirestore.instance.collection('rrdbInbox').where('email',
-                                          isEqualTo: email).snapshots();
+
+        return FirebaseFirestore.instance.collection('rrdbInbox').where(
+          Filter.or(
+            Filter('email', isEqualTo: email),
+            Filter('reviewedBy', isEqualTo: email),
+          )).snapshots();
     } 
 
     Widget build(BuildContext context)
