@@ -109,7 +109,7 @@ class Inbox extends StatelessWidget
             ),
         );
     }
-    Widget buildCardText(currentUser, Map<String, dynamic> doc){
+    Widget buildCardText(User currentUser, Map<String, dynamic> doc){
       final userEmail = currentUser.email;
 
       String resourceMessage = "";
