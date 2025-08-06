@@ -466,6 +466,7 @@ class ProfileIcon extends StatelessWidget {
                       ]);
             } else if (claims['manager']) {
               return PopupMenuButton<Menu>(
+
                   icon: Icon(Icons.person),
                   offset: const Offset(0, 40),
                   onSelected: (Menu item) {

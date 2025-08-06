@@ -622,7 +622,7 @@ class _CreateResourceState extends State<CreateResource> {
                     activeColor: Theme.of(context).primaryColor,
                     controlAffinity: ListTileControlAffinity.trailing,
                     contentPadding: EdgeInsets.all(8.0),
-                    tileColor: Colors.grey[100],
+                    tileColor: Theme.of(context).colorScheme.surfaceContainerLow,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),

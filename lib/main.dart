@@ -19,6 +19,13 @@ import 'package:web_app/reviewResource.dart';
 import 'package:web_app/inbox.dart';
 import 'package:web_app/userManagement.dart';
 
+ColorScheme colorScheme = ColorScheme.fromSeed(
+  seedColor: Color(0xFF0060BE),
+  brightness: Brightness.light,
+  dynamicSchemeVariant: DynamicSchemeVariant.fidelity);
+
+Color customPrimaryColor = Color(0xFF0060BE);
+
 //Main function
 void main() async {
   await dotenv.load(fileName: "env");
@@ -60,6 +67,51 @@ class MyApp extends StatelessWidget {
         '/top10resources' : (context) => Top10Resources(),
       },
       theme: ThemeData(
+        colorScheme: colorScheme,
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ButtonStyle(
+            backgroundColor: WidgetStateColor.resolveWith((Set<WidgetState> states) {
+              if (states.contains(WidgetState.pressed)){
+                return colorScheme.primary;
+              } else if (states.contains(WidgetState.hovered)){
+                return colorScheme.primary;
+              } else if (states.contains(WidgetState.focused)){
+                return colorScheme.primary;
+              }
+              return customPrimaryColor;
+            }),
+            foregroundColor: WidgetStatePropertyAll(Colors.white),
+            shape: WidgetStatePropertyAll(
+              RoundedRectangleBorder(
+                borderRadius: BorderRadiusGeometry.all(Radius.circular(5))
+              )
+            )
+          )
+        ),
+        appBarTheme: AppBarTheme(
+          foregroundColor: Colors.white,
+          backgroundColor: customPrimaryColor,
+        ),
+        chipTheme: ChipThemeData(
+          color: WidgetStateColor.resolveWith( (Set<WidgetState> states) {
+            if (states.contains(WidgetState.hovered)) {
+              return colorScheme.outline;
+            } else if (states.contains(WidgetState.selected)) {
+              return customPrimaryColor;
+            }
+            return colorScheme.surfaceDim;
+          }),
+          showCheckmark: true,
+          checkmarkColor: Colors.white,
+        ),
+        dialogTheme: DialogThemeData(
+          backgroundColor: colorScheme.surfaceBright,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadiusGeometry.all(Radius.circular(9))
+          )
+        ),
+        
+        /*
         primaryColor: Color(0xFF0060BE),
         primaryColorDark: Color(0xFF0052a2),
         primaryColorLight: Color(0xFF006edb),
@@ -121,6 +173,7 @@ class MyApp extends StatelessWidget {
             borderSide: BorderSide(color: Colors.grey),
           ),
         ),
+        */
       ),
       home: const MyHomePage(),
     );
