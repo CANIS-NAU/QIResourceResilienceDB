@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:web_app/main.dart';
+import 'package:web_app/widgets.dart';
+import 'package:web_app/theme.dart';
 
 
 void main() {
@@ -15,24 +16,18 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   bool darkMode = false;
+  
 
   @override
   Widget build(BuildContext context) {
-    const seed = Color(0xFF4890F7);
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: colorScheme,
-        floatingActionButtonTheme: FloatingActionButtonThemeData(
-          backgroundColor: colorScheme.primary,
-        )
-      ),
+      theme: theme,
       darkTheme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: seed,
+          seedColor: seedColor,
           brightness: Brightness.dark,
         ),
       ),
@@ -80,8 +75,8 @@ class _ThemeViewState extends State<ThemeView> {
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-        child: Wrap(
-          runSpacing: 24,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _section("Buttons", _buildButtons()),
             _section("Selection Controls", _buildSelectionControls()),
@@ -113,10 +108,12 @@ class _ThemeViewState extends State<ThemeView> {
     return Wrap(
       spacing: 8,
       children: [
-        ElevatedButton(onPressed: () {}, child: const Text("Elevated")),
+        ElevatedButton(onPressed: () {}, child: const Text("Confirm")),
+        DeleteButton(label: "Delete", onPressed: () {}),
         FilledButton(onPressed: () {}, child: const Text("Filled")),
         OutlinedButton(onPressed: () {}, child: const Text("Outlined")),
         TextButton(onPressed: () {}, child: const Text("Text")),
+        CancelButton(label: "Cancel", onPressed: () {}),
         IconButton(onPressed: () {}, icon: const Icon(Icons.favorite)),
         FloatingActionButton(
           onPressed: () {},

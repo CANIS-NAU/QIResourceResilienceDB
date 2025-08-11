@@ -18,14 +18,8 @@ import 'package:web_app/account.dart';
 import 'package:web_app/reviewResource.dart';
 import 'package:web_app/inbox.dart';
 import 'package:web_app/userManagement.dart';
+import 'package:web_app/theme.dart';
 
-ColorScheme colorScheme = ColorScheme.fromSeed(
-  seedColor: Color(0xff4890f7),
-  brightness: Brightness.light,
-  dynamicSchemeVariant: DynamicSchemeVariant.fidelity
-  );
-
-Color customPrimaryColor = Color(0xFF0060BE);
 
 //Main function
 void main() async {
@@ -67,41 +61,10 @@ class MyApp extends StatelessWidget {
         '/reviewresource' :  ( context ) => ReviewResource(resourceData: ModalRoute.of(context)!.settings.arguments as QueryDocumentSnapshot),
         '/top10resources' : (context) => Top10Resources(),
       },
-      theme: ThemeData(
-        colorScheme: colorScheme,
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            foregroundColor: colorScheme.onPrimary,
-            backgroundColor: colorScheme.primary,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadiusGeometry.circular(5),
-            )
-          ),
-        ),
-        appBarTheme: AppBarTheme(
-          foregroundColor: Colors.white,
-          backgroundColor: colorScheme.primary,
-        ),
-        chipTheme: ChipThemeData(
-          color: WidgetStateColor.resolveWith( (Set<WidgetState> states) {
-            if (states.contains(WidgetState.hovered)) {
-              return colorScheme.outline;
-            } else if (states.contains(WidgetState.selected)) {
-              return colorScheme.primary;
-            }
-            return colorScheme.surfaceDim;
-          }),
-          showCheckmark: true,
-          checkmarkColor: Colors.white,
-        ),
-        dialogTheme: DialogThemeData(
-          backgroundColor: colorScheme.surfaceBright,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadiusGeometry.all(Radius.circular(9))
-          )
-        ),
-        
-        /*
+      theme: theme,
+      home: const MyHomePage(),
+      /* OLD THEME DATA (for reference)
+      ThemeData(
         primaryColor: Color(0xFF0060BE),
         primaryColorDark: Color(0xFF0052a2),
         primaryColorLight: Color(0xFF006edb),
@@ -164,8 +127,6 @@ class MyApp extends StatelessWidget {
           ),
         ),
         */
-      ),
-      home: const MyHomePage(),
     );
   }
 }

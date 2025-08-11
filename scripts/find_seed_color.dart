@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:material_color_utilities/material_color_utilities.dart';
 
-
-Color seedColor = Color(0xFF0060BE);
+Color seedColor = Colors.red;
 
 double perceptualDifference(Hct a, Hct b) {
   final hueDiff = (a.hue - b.hue).abs();
@@ -12,15 +11,12 @@ double perceptualDifference(Hct a, Hct b) {
   return hueDiff + chromaDiff + toneDiff; 
 }
 
-
-
-
 void findSeedForPrimary(Color targetColor) {
   final targetHct = Hct.fromInt(targetColor.toARGB32());
-  final tolerance = 2.6;
+  final tolerance = 10;
 
-  for (double chroma = 40; chroma <= 80; chroma += 5) {
-    for (double tone = 60; tone <= 100; tone += 5) {
+  for (double chroma = 40; chroma <= 80; chroma += 1) {
+    for (double tone = 60; tone <= 100; tone += 1) {
       final seedHct = Hct.from(targetHct.hue, chroma, tone);
       final seedColor = Color(seedHct.toInt());
 
