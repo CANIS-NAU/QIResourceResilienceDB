@@ -20,9 +20,10 @@ import 'package:web_app/inbox.dart';
 import 'package:web_app/userManagement.dart';
 
 ColorScheme colorScheme = ColorScheme.fromSeed(
-  seedColor: Color(0xFF0060BE),
+  seedColor: Color(0xff4890f7),
   brightness: Brightness.light,
-  dynamicSchemeVariant: DynamicSchemeVariant.fidelity);
+  dynamicSchemeVariant: DynamicSchemeVariant.fidelity
+  );
 
 Color customPrimaryColor = Color(0xFF0060BE);
 
@@ -69,35 +70,24 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: colorScheme,
         elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ButtonStyle(
-            backgroundColor: WidgetStateColor.resolveWith((Set<WidgetState> states) {
-              if (states.contains(WidgetState.pressed)){
-                return colorScheme.primary;
-              } else if (states.contains(WidgetState.hovered)){
-                return colorScheme.primary;
-              } else if (states.contains(WidgetState.focused)){
-                return colorScheme.primary;
-              }
-              return customPrimaryColor;
-            }),
-            foregroundColor: WidgetStatePropertyAll(Colors.white),
-            shape: WidgetStatePropertyAll(
-              RoundedRectangleBorder(
-                borderRadius: BorderRadiusGeometry.all(Radius.circular(5))
-              )
+          style: ElevatedButton.styleFrom(
+            foregroundColor: colorScheme.onPrimary,
+            backgroundColor: colorScheme.primary,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadiusGeometry.circular(5),
             )
-          )
+          ),
         ),
         appBarTheme: AppBarTheme(
           foregroundColor: Colors.white,
-          backgroundColor: customPrimaryColor,
+          backgroundColor: colorScheme.primary,
         ),
         chipTheme: ChipThemeData(
           color: WidgetStateColor.resolveWith( (Set<WidgetState> states) {
             if (states.contains(WidgetState.hovered)) {
               return colorScheme.outline;
             } else if (states.contains(WidgetState.selected)) {
-              return customPrimaryColor;
+              return colorScheme.primary;
             }
             return colorScheme.surfaceDim;
           }),
