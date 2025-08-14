@@ -57,20 +57,14 @@ class ResourceSummary extends StatelessWidget {
 
     Widget managerButton(bool vis) {
       String visStatus = vis ? "Archive" : "Un-archive";
-      return TextButton(
+      return ElevatedButton(
         style: ButtonStyle(
-          foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
-          backgroundColor: MaterialStateProperty.resolveWith<Color>((Set<MaterialState> states) {
-            if (states.contains(MaterialState.focused)) {
-              return Theme.of(context).primaryColor.withOpacity(0.7);
-            }
-            return Theme.of(context).primaryColor;
-          }),
-          shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-              RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18.0),
-            side: BorderSide(color: Theme.of(context).primaryColor),
-          )),
+          shape: WidgetStatePropertyAll(
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(18.0),
+            ),
+          ),
+          padding: WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: 8.0))
         ),
         onPressed: () {
           setVisabilityStatus(!vis).then((bool status) {
