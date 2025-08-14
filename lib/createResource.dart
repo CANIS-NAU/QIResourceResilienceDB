@@ -357,20 +357,8 @@ class _CreateResourceState extends State<CreateResource> {
                                   horizontal: 4.0, vertical: 20.0),
                               child: InputChip(
                                 label: Text(
-                                  tag,
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                  ),
+                                  tag
                                 ),
-                                deleteIconColor: Colors.white,
-                                backgroundColor: Theme.of(context).primaryColor,
-                                side: MaterialStateBorderSide.resolveWith((Set<MaterialState> states) {
-                                  if (states.contains(MaterialState.focused)) {
-                                    return BorderSide(
-                                        color: Colors.grey[700]!, width: 2);
-                                  }
-                                  return BorderSide.none;
-                                }),
                                 onDeleted: () {
                                   setState(() {
                                     selectedTags.remove(tag);

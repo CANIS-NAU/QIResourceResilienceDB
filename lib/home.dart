@@ -8,7 +8,7 @@ verifying a resource, and a dashboard.
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:multi_select_flutter/multi_select_flutter.dart';
+import 'package:web_app/theme.dart';
 import 'package:web_app/view_resource/resource_summary.dart';
 import 'package:web_app/view_resource/filter.dart';
 import 'package:web_app/pdfDownload.dart';
@@ -43,6 +43,8 @@ class _MyHomePageState extends State<MyHomePage> {
     resources = buildQuery(filter);
   }
 
+  final chipShape = StadiumBorder();
+
   //Home screen UI
   @override
   Widget build(BuildContext context) {
@@ -60,6 +62,7 @@ class _MyHomePageState extends State<MyHomePage> {
       child: Scaffold(
         key: _scaffoldKey,
         appBar: AppBar(
+          scrolledUnderElevation: 0,
           backgroundColor: Colors.transparent,
           elevation: 0,
           titleSpacing: 0,
@@ -188,16 +191,22 @@ class _MyHomePageState extends State<MyHomePage> {
                       ),
                     ),
                     SizedBox(height: 10),
-                    MultiSelectChipDisplay(
-                      items: filter.categorical
-                          .map((e) => MultiSelectItem(e, e.label))
-                          .toList(),
-                      onTap: (value) {
-                        setState(() {
-                          filter.removeFilter(value);
-                          onFilterChange();
-                        });
-                      },
+                    Wrap(
+                      spacing: 8.0,
+                      runSpacing: 8.0,
+                      direction: Axis.horizontal,
+                      children: filter.categorical
+                        .map((e) => FilterChip(
+                          selected: true,
+                          label: Text(e.label),
+                          onSelected: (bool selected) {
+                            setState(() {
+                              filter.removeFilter(e);
+                              onFilterChange();
+                              });
+                          },
+                        ),
+                      ).toList()
                     ),
                   ],
                 ),

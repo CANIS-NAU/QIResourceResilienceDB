@@ -9,36 +9,28 @@ ColorScheme colorScheme = ColorScheme.fromSeed(
 
 ThemeData theme = ThemeData(
   colorScheme: colorScheme,
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            foregroundColor: colorScheme.onPrimary,
-            backgroundColor: colorScheme.primary,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadiusGeometry.circular(5),
-            )
-          ),
-        ),
-        appBarTheme: AppBarTheme(
-          foregroundColor: Colors.white,
-          backgroundColor: colorScheme.primary,
-        ),
+  elevatedButtonTheme: ElevatedButtonThemeData(
+    style: ElevatedButton.styleFrom(
+      foregroundColor: colorScheme.onPrimary,
+      backgroundColor: colorScheme.primary,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadiusGeometry.circular(5),
+      ),
+    ),
+  ),
+  appBarTheme: AppBarTheme(
+    foregroundColor: Colors.white,
+    backgroundColor: colorScheme.primary,
+  ),
 
-        dialogTheme: DialogThemeData(
-          backgroundColor: colorScheme.surfaceBright,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadiusGeometry.all(Radius.circular(9))
-          )
-        ),
-        chipTheme: ChipThemeData(
-          color: WidgetStateColor.resolveWith( (Set<WidgetState> states) {
-            if (states.contains(WidgetState.hovered)) {
-              return colorScheme.outline;
-            } else if (states.contains(WidgetState.selected)) {
-              return colorScheme.primary;
-            }
-            return colorScheme.surfaceDim;
-          }),
-          showCheckmark: true,
-          checkmarkColor: Colors.white,
-        ),
+  dialogTheme: DialogThemeData(
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadiusGeometry.all(Radius.circular(5)),
+    ),
+  ),
+  chipTheme: ChipThemeData.fromDefaults(
+    brightness: Brightness.light,
+    secondaryColor: colorScheme.primary,
+    labelStyle: TextStyle(),
+  ),
 );
