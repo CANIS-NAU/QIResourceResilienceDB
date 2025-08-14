@@ -11,6 +11,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 //Package imports
 import 'package:flutter/material.dart';
 import 'package:web_app/model.dart';
+import 'package:web_app/theme.dart';
 import 'package:web_app/widgets.dart';
 import 'package:web_app/util.dart';
 import 'package:web_app/Analytics.dart';
@@ -746,8 +747,13 @@ class _ReviewResourceState extends State<ReviewResource> {
                     TextField(
                       maxLines: 3,
                       decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                          borderSide: BorderSide(
+                            width: 1.0,
+                            color: Theme.of(context).colorScheme.outline,
+                          )
+                        ),
                       hintText: 'Type your additional comments here',
-                      border: InputBorder.none,
                       ),
                       controller: _userCommentController,
                     ),
