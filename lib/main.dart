@@ -19,6 +19,8 @@ import 'package:web_app/account.dart';
 import 'package:web_app/reviewResource.dart';
 import 'package:web_app/inbox.dart';
 import 'package:web_app/userManagement.dart';
+import 'package:web_app/theme.dart';
+
 
 //Main function
 void main() async {
@@ -60,94 +62,7 @@ class MyApp extends StatelessWidget {
         '/reviewresource' :  ( context ) => ReviewResource(resourceData: ModalRoute.of(context)!.settings.arguments as Resource),
         '/top10resources' : (context) => Top10Resources(),
       },
-      theme: ThemeData(
-        primaryColor: Color.fromARGB(255, 0, 96, 190),
-        primaryColorDark: Color.fromARGB(255, 0, 82, 162),
-        primaryColorLight: Color.fromARGB(255, 0, 110, 219),
-        focusColor: Color.fromARGB(255, 204, 204, 204),
-        hoverColor: Color.fromARGB(255, 204, 204, 204),
-        appBarTheme: AppBarTheme(
-          color: Color.fromARGB(255, 0, 96, 190),
-          iconTheme: IconThemeData(color: Colors.white),
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ButtonStyle(
-            backgroundColor: MaterialStateProperty.resolveWith<Color>((Set<MaterialState> states) {
-              if (states.contains(MaterialState.pressed)) {
-                return Color.fromARGB(255, 0, 82, 162);
-              } else if (states.contains(MaterialState.hovered)) {
-                return Color.fromARGB(255, 0, 82, 162);
-              } else if (states.contains(MaterialState.focused)) {
-                return Color.fromARGB(255, 0, 82, 162);
-              }
-              return Color.fromARGB(255, 0, 96, 190);
-            }),
-          ),
-        ),
-        textButtonTheme: TextButtonThemeData(
-          style: ButtonStyle(
-          foregroundColor: MaterialStateProperty.all<Color>(Color(0xFF0060BE)),
-          backgroundColor: MaterialStateProperty.resolveWith<Color>((states) {
-            if (states.contains(MaterialState.pressed)) {
-              return Color.fromARGB(255, 204, 204, 204);
-            } else if (states.contains(MaterialState.hovered)) {
-              return Color.fromARGB(255, 204, 204, 204);
-            } else if (states.contains(MaterialState.focused)) {
-              return Color.fromARGB(255, 204, 204, 204);
-            }
-            return Colors.transparent;
-          }),
-          ),
-        ),
-        outlinedButtonTheme: OutlinedButtonThemeData(
-          style: ButtonStyle(
-            foregroundColor: MaterialStateProperty.all<Color>(Color(0xFF0060BE)),
-            backgroundColor: MaterialStateProperty.resolveWith<Color>((Set<MaterialState> states) {
-              if (states.contains(MaterialState.pressed)) {
-                return Color.fromARGB(255, 204, 204, 204);
-              } else if (states.contains(MaterialState.hovered)) {
-                return Color.fromARGB(255, 204, 204, 204);
-              } else if (states.contains(MaterialState.focused)) {
-                return Color.fromARGB(255, 204, 204, 204);
-              }
-              return Colors.transparent;
-            }),
-          ),
-        ),
-        chipTheme: ChipThemeData(
-          backgroundColor: Colors.grey,
-          selectedColor: Color(0xFF0060BE),
-          showCheckmark: true,
-          checkmarkColor: Colors.white
-        ),
-        radioTheme: RadioThemeData(
-          fillColor: MaterialStateProperty.resolveWith<Color>((Set<MaterialState> states) {
-            if (states.contains(MaterialState.selected)) {
-              return Color(0xFF0060BE);
-            }
-            return Colors.grey;
-          }),
-        ),
-        checkboxTheme: CheckboxThemeData(
-          fillColor: MaterialStateProperty.resolveWith<Color>((Set<MaterialState> states) {
-            if (states.contains(MaterialState.selected)) {
-              return Color(0xFF0060BE);
-            }
-            return Colors.grey;
-          }),
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          border: OutlineInputBorder(
-            borderSide: BorderSide(color: Colors.grey),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderSide: BorderSide(color: Color(0xFF0060BE), width: 2),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderSide: BorderSide(color: Colors.grey),
-          ),
-        ),
-      ),
+      theme: theme,
       home: const MyHomePage(),
     );
   }

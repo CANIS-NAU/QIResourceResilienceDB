@@ -218,9 +218,7 @@ class _CustomFilterChipState extends State<CustomFilterChip> {
   @override
   Widget build(BuildContext context) {
     return FilterChip(
-      label: Text(widget.label,
-        style: TextStyle(
-        color: _isSelected ? Colors.white : Colors.black ),),
+      label: Text(widget.label),
       selected: _isSelected,
       onSelected: (bool selected) {
         setState(() {
@@ -228,12 +226,6 @@ class _CustomFilterChipState extends State<CustomFilterChip> {
         });
         widget.onSelected(selected);
       },
-      side: MaterialStateBorderSide.resolveWith((Set<MaterialState> states) {
-      if (states.contains(MaterialState.focused)) {
-        return BorderSide(color: Colors.grey[700]!, width: 2);
-      }
-      return BorderSide.none;
-      }),
     );
   }
 }

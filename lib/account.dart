@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:web_app/widgets.dart';
 
 class Account extends StatelessWidget
 {
@@ -161,30 +162,11 @@ class Account extends StatelessWidget
                             },
                           ),
                           SizedBox(height: 30),
-                          TextButton(
-                            style: ButtonStyle(
-                                foregroundColor:
-                                    MaterialStateProperty.all<Color>(
-                                        Colors.white),
-                                backgroundColor:
-                                    MaterialStateProperty.resolveWith<Color>(
-                                        (Set<MaterialState> states) {
-                                  if (states.contains(MaterialState.focused)) {
-                                    return Theme.of(context).primaryColor.withOpacity(0.7);
-                                  }
-                                  return Theme.of(context).primaryColor;
-                                }),
-                                shape: MaterialStateProperty.all<
-                                        RoundedRectangleBorder>(
-                                    RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(18.0),
-                                        side: BorderSide(
-                                            color: Theme.of(context).primaryColor)))),
+                          PrimaryButton(
                             onPressed: () {
                               changePassword(context, pass, newPass, reenter);
                             },
-                            child: Text('Change Password'),
+                            label: 'Change Password',
                           ),
                         ],
                       ),
